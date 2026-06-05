@@ -3,6 +3,11 @@
 # It is INERT here in the kit repo (GitHub only runs workflows under .github/workflows/).
 # Each quality gate carries a standardized `id: gate-*` that conformance/ci-gates.sh asserts.
 # Satisfies DEVELOPMENT-STANDARDS.md §14 (CI/CD Pipeline).
+#
+# HARDENING (recommended for production, on-message with §14's supply-chain gates):
+#   - Pin every `uses:` action to a full commit SHA, not a mutable @vN tag.
+#   - Pin the CycloneDX (and any npx) tool to a fixed version.
+# Left on major tags here for reference readability.
 name: CI
 
 on:
@@ -53,6 +58,8 @@ jobs:
         uses: gitleaks/gitleaks-action@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Organization-owned repos additionally require a gitleaks license:
+          # GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}
 
       - name: Dependency vulnerability scan
         id: gate-dep-scan
@@ -75,4 +82,6 @@ jobs:
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         uses: actions/attest-build-provenance@v1
         with:
+          # Set this to your actual built artifact (e.g. dist/** or the published
+          # package/image). sbom.json is used here only as a runnable placeholder.
           subject-path: sbom.json
