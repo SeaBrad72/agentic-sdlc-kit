@@ -248,8 +248,8 @@ How to change a running system without breaking it — the release-engineering m
 - **Forward-fix** only when rollback is riskier than the bug (e.g., an irreversible migration already applied) or the fix is trivial and verified.
 - Preference order: **flag-off → redeploy previous → revert + redeploy**. Every release declares its rollback path *before* it ships (the "rollback ready" in §4).
 
-### Supply-chain integrity *(configuration hook)*
-Pin/lock dependencies; generate an **SBOM**; scan dependencies and verify provenance for releases. Tooling is a project choice (e.g., the wired Semgrep / Sonatype); the scan cadence joins recurring maintenance (§15).
+### Supply-chain integrity *(required CI gates)*
+Pin/lock dependencies; scan dependencies for vulnerabilities; generate an **SBOM**; attest build **provenance** for released artifacts. These are **required CI gates on every PR** (`DEVELOPMENT-STANDARDS.md` §14), not optional hooks. Tooling is a project choice (**→ profile**; e.g., the wired Semgrep / Sonatype). A deeper full-tree audit also runs in recurring maintenance (§15).
 
 ### Versioning & release identity *(configuration hook)*
 Tag releases with **semantic versioning**; the CHANGELOG (§15) records what each version changed. Breaking changes bump major and require explicit approval (§4).
@@ -361,7 +361,7 @@ The Definition of Done *requires* several of these; this flow says *when in the 
 
 ### Recurring & maintenance work
 Cadence-triggered (not intake-triggered) work that flows through the same board as a distinct item type, with the same gates and Definition of Done:
-- Dependency audits / vulnerability scans + SBOM refresh (monthly + pre-release)
+- Dependency audits / vulnerability scans + SBOM refresh — the **deeper, full-tree** periodic audit (monthly + pre-release) complementing the per-PR dependency gate (`DEVELOPMENT-STANDARDS.md` §14)
 - Security scans
 - Stale feature-flag cleanup (flag debt)
 - Backup-restore verification (prove DR actually works)
