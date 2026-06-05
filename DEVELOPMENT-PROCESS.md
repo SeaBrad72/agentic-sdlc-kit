@@ -163,10 +163,11 @@ Humans gate only where judgment matters; agents flow at machine speed between ga
 | **Review** | Did we build it *right*? (quality, **security lens**, standards) | Different agent + human |
 | **Eval gate** *(AI features)* | Do model/prompt outputs meet the eval bar — and did this change not regress evals? | Builder + reviewer |
 | **Compliance gate** *(regulated domains)* | Does this meet the regulatory bar before release? | Security owner + human |
+| **15-Factor conformance** *(deployable services)* | Does the architecture satisfy the applicable 15 factors? (`conformance/15-factor-checklist.md`) | Reviewer + lead |
 | **Acceptance** | Did we build the *right thing*? (intent/need) | Intent owner |
 | **Definition of Done** | Truly complete? (per `DEVELOPMENT-STANDARDS.md`) | Automated + human |
 
-Review and Acceptance fail *differently* and are kept distinct. Threat-model, eval, and compliance gates are **conditional** — they apply to sensitive / AI / regulated work respectively, not every item (don't impose them where they optimize nothing). For AI features, **evals are the dev-time quality bar** — the AI analog of TDD: written alongside the feature, run in CI, and gating like tests (see `DEVELOPMENT-STANDARDS.md`).
+Review and Acceptance fail *differently* and are kept distinct. Threat-model, eval, compliance, and 15-factor gates are **conditional** — they apply to sensitive / AI / regulated / deployable-service work respectively, not every item (don't impose them where they optimize nothing). For AI features, **evals are the dev-time quality bar** — the AI analog of TDD: written alongside the feature, run in CI, and gating like tests (see `DEVELOPMENT-STANDARDS.md`).
 
 ---
 
@@ -179,7 +180,7 @@ Same structure at every level (fractal); different scope and frequency. **Every 
 | **L0 · Reflection-in-action** | Every tool result / test run | Agent, silently | Course-correction (no artifact) → immediate behavior |
 | **L1 · Increment retro** | Item → Done / PR opened | Building agent | Tiny structured note → PR/item; durable learnings → memory; doc proposals → L2 |
 | **L2 · Milestone retro** | Milestone close / time-fallback | Human + lead, fed by L1 notes | Pattern-level decisions → roadmap, backlog, the two docs, memory |
-| **L3 · Process retro** | Periodic / when the process bites | Human | Process improvements → `DEVELOPMENT-PROCESS.md` + `DEVELOPMENT-STANDARDS.md` |
+| **L3 · Process retro** | Periodic / when the process bites | Human | Process improvements → `DEVELOPMENT-PROCESS.md` + `DEVELOPMENT-STANDARDS.md`; **kit-level improvements → PR upstream to the canonical kit** (`MAINTAINING.md` §4; humans ratify) |
 | **Event retro** | Bug · red CI · rejected review · blocker — *any stage* | Whoever hit it | Blameless triage → logged on item; prevention → backlog/docs |
 
 **L1 increment-retro prompt (kept tiny — seconds to write):**
