@@ -1,5 +1,7 @@
 # Agentic SDLC Kit
 
+`v1.0.0` · Apache-2.0 · [CHANGELOG](CHANGELOG.md) · [how the kit is maintained](MAINTAINING.md)
+
 A complete, **stack-agnostic** software development lifecycle designed for teams working with AI agents — from idea through released, operating software. Drop it into a new project, choose your stack, and go.
 
 It is opinionated about *how to build well with agents* and deliberately neutral about *what you build it with*.
@@ -12,6 +14,7 @@ Any team — humans, agents, or both — starting a new project who wants produc
 | File | What it is |
 |------|-----------|
 | **`START-HERE.md`** | Run first — walks you through Inception, including choosing your stack. |
+| **`MAINTAINING.md`** | How the kit is built, versioned, and contributed back to (the contract/reference/conformance convention). |
 | **`WALKTHROUGH.md`** | A narrative of the kit in motion — one feature from idea to operating software. |
 | **`CLAUDE.md`** | Principles + Definition of Done. Authoritative. |
 | **`DEVELOPMENT-PROCESS.md`** | The agentic SDLC: Inception → Discover → Plan → Build → Review → Release → Done → Operate ↺. |
@@ -26,6 +29,16 @@ Any team — humans, agents, or both — starting a new project who wants produc
 3. At stack selection: pick a ready profile **or** generate one from `profiles/_TEMPLATE.md` for your stack — recorded as **ADR-000**.
 4. Pass the **Inception Done** gate → enter the loop at **Discover**.
 
+## How the kit is built
+
+Every capability ships as three parts (full detail in `MAINTAINING.md`):
+
+- **Contract** — the binding, stack-neutral requirement (in the standards/process docs).
+- **Reference implementation** — a working artifact you copy and adapt (in a profile or the repo). You own it.
+- **Conformance check** — proof the implementation still satisfies the contract (in `conformance/`).
+
+So the kit **dictates the contract and offers the implementation**: rewrite the reference freely as long as the conformance check still passes. The kit is itself a versioned product (`VERSION`, `CHANGELOG.md`) that is built with the very loop it prescribes — improvements found by adopters flow back upstream as PRs.
+
 ## The core ideas
 - **Governing lens:** rituals that *manage human effort* die; rituals that *clarify intent or improve quality* get stronger. Agent effort is cheap; human attention and integration risk are the scarce resources.
 - **Flow, not sprints:** WIP-limited kanban; humans are the pacing metronome at the gates.
@@ -37,4 +50,4 @@ Any team — humans, agents, or both — starting a new project who wants produc
 Everything is meant to be tailored. Stack-specific → a profile. Project-specific → the project's own `CLAUDE.md`. Org-specific (stakeholder cadence, spend thresholds, SLO gating) → the configuration hooks the docs call out. Keep the universal files universal.
 
 ## License
-[Choose a license before distributing.]
+Apache-2.0 — see [`LICENSE`](LICENSE).
