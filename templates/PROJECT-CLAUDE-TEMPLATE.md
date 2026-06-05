@@ -6,6 +6,7 @@
 **Intent owner:** [who owns the why]
 **Status:** [Inception / Active / Maintenance / Paused]
 **Created:** [date]
+**Kit version adopted:** [vX.Y.Z — the Agentic SDLC Kit release this project was incepted from; see the kit's `CHANGELOG.md`]
 
 ---
 

@@ -16,6 +16,8 @@
 | **`profiles/<stack>.md`** | The concrete *how* for your chosen stack (config, examples, commands). Selected at Inception. |
 | **`templates/`** | `PROJECT-CLAUDE-TEMPLATE.md`, `BACKLOG-TEMPLATE.md`. |
 | **`START-HERE.md`** | Run this first — it walks you through Inception, including choosing your stack. |
+| **`MAINTAINING.md`** | How the kit itself is built, versioned (`VERSION`, `CHANGELOG.md`), and contributed back to — the contract/reference/conformance convention. |
+| **`conformance/`** | Executable checks/checklists proving a reference implementation satisfies its contract. |
 
 New here? **Read `START-HERE.md`.**
 
