@@ -6,6 +6,16 @@
 #
 # Usage: sh conformance/ci-gates.sh <workflow-file>
 # Exit:  0 = all gates present; 1 = missing gate(s) or bad usage.
+#
+# Matching is best-effort and structural: a gate counts only when `id: <gate>`
+# appears as a YAML key at the start of a line (leading whitespace allowed),
+# NOT inside a comment or a quoted value. This prevents a workflow from passing
+# by merely *mentioning* a gate id (e.g. `# id: gate-lint`) without running it.
+# It does not parse YAML, so a gate id inside a multi-line block scalar could
+# still be a false positive. For stronger guarantees use a YAML parser, e.g.
+#   yq -r '.jobs[].steps[].id' <workflow> | grep -Fxq <gate>
+# This shell check is a portable, zero-dependency gate and should be paired with
+# the pipeline actually running (the kit's own CI runs the real workflow).
 set -eu
 
 WORKFLOW="${1:-}"
@@ -25,7 +35,7 @@ REQUIRED="gate-lint gate-type-check gate-test gate-build gate-secret-scan gate-d
 
 missing=""
 for gate in $REQUIRED; do
-  if ! grep -Eq "id:[[:space:]]*[\"']?${gate}[\"']?([[:space:]]|\$)" "$WORKFLOW"; then
+  if ! grep -Eq "^[[:space:]]*(-[[:space:]]+)?id:[[:space:]]*[\"']?${gate}[\"']?[[:space:]]*(#.*)?\$" "$WORKFLOW"; then
     missing="$missing $gate"
   fi
 done
