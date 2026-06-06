@@ -11,12 +11,17 @@ set -eu
 STACK="${1:-}"
 [ -n "$STACK" ] || { echo "usage: new-profile.sh <stack-name>" >&2; exit 2; }
 case "$STACK" in
-  */*|*" "*|.*) echo "error: stack name must be a simple slug (e.g. go, dotnet, swift)" >&2; exit 2 ;;
+  *[!a-z0-9._-]*|.*|-*) echo "error: stack name must be a simple slug — lowercase a-z, 0-9, '.', '_', '-', not starting with '.' or '-' (e.g. go, dotnet, java-spring)" >&2; exit 2 ;;
 esac
 [ -f profiles/_TEMPLATE.md ] || { echo "error: run from the kit repo root (profiles/_TEMPLATE.md not found)" >&2; exit 1; }
 if [ -e "profiles/${STACK}.md" ] || [ -e "profiles/${STACK}" ]; then
   echo "error: profiles/${STACK}.md or profiles/${STACK}/ already exists — choose another name" >&2; exit 1
 fi
+
+# Clean up a partial scaffold if any step below fails (so a failed run never strands a
+# half-built profile that then blocks retries via the existence guard above).
+cleanup() { [ "${OK:-0}" = 1 ] || rm -rf "profiles/${STACK}.md" "profiles/${STACK}"; }
+trap cleanup EXIT
 
 esc() { printf '%s' "$1" | sed 's/[&/\\]/\\&/g'; }
 
@@ -81,6 +86,8 @@ YAML
 # 3. governance companions (derive from the shipped Python reference; stack-neutral)
 sed "s/Python profile/${STACK} profile/" profiles/python/CODEOWNERS > "profiles/${STACK}/CODEOWNERS"
 sed "s/(Python profile)/(${STACK} profile)/" profiles/python/BRANCH-PROTECTION.md > "profiles/${STACK}/BRANCH-PROTECTION.md"
+
+OK=1   # all files created; the EXIT trap will keep them
 
 cat <<EOF
 Scaffolded:
