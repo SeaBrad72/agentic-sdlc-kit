@@ -1,100 +1,60 @@
-# [Project Name] - Project Backlog
+# [Project Name] — Backlog (Flow Board)
 
-**Created:** [Date]
-**Current Phase:** Phase X
-**Status:** [Active Development / Maintenance / Paused]
+> **Template.** The tactical work-item queue that runs the loop (DEVELOPMENT-PROCESS.md §6). Ordered, not a pile. This is the `BACKLOG.md` backend; swap for GitHub Issues/Linear/Jira per the project `CLAUDE.md` if chosen.
 
----
+**Created:** [date] · **Backlog backend:** BACKLOG.md (repo-native)
 
-## 🎯 Project Vision
-
-**Purpose:** What problem does this solve?
-
-**Long-Term Potential:** What could this become?
-
-**Business Value:** [Internal tool / Product / Learning demo / Revenue opportunity]
+## How to use
+- Every item has: **intent** (why) · **acceptance criteria** · **size** (one-flow small) · **risk/complexity tag** · **owner** (human or agent) · **links** (spec/PR/milestone).
+- **Order** by value × urgency ÷ effort-risk — the intent owner ranks; the lead breaks ties on risk/deps. No story points.
+- Work types share one board and are prioritized against each other: **feature · bug · tech-debt · spike · recurring**. Tech-debt gets a standing paydown share each cycle.
+- Move items down the states as they flow. Entering **In Progress** is an atomic ownership claim (no double-claims).
 
 ---
 
-## ✅ Completed Phases
+## Ready
+> Passed Definition of Ready (criteria present, sliced, deps known). Safe to start.
 
-### Phase 1: [Name] (Completed [Date])
-- [x] Feature 1
-- [x] Feature 2
-- [x] Feature 3
+| Item | Intent (why) | Acceptance criteria | Size | Risk | Type | Owner | Links |
+|------|--------------|---------------------|------|------|------|-------|-------|
+| [title] | [why] | [testable criteria] | S | low | feature | [who] | [spec] |
 
-**Shipped:** [Link to live deployment or GitHub release]
-**Retro:** [Link to day's retro in PROGRESS.md]
+## In Progress
+> WIP-limited. One atomic claim per item.
 
----
+| Item | Owner | Started | Links |
+|------|-------|---------|-------|
+| | | | |
 
-## 🔄 Next Up (Obvious Next Iteration)
+## In Review
+> Builder ≠ sole reviewer. Awaiting merge gate.
 
-### Phase 2: [Name] (Target: [When])
-- [ ] Feature 1
-- [ ] Feature 2
-- [ ] Feature 3
+| Item | Reviewer | PR |
+|------|----------|----|
+| | | |
 
-**Why this next:** [Brief explanation of logical progression]
-**Prerequisites:** [Skills/knowledge needed]
+## Released
+> Deployed; awaiting outcome validation (did it move its metric?).
 
----
+| Item | Released | Success metric / hypothesis |
+|------|----------|------------------------------|
+| | | |
 
-## 🚀 Future Enhancements (Innovation Features)
+## Done
+> Definition of Done met, L1 retro written, outcome validated.
 
-### Phase 3: [Name] (Target: [When])
-- [ ] AI/ML feature 1
-- [ ] Advanced feature 2
-- [ ] Integration 3
+| Item | Closed | Retro/outcome |
+|------|--------|---------------|
 
-**Innovation Value:** [What makes this cutting-edge?]
-**Dependencies:** [What needs to be learned first?]
-
----
-
-## 🎯 Long-Term Vision (Aspirational)
-
-### Phase 4+: [Name] (Target: [Timeframe])
-- [ ] Major feature 1
-- [ ] Platform expansion 2
-- [ ] Enterprise feature 3
-
-**Big Picture:** [Where this could go]
-**Required Capabilities:** [What skills/tech needed]
+## Blocked
+| Item | Blocked on | Since | Event-retro link |
+|------|-----------|-------|------------------|
 
 ---
 
-## 💡 Ideas Parking Lot
+## Backlog (unrefined)
+> Validated candidates from Discover, not yet Ready. The roadmap/parking-lot lives separately (strategic altitude).
 
-- Idea 1: [Quick note]
-- Idea 2: [Quick note]
-- Idea 3: [Quick note]
+- [ ] [candidate] — [intent] — [risk tag]
 
-*(Unstructured ideas that might fit into phases later)*
-
----
-
-## 📊 Metrics & Success Criteria
-
-**Current Metrics:**
-- Metric 1: [Value]
-- Metric 2: [Value]
-
-**Future Targets:**
-- Phase 2: [Target metric]
-- Phase 3: [Target metric]
-- Phase 4: [Target metric]
-
----
-
-## 🔗 Related Resources
-
-- **GitHub Repo:** [Link]
-- **Live Demo:** [Link]
-- **Documentation:** [Link to README or docs folder]
-- **Related Projects:** [Links to other projects this connects to]
-
----
-
-**Last Updated:** [Date]
-**Next Review:** [Date - suggest reviewing during retros or monthly]
+**Last Updated:** [date]
