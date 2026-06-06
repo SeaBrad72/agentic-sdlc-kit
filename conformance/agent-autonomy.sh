@@ -37,10 +37,25 @@ assert_allow "npm test"            '{"tool_name":"Bash","tool_input":{"command":
 assert_allow "read file"           '{"tool_name":"Read","tool_input":{"file_path":"README.md"}}'
 assert_allow "write .env.example"  '{"tool_name":"Write","tool_input":{"file_path":".env.example","content":"SECRET="}}'
 
+# --- bypass-resistance regressions (security review 2026-06-06: must DENY) ---
+assert_deny "rm split flags -r -f" '{"tool_name":"Bash","tool_input":{"command":"rm -r -f /tmp/x"}}'
+assert_deny "rm -fr"               '{"tool_name":"Bash","tool_input":{"command":"rm -fr /tmp/x"}}'
+assert_deny "rm --recursive"       '{"tool_name":"Bash","tool_input":{"command":"rm --recursive /tmp/x"}}'
+assert_deny "rm inside bash -c"    '{"tool_name":"Bash","tool_input":{"command":"bash -c \"rm -rf /\""}}'
+assert_deny "force-to-main +main"  '{"tool_name":"Bash","tool_input":{"command":"git push origin +main"}}'
+assert_deny "push HEAD:main"       '{"tool_name":"Bash","tool_input":{"command":"git push origin HEAD:main"}}'
+assert_deny "npm publish 2 spaces" '{"tool_name":"Bash","tool_input":{"command":"npm  publish"}}'
+assert_deny "prisma migrate reset" '{"tool_name":"Bash","tool_input":{"command":"npx prisma migrate reset --force"}}'
+assert_deny "psql DELETE FROM"     '{"tool_name":"Bash","tool_input":{"command":"psql -c \"DELETE FROM users\""}}'
+assert_deny "malformed JSON"       '{bad "command":"rm -rf /"}'
+
 # --- false-positive regressions (mentions a dangerous thing but is safe) ---
 assert_allow "doc mentions rm -rf"      '{"tool_name":"Write","tool_input":{"file_path":"notes.md","content":"never run rm -rf / in prod"}}'
 assert_allow "commit msg says prod"     '{"tool_name":"Bash","tool_input":{"command":"git commit -m \"deploy to prod notes\""}}'
 assert_allow "commit msg says drop tbl" '{"tool_name":"Bash","tool_input":{"command":"git commit -m \"drop table cleanup task\""}}'
+assert_allow "branch feature/main-x"    '{"tool_name":"Bash","tool_input":{"command":"git push origin feature/main-thing"}}'
+assert_allow "rm single file"           '{"tool_name":"Bash","tool_input":{"command":"rm stale.txt"}}'
+assert_allow "confirm -r in message"    '{"tool_name":"Bash","tool_input":{"command":"git commit -m \"confirm -r removal\""}}'
 
 if [ "$fail" -ne 0 ]; then echo "FAIL: agent-autonomy conformance failed"; exit 1; fi
 echo "OK: agent-autonomy guard denies irreversible actions and allows safe ones"
