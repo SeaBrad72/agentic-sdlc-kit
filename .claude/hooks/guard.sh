@@ -80,6 +80,11 @@ case "$TOOL" in
     if printf '%s' "$CMD" | grep -Eiq '(prisma[[:space:]]+migrate[[:space:]]+reset|prisma[[:space:]]+db[[:space:]]+push[^|]*--force-reset|sequelize[^|]*db:migrate:undo:all|knex[^|]*migrate:rollback[^|]*--all|drizzle-kit[[:space:]]+push)'; then
       emit_deny "13: destructive DB reset via a migration runner - human-gated."
     fi
+    # dropdb as an invoked command (start or after a shell separator), not when merely
+    # mentioned in prose (e.g. a commit message "fix dropdb bug").
+    if printf '%s' "$CMD" | grep -Eq '(^|[;&|][[:space:]]*)dropdb([[:space:]]|$)'; then
+      emit_deny "13: dropdb destroys a database irreversibly - human-gated."
+    fi
     if printf '%s' "$CMD" | grep -Eq '(curl|wget)[^|]*\|[[:space:]]*(sudo[[:space:]]+)?(sh|bash)([[:space:]]|$)'; then
       emit_deny "13: piping a remote script into a shell is high-blast-radius - human-gated."
     fi

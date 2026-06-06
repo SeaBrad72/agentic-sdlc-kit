@@ -47,6 +47,7 @@ assert_deny "push HEAD:main"       '{"tool_name":"Bash","tool_input":{"command":
 assert_deny "npm publish 2 spaces" '{"tool_name":"Bash","tool_input":{"command":"npm  publish"}}'
 assert_deny "prisma migrate reset" '{"tool_name":"Bash","tool_input":{"command":"npx prisma migrate reset --force"}}'
 assert_deny "psql DELETE FROM"     '{"tool_name":"Bash","tool_input":{"command":"psql -c \"DELETE FROM users\""}}'
+assert_deny "dropdb command"       '{"tool_name":"Bash","tool_input":{"command":"dropdb proddb"}}'
 assert_deny "malformed JSON"       '{bad "command":"rm -rf /"}'
 
 # --- false-positive regressions (mentions a dangerous thing but is safe) ---
@@ -56,6 +57,7 @@ assert_allow "commit msg says drop tbl" '{"tool_name":"Bash","tool_input":{"comm
 assert_allow "branch feature/main-x"    '{"tool_name":"Bash","tool_input":{"command":"git push origin feature/main-thing"}}'
 assert_allow "rm single file"           '{"tool_name":"Bash","tool_input":{"command":"rm stale.txt"}}'
 assert_allow "confirm -r in message"    '{"tool_name":"Bash","tool_input":{"command":"git commit -m \"confirm -r removal\""}}'
+assert_allow "dropdb word in message"   '{"tool_name":"Bash","tool_input":{"command":"git commit -m \"fix dropdb bug\""}}'
 
 if [ "$fail" -ne 0 ]; then echo "FAIL: agent-autonomy conformance failed"; exit 1; fi
 echo "OK: agent-autonomy guard denies irreversible actions and allows safe ones"
