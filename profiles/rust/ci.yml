@@ -1,0 +1,82 @@
+# Reference CI pipeline for the Rust profile.
+# COPY & ADAPT: copy to your project's .github/workflows/ci.yml. Inert here in the kit.
+# Each quality gate carries a standardized `id: gate-*` that conformance/ci-gates.sh asserts.
+# Satisfies DEVELOPMENT-STANDARDS.md §14. HARDENING: pin `uses:`/tools to versions for production.
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+  id-token: write
+  attestations: write
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy, rustfmt
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Install dependencies
+        id: gate-install
+        run: cargo fetch
+
+      - name: Lint
+        id: gate-lint
+        run: cargo clippy --all-targets -- -D warnings
+
+      - name: Type-check
+        id: gate-type-check
+        run: cargo check --all-targets
+
+      - name: Test + coverage (>=80%)
+        id: gate-test
+        run: |
+          cargo install cargo-llvm-cov
+          cargo llvm-cov --fail-under-lines 80
+
+      - name: Build
+        id: gate-build
+        run: cargo build --release
+
+      - name: Secret scan
+        id: gate-secret-scan
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}  # required for org repos
+
+      - name: Dependency vulnerability scan
+        id: gate-dep-scan
+        run: |
+          cargo install cargo-audit
+          cargo audit
+
+      - name: Generate SBOM (CycloneDX)
+        id: gate-sbom
+        run: |
+          cargo install cargo-cyclonedx
+          cargo cyclonedx -f json
+
+      - name: Upload SBOM
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbom
+          path: "**/*.cdx.json"
+
+      - name: Attest build provenance
+        id: gate-provenance
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: actions/attest-build-provenance@v1
+        with:
+          subject-path: target/release/<app>   # TODO: path to the built binary
