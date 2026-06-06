@@ -11,7 +11,8 @@ Maps the controls **this kit enforces or assists** to SOC 2 Trust Services Crite
 
 | Kit control | Where in the kit | SOC 2 | ISO 27001:2022 | Evidence artifact | Responsibility |
 |-------------|------------------|-------|----------------|-------------------|----------------|
-| Lint / type-check / test + 80% coverage | STANDARDS §14 gates 1–4; `profiles/*/ci.yml` | CC8.1 | A.8.28 (secure coding), A.8.29 (security testing in dev) | CI gate run logs | Kit-enforced |
+| Lint / type-check / test + 80% coverage | STANDARDS §14 gates 1–3; `profiles/*/ci.yml` | CC8.1 | A.8.28 (secure coding), A.8.29 (security testing in dev) | CI gate run logs | Kit-enforced |
+| Reproducible production build | STANDARDS §14 gate 4; `gate-build` | CC8.1 | A.8.25 (secure development life cycle), A.8.31 (separation of dev/test/prod) | build CI log / artifact | Kit-enforced |
 | Secret scanning (no committed secrets) | STANDARDS §14 gate 5; `gate-secret-scan` | CC6.1 | A.8.28 (secure coding), A.5.15 (access control) | secret-scan CI log | Kit-enforced |
 | Dependency vulnerability scan | STANDARDS §14 gate 6; `gate-dep-scan` | CC7.1 | A.8.8 (management of technical vulnerabilities) | dep-scan CI log | Kit-enforced |
 | SBOM + build-provenance attestation | STANDARDS §14 gate 7; `gate-sbom` / `gate-provenance` | CC7.1, CC9.2 | A.8.8 (management of technical vulnerabilities), A.5.21 (managing information security in the ICT supply chain) | SBOM file, attestation | Kit-enforced |
@@ -42,7 +43,7 @@ Applies to projects handling personal data. **N/A (reason)** for projects with n
 | Notice / privacy communication | STANDARDS §2 (PII) | P1.0 (notice) | A.5.34 (privacy and protection of PII) | privacy notice | Org-owned |
 | Choice & consent (incl. age-gating for children's data) | STANDARDS §2 | P2.0 (choice and consent) | A.5.34 (privacy and protection of PII) | consent records | Org-owned |
 | Collection limitation | STANDARDS §2 (validate at boundaries) | P3.0 (collection) | A.5.34 (privacy and protection of PII), A.8.26 (application security requirements) | data inventory | Kit-assisted |
-| Use, retention & disposal (minimization) | STANDARDS §2; A.8.10 deletion | P4.0 (use, retention, and disposal) | A.8.10 (information deletion), A.5.34 (privacy and protection of PII) | retention policy | Kit-assisted |
+| Use, retention & disposal (minimization) | STANDARDS §2 | P4.0 (use, retention, and disposal) | A.8.10 (information deletion), A.5.34 (privacy and protection of PII) | retention policy | Kit-assisted |
 | Data-subject access | STANDARDS §2 | P5.0 (access) | A.5.34 (privacy and protection of PII) | DSAR process | Org-owned |
 | Right to erasure | STANDARDS §2 (deletable on request) | P4.0 (use, retention, and disposal) | A.8.10 (information deletion) | erasure process + code path | Kit-assisted |
 | Disclosure & third-party/affiliate data-sharing | STANDARDS §2 (no PII to third parties w/o consent) | P6.0 (disclosure and notification) | A.5.34 (privacy and protection of PII), A.5.19 (information security in supplier relationships), A.5.20 (addressing security within supplier agreements) | data-sharing agreements | Org-owned |
