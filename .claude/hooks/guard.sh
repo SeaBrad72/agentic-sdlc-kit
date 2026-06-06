@@ -1,0 +1,106 @@
+#!/bin/sh
+# guard.sh — PreToolUse hook enforcing the §13 autonomy matrix (DEVELOPMENT-PROCESS.md).
+# Denies irreversible / high-blast-radius actions; defers everything else to normal
+# permission handling. Reads the tool-call JSON on stdin and, when a denied pattern
+# matches the relevant input FIELD ONLY (Bash .command / Write|Edit .file_path) — not
+# the whole payload — prints a deny decision and exits 0. Field-scoping means editing a
+# doc that merely *mentions* a dangerous command (in file CONTENT) is NOT blocked.
+#
+# Within the Bash .command field, matching errs toward OVER-blocking: a dangerous token
+# inside a quoted string (e.g. `bash -c "rm -rf /"`, and likewise `echo "rm -rf"`) is
+# denied, because a guard cannot safely distinguish quoting from execution and
+# under-blocking a real deletion is worse than over-blocking an echo.
+#
+# Requires `jq`. If jq is absent, OR the tool input is not valid JSON, mutating tools
+# (Bash/Write/Edit/NotebookEdit) are denied (fail-safe toward caution); read-only allowed.
+set -eu
+
+INPUT=$(cat)
+
+emit_deny() {
+  printf '{"hookSpecificOutput":{"hookEventName":"PreToolUse","permissionDecision":"deny","permissionDecisionReason":"%s"}}\n' "$1"
+  exit 0
+}
+allow() { exit 0; }   # no output = defer to normal permission flow
+
+# best-effort tool name without jq (only used to decide the fail-safe deny)
+tool_name_grep() {
+  printf '%s' "$INPUT" | tr -d '\n' | sed -n 's/.*"tool_name"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p'
+}
+deny_if_mutating() {
+  case "$1" in
+    Bash|Write|Edit|NotebookEdit)
+      emit_deny "agent-guard: $2 (DEVELOPMENT-PROCESS.md 13). Mutating tools are denied until resolved." ;;
+    *) allow ;;
+  esac
+}
+
+if ! command -v jq >/dev/null 2>&1; then
+  deny_if_mutating "$(tool_name_grep)" "jq is required to evaluate tool safety; install jq"
+fi
+
+# Parse the tool name. If the payload is not valid JSON, jq exits non-zero — FAIL CLOSED
+# (deny mutating tools) instead of letting set -e kill the script with no decision (which
+# a PreToolUse hook treats as "proceed").
+if ! TOOL=$(printf '%s' "$INPUT" | jq -r '.tool_name // empty' 2>/dev/null); then
+  # Unparseable input: we can verify nothing, so deny outright (fail closed). Claude Code
+  # always sends valid JSON to hooks, so this path is an anomaly, not normal operation.
+  emit_deny "agent-guard: tool input is not valid JSON — cannot verify safety; denying (DEVELOPMENT-PROCESS.md 13)."
+fi
+
+case "$TOOL" in
+  Bash)
+    CMD=$(printf '%s' "$INPUT" | jq -r '.tool_input.command // empty' 2>/dev/null || printf '')
+    # recursive rm in any flag arrangement (-rf, -fr, -r -f, --recursive), bounded so
+    # 'confirm'/'npm' are not matched, but quoted forms (bash -c "rm -rf") are.
+    if printf '%s' "$CMD" | grep -Eq '(^|[^[:alnum:]_])rm[[:space:]]+([^;&|]*[[:space:]])?(-[[:alnum:]]*[rR]|--recursive)'; then
+      emit_deny "13: recursive rm is irreversible - human-gated."
+    fi
+    if printf '%s' "$CMD" | grep -Eq 'git[[:space:]]+reset[[:space:]]+.*--hard'; then
+      emit_deny "13: git reset --hard discards work irreversibly - human-gated."
+    fi
+    if printf '%s' "$CMD" | grep -Eq 'git[[:space:]]+commit[[:space:]]+.*--amend'; then
+      emit_deny "13: git commit --amend rewrites history - human-gated."
+    fi
+    if printf '%s' "$CMD" | grep -Eq '(npm|yarn|pnpm)[[:space:]]+publish'; then
+      emit_deny "13: publishing a package is externally irreversible - human-gated."
+    fi
+    if printf '%s' "$CMD" | grep -Eq 'git[[:space:]]+push.*(--force|--force-with-lease|[[:space:]]-f([[:space:]]|$)|[[:space:]+]\+[^[:space:]]*[[:space:]]*$)'; then
+      emit_deny "13: force-push rewrites published history - human-gated."
+    fi
+    # push to main/master in any refspec form: 'main', '+main', 'HEAD:main', 'x:master'
+    if printf '%s' "$CMD" | grep -Eq 'git[[:space:]]+push.*[[:space:]:+/](main|master)([[:space:]]|:|$)'; then
+      emit_deny "13: pushing directly to main/master bypasses review - open a PR (human-gated)."
+    fi
+    # destructive SQL via a DB client
+    if printf '%s' "$CMD" | grep -Eiq '(psql|mysql|mariadb|sqlite3|mongosh?).*(drop[[:space:]]+table|truncate|delete[[:space:]]+from)'; then
+      emit_deny "13: destructive SQL (DROP/TRUNCATE/DELETE via a DB client) - human-gated."
+    fi
+    # destructive DB resets via migration runners
+    if printf '%s' "$CMD" | grep -Eiq '(prisma[[:space:]]+migrate[[:space:]]+reset|prisma[[:space:]]+db[[:space:]]+push[^|]*--force-reset|sequelize[^|]*db:migrate:undo:all|knex[^|]*migrate:rollback[^|]*--all|drizzle-kit[[:space:]]+push)'; then
+      emit_deny "13: destructive DB reset via a migration runner - human-gated."
+    fi
+    # dropdb as an invoked command (start or after a shell separator), not when merely
+    # mentioned in prose (e.g. a commit message "fix dropdb bug").
+    if printf '%s' "$CMD" | grep -Eq '(^|[;&|][[:space:]]*)dropdb([[:space:]]|$)'; then
+      emit_deny "13: dropdb destroys a database irreversibly - human-gated."
+    fi
+    if printf '%s' "$CMD" | grep -Eq '(curl|wget)[^|]*\|[[:space:]]*(sudo[[:space:]]+)?(sh|bash)([[:space:]]|$)'; then
+      emit_deny "13: piping a remote script into a shell is high-blast-radius - human-gated."
+    fi
+    if printf '%s' "$CMD" | grep -Eiq '(vercel[[:space:]]+(deploy[[:space:]]+)?--prod|railway[[:space:]]+up|fly[[:space:]]+deploy|terraform[[:space:]]+apply|kubectl[[:space:]]+apply|helm[[:space:]]+(install|upgrade))'; then
+      emit_deny "13: production deploy / infra apply is high-blast-radius - human-gated."
+    fi
+    allow ;;
+  Write|Edit|NotebookEdit)
+    FP=$(printf '%s' "$INPUT" | jq -r '.tool_input.file_path // empty' 2>/dev/null || printf '')
+    BASE=$(basename "$FP" 2>/dev/null || printf '%s' "$FP")
+    if [ "$BASE" = ".env.example" ]; then allow; fi
+    case "$FP" in
+      *.env|*/.env|*.env.local|*.env.production|*.env.development|*.pem|*.key|*id_rsa*|*/secrets/*|*/secret/*)
+        emit_deny "13: writing secret material ($BASE) - human-gated (use .env.example + a secrets manager)." ;;
+    esac
+    allow ;;
+  *)
+    allow ;;
+esac
