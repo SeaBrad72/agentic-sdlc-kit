@@ -24,6 +24,17 @@ jobs:
       - name: Agent-autonomy guard conformance (§13)
         run: sh conformance/agent-autonomy.sh
 
+  bootstrap:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Bootstrap a temp project and verify Inception-Done
+        run: |
+          tmp=$(mktemp -d)
+          git archive HEAD | tar -x -C "$tmp"
+          ( cd "$tmp" && sh scripts/incept.sh --noninteractive --name DemoApp --intent-owner "CI" --stack typescript-node --backlog md )
+          sh conformance/inception-done.sh "$tmp"
+
   docs-links:
     runs-on: ubuntu-latest
     steps:
