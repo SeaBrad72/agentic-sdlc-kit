@@ -110,7 +110,7 @@ cat <<EOF
 Do the judgment steps incept does NOT automate (see START-HERE.md):
   1. Write the charter prose in CLAUDE.md (problem, vision, success metrics, scope).
   2. Record the real stack decision in docs/architecture/ADR-000-stack.md.
-  3. Protect main (green CI to merge; builder != sole merger).
+  3. Protect main NOW — run the gh-api command in profiles/${STACK}/BRANCH-PROTECTION.md; verify with: sh conformance/branch-protection.sh
   4. Declare per-project config in CLAUDE.md §3 (autonomy tiers, SLO, review routing, WIP).
   5. Assign roles in CLAUDE.md §4.
 
