@@ -56,7 +56,7 @@ INCEPTION (one-time) ──▶ [ Discover → Plan → Build → Review → Rele
 3. **Repo & environment** — repo created; branch protection on `main`; `.gitignore`; `.env.example`; reproducible local env (Docker / devcontainer); secrets management wired.
 4. **Tooling & CI/CD baseline** — formatter, linter, test runner, and a CI pipeline with quality gates, appropriate to the chosen stack. Green pipeline on an empty project before feature work starts.
 5. **Instantiate project artifacts** — create the project's `CLAUDE.md` (from `templates/PROJECT-CLAUDE-TEMPLATE.md`), `RUNBOOK.md`, the backlog (`BACKLOG.md` from `templates/BACKLOG-TEMPLATE.md`, or chosen backend), and a seed roadmap.
-6. **Per-project configuration** — declare in the project `CLAUDE.md`: backlog backend (§6), autonomy-tier defaults (§13), SLO/error-budget posture (§9), review routing (§12), WIP limits, and environments (local/staging/prod).
+6. **Per-project configuration** — declare in the project `CLAUDE.md`: backlog backend (§6), autonomy-tier defaults (§13), SLO/error-budget posture (§9), review routing (§12), WIP limits, and environments (Dev/QA/UAT/Prod — see Environments & promotion).
 7. **Assign roles** — fill each function in §2 with a human or agent for this project.
 8. **Exit gate — "Inception Done"** — charter approved, stack decided (ADR-000), CI green, project `CLAUDE.md`/`RUNBOOK`/backlog in place, config declared, roles assigned. **Only then does the project enter the loop at Discover.**
 
@@ -213,6 +213,21 @@ monitor → detect (alert · error spike · support ticket · user feedback · u
 - **Maturity step: hard-gate** — a project at production scale may promote to SRE-style gating (non-critical releases freeze when the budget is burned until reliability recovers). Mirrors the Stage 1–4 scale progression in `DEVELOPMENT-STANDARDS.md`.
 
 **Cost / spend governance (per project):** track delivery and runtime cost — including agent/compute spend, which can grow fast. **Default: tracked and surfaced in metrics; a spend-gate (alert/throttle on budget burn) promotes at maturity** — same soft→gating progression as error budgets.
+
+### Environments & promotion
+
+Changes flow through a promotion pipeline with a gate between each tier:
+
+| Tier | Purpose | Promotion gate into it |
+|------|---------|------------------------|
+| **Dev** | Active development / integration | CI green on the PR |
+| **QA** | Automated + integration acceptance | Dev green + test suite/integration pass |
+| **UAT** | Stakeholder / business acceptance | QA green + acceptance sign-off (PO/QA) |
+| **Prod** | Live users | UAT sign-off + **human approval (Release Manager)** |
+
+**Production promotion is always human-gated** regardless of agent autonomy tier (§13) — it is in the irreversible/high-blast set. Promotion is forward-only through the tiers; no skipping straight to Prod.
+
+A project may **collapse tiers with a one-line reason** (e.g. a tiny internal tool runs Dev→Prod) — but the contract is: at least one non-prod tier, gated promotion, and a human gate on prod. Environments and per-tier deploy triggers are declared in the project `CLAUDE.md` (§3).
 
 ### Outcome validation
 

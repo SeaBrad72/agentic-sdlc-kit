@@ -16,3 +16,7 @@ Start conservative; raise an action's autonomy as agent-quality metrics earn it.
 
 ## Conformance
 `conformance/agent-autonomy.sh` proves the guard denies the irreversible battery and allows the safe one (including false-positive and bypass-resistance regressions). It runs in CI.
+
+## Coverage boundary
+
+This guard governs the **Claude Code agent runtime only**. A human at a shell, or a different agent runtime, is not covered — production safety also requires platform controls (database IAM, separate production credentials/accounts, deploy approvals). Those are **Org-owned** (see `../docs/enterprise/README.md`).

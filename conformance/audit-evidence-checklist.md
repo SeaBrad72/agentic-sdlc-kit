@@ -16,7 +16,7 @@ Copy this file into your project (or your audit/review record). For each control
 | Dependency vulnerability scan | CC7.1 / A.8.8 | dep-scan CI log (gate-dep-scan) | **Auto:** `sh conformance/ci-gates.sh …` | |
 | SBOM + build provenance | CC7.1, CC9.2 / A.8.8, A.5.21 | SBOM file + attestation (gate-sbom / gate-provenance) | **Auto:** `sh conformance/ci-gates.sh …` + the SBOM artifact | |
 | Least-privilege OIDC in CI | CC6.1, CC6.3 / A.8.2 | the workflow's push-only `provenance` job (no workflow-level `id-token`) | Manual (review the workflow) | |
-| Branch protection · builder ≠ sole merger | CC8.1, CC6.1 / A.8.32, A.8.4 | branch-protection settings + PR approval records | Manual (GitHub settings + PR history) | |
+| Branch protection · builder ≠ sole merger | CC8.1, CC6.1 / A.8.32, A.8.4 | branch-protection settings + PR approval records | **Auto (where reachable):** `sh conformance/branch-protection.sh` + PR history | |
 | Change management via PR + green CI | CC8.1 / A.8.32 | merge history (every change via reviewed PR with green CI) | Manual (PR / merge records) | |
 | Agent autonomy · human gates for irreversible actions | CC6.1, CC6.3 / A.8.2 | guard hook denies the gated set | **Auto:** `sh conformance/agent-autonomy.sh` | |
 | Inception completed (project resumable cold) | — | the Inception gate passes | **Auto:** `sh conformance/inception-done.sh` | |
