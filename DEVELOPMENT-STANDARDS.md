@@ -180,7 +180,7 @@ The architectural contract for **deployable services**, after Hoffman's *Beyond 
 | 6 | **Logs** | Treat logs as event streams to stdout/stderr; never manage log files in-process. | §3 |
 | 7 | **Disposability** | Fast startup and graceful shutdown; handle termination signals, drain in-flight work, make operations idempotent so a killed process loses nothing. | §4 |
 | 8 | **Backing services** | Treat datastores, caches, queues, and third-party APIs as attached resources, swappable by config with no code change. | §2; **→ profile** |
-| 9 | **Dev/prod parity** | Keep development, staging, and production as similar as possible (same backing-service types, small time/personnel/tooling gaps). | **→ profile** |
+| 9 | **Dev/prod parity** | Keep all tiers (Dev/QA/UAT/Prod) as similar as possible (same backing-service types, small time/personnel/tooling gaps). | **→ profile** |
 | 10 | **Admin processes** | Run one-off and admin tasks (migrations, backfills) as first-class, versioned processes in an identical environment — never manual production surgery. | §6 |
 | 11 | **Port binding** | A service is self-contained and exports itself by binding to a port; no injection into a runtime web server. | **→ profile** |
 | 12 | **Stateless processes** | Processes are stateless and share-nothing; any persistent state lives in a backing service, never in process memory or local disk between requests. | §6; backing services (Factor 8) |
@@ -193,7 +193,7 @@ The architectural contract for **deployable services**, after Hoffman's *Beyond 
 - **Dependencies (Factor 3)** — a committed lockfile is mandatory; production builds pin exact versions; no reliance on globally-installed tools.
 - **Disposability (Factor 7)** — services handle SIGTERM/SIGINT, stop accepting new work, drain in-flight requests within a bounded grace period, and rely on idempotency (§4) so an abrupt kill is safe.
 - **Backing services (Factor 8)** — every datastore/cache/queue/external API is reached through configuration (a URL/credential in the environment), so it can be swapped (local ↔ managed) without code change.
-- **Dev/prod parity (Factor 9)** — local and production use the same *types* of backing services; document any deliberate gap in the RUNBOOK.
+- **Dev/prod parity (Factor 9)** — all tiers (Dev/QA/UAT/Prod) use the same *types* of backing services; document any deliberate gap in the RUNBOOK.
 - **Stateless processes (Factor 12)** — no sticky in-process or local-disk session state; horizontal scaling and disposability depend on this.
 - **Concurrency (Factor 13)** — the scaling model is the process model; document expected concurrency and how the service scales out.
 - **Telemetry depth (Factor 14)** — observability is metrics + traces + health, extending §3 beyond logs.
@@ -223,6 +223,8 @@ Automated quality gates are the contract's teeth: *if it isn't automated, it isn
 **CI security hardening (required posture, not a gate).** The provenance/attestation step requires `id-token: write`; grant it via a **separate job that runs only on push-to-main**, keeping the main gate job at `contents: read` so PR-triggered steps cannot mint an OIDC token a poisoned dependency could exfiltrate. Pin third-party actions to a full commit SHA in production. The cloud OIDC trust policy **MUST** restrict `sub` to the main-branch ref (`refs/heads/main`), never `pull_request`. The profile reference pipelines model this two-job split.
 
 > This raises the supply-chain posture (gates 6–7) to the baseline for **all** projects — see `DEVELOPMENT-PROCESS.md` §10.
+
+**Promotion & production gate.** Changes promote Dev → QA → UAT → Prod (see `DEVELOPMENT-PROCESS.md` "Environments & promotion"); each promotion requires a green pipeline, and **production promotion requires human approval** via a protected deploy environment. Destructive operations against production are prohibited from automated agents (enforced by the `DEVELOPMENT-PROCESS.md` §13 guard); the human side is owned by platform controls.
 
 ---
 

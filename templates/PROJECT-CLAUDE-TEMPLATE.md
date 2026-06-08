@@ -50,7 +50,7 @@ This file holds only what is **specific to this project**.
 - **SLO / error-budget posture** (§9): [soft track-and-guide / hard-gating] — [target SLOs if defined]
 - **Review routing / ownership** (§11): [who/which agent reviews what; CODEOWNERS link]
 - **WIP limits:** [per-stage or global cap]
-- **Environments:** local → [staging?] → production — [deploy triggers]
+- **Environments** (§ "Environments & promotion"): Dev → QA → UAT → Prod — [per-tier deploy trigger]; [if collapsing tiers, name which you use + one-line reason]. Production promotion is human-gated.
 
 ## 4. Roles (this project)
 

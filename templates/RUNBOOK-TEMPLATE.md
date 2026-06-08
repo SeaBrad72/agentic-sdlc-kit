@@ -24,7 +24,8 @@ Documented in `.env.example` (committed, placeholders only). Required:
 
 ## 4. Deploy
 - Target: [Vercel / Railway / container / …]
-- Trigger: [merge to main → auto-deploy / manual]
+- Promotion: Dev → QA → UAT → Prod (prod is human-gated — see `DEVELOPMENT-PROCESS.md` "Environments & promotion")
+- Trigger: [per-tier deploy trigger; e.g. CI green on PR → Dev; human approval → Prod]
 - Steps: `[deploy command(s)]`
 
 ## 5. Rollback
