@@ -226,6 +226,18 @@ Automated quality gates are the contract's teeth: *if it isn't automated, it isn
 
 **Promotion & production gate.** Changes promote Dev → QA → UAT → Prod (see `DEVELOPMENT-PROCESS.md` "Environments & promotion"); each promotion requires a green pipeline, and **production promotion requires human approval** via a protected deploy environment. Destructive operations against production are prohibited from automated agents (enforced by the `DEVELOPMENT-PROCESS.md` §13 guard); the human side is owned by platform controls.
 
+**Reference — production deploy is human-gated by a protected environment** (inert here; adopters wire it):
+```yaml
+deploy-prod:
+  needs: ci
+  if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+  environment: production   # set required reviewers on this environment in repo settings
+  runs-on: ubuntu-latest
+  steps:
+    - run: echo "promote the verified artifact to production"
+```
+Required reviewers on the `production` environment make the promotion human-gated at the platform level, complementing the `DEVELOPMENT-PROCESS.md` §13 agent guard.
+
 ---
 
 **Remember:** this is the *universal* bar. Keep stack-specifics out of this file — they belong in `profiles/<stack>.md`. That separation is what lets any team adopt these standards without inheriting someone else's technology choices.

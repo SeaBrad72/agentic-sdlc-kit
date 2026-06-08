@@ -22,6 +22,7 @@ It does **not** run your compliance or privacy *program*. The following control 
 - **Vendor / third-party risk management** — supplier due diligence, contracts, ongoing monitoring (incl. affiliate/partner data-sharing agreements).
 - **Business continuity / disaster recovery** — beyond the technical RUNBOOK DR section (BIA, tested recovery, alternate sites).
 - **Privacy program** — the kit provides PII/consent/erasure *primitives* and maps them, but the organization owns its privacy program: lawful basis, notices, consent records, data-subject-request handling, retention schedules, and **children's-data obligations (COPPA / GDPR minors' provisions / CCPA-CPRA)** where applicable.
+- **Runtime coverage of the agent guard** — the committed `.claude/` guard prevents destructive actions only within the **Claude Code agent runtime**. Humans at a shell and other agent runtimes are not covered; production destructive-action prevention for them is **Org-owned** (database IAM, separate prod accounts/credentials, deploy approvals).
 
 ## Responsibility legend
 
