@@ -3,6 +3,21 @@
 All notable changes to the Agentic SDLC Kit are recorded here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.13.0] - 2026-06-06
+
+Slice 7a — Environments & production safety. First sub-slice of Slice 7 (adoption/safety hardening).
+
+### Added
+- **Dev → QA → UAT → Prod** environment model with gated promotion (production always human-gated) in `DEVELOPMENT-PROCESS.md` + `DEVELOPMENT-STANDARDS.md` §14 + `PROJECT-CLAUDE-TEMPLATE.md` + `RUNBOOK-TEMPLATE.md`.
+- `conformance/branch-protection.sh` — verifies `main` is actually protected (PR reviews + status checks) via `gh api`; informational clean-exit where the API isn't reachable. `incept.sh` now reminds to apply branch protection.
+- Env-protected reference prod-deploy workflow; explicit **human-coverage boundary** (the guard governs the Claude Code runtime only; humans/other runtimes are Org-owned platform controls).
+
+### Changed
+- **`.claude/hooks/guard.sh` is now environment-aware (additive — no existing deny weakened):** expanded destructive coverage (database drops via ORM/framework tools across Rails/Laravel/Django/Alembic/Flyway/.NET-EF, raw DB-client `DROP DATABASE`, restore-with-clean, cache flush, cluster-resource and container-volume removal, cloud storage/DB/instance deletion) plus a **production-context catch-all** (prod kube/helm context or namespace, `*_ENV=prod` prefix, `--env production` co-occurring with a destructive/deploy verb). All 35 prior conformance cases pass; 61 cases total.
+
+### Note
+No new required CI gate (MINOR). Production destructive-action prevention for humans and non-Claude-Code runtimes is Org-owned (platform IAM / account separation / deploy approvals).
+
 ## [2.12.0] - 2026-06-06
 
 Slice 6d — Enterprise addendum, pillar 4 (capstone): the audit-evidence checklist. **Completes the enterprise addendum and the kit roadmap.** Tagged `v3.0.0` as the "enterprise layer complete" milestone (a marker, not a semver-major — no new required gate; the kit's contract version is 2.12.0, per `MAINTAINING.md`).
