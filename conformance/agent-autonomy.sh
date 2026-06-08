@@ -77,8 +77,12 @@ assert_deny "gcloud sql delete"    '{"tool_name":"Bash","tool_input":{"command":
 assert_deny "prod kube apply"      '{"tool_name":"Bash","tool_input":{"command":"kubectl --context prod-cluster apply -f k8s/"}}'
 assert_deny "prod env migrate"     '{"tool_name":"Bash","tool_input":{"command":"NODE_ENV=production npm run migrate"}}'
 assert_deny "--env production deploy" '{"tool_name":"Bash","tool_input":{"command":"./deploy.sh --env production"}}'
+assert_deny "ef database update 0"  '{"tool_name":"Bash","tool_input":{"command":"dotnet ef database update 0"}}'
+assert_deny "docker system prune --all" '{"tool_name":"Bash","tool_input":{"command":"docker system prune --all -f"}}'
+assert_deny "kubectl -n prod scale" '{"tool_name":"Bash","tool_input":{"command":"kubectl -n prod scale deploy/api --replicas=0"}}'
 
 # --- 7a: false-positive guards (must ALLOW) ---
+assert_allow "kubectl -n prod get"     '{"tool_name":"Bash","tool_input":{"command":"kubectl -n prod get pods"}}'
 assert_allow "kubectl get pods"        '{"tool_name":"Bash","tool_input":{"command":"kubectl get pods -n app"}}'
 assert_allow "docker build"            '{"tool_name":"Bash","tool_input":{"command":"docker build -t app ."}}'
 assert_allow "aws s3 ls"               '{"tool_name":"Bash","tool_input":{"command":"aws s3 ls s3://bucket"}}'

@@ -90,7 +90,7 @@ case "$TOOL" in
       emit_deny "13: dropdb destroys a database irreversibly - human-gated."
     fi
     # ORM / framework DB destruction (drop/reset/wipe/fresh) across stacks
-    if printf '%s' "$CMD" | grep -Eiq '(rails|rake)[[:space:]]+db:(drop|reset|migrate:reset|purge)|artisan[[:space:]]+(migrate:fresh|migrate:reset|db:wipe)|manage\.py[[:space:]]+(flush|reset_db|sqlflush)|alembic[[:space:]]+downgrade[[:space:]]+base|flyway[[:space:]]+clean|dotnet[[:space:]]+ef[[:space:]]+database[[:space:]]+drop'; then
+    if printf '%s' "$CMD" | grep -Eiq '(rails|rake)[[:space:]]+db:(drop|reset|migrate:reset|purge)|artisan[[:space:]]+(migrate:fresh|migrate:reset|db:wipe)|manage\.py[[:space:]]+(flush|reset_db|sqlflush)|alembic[[:space:]]+downgrade[[:space:]]+base|flyway[[:space:]]+clean|dotnet[[:space:]]+ef[[:space:]]+database[[:space:]]+(drop|update[[:space:]]+0)'; then
       emit_deny "13: destructive DB drop/reset via an ORM/framework tool - human-gated."
     fi
     if printf '%s' "$CMD" | grep -Eq 'pg_restore[^|]*(--clean|[[:space:]]-c([[:space:]]|$))'; then
@@ -102,7 +102,7 @@ case "$TOOL" in
     if printf '%s' "$CMD" | grep -Eq 'kubectl[[:space:]]+([^|]*[[:space:]])?delete([[:space:]]|$)'; then
       emit_deny "13: kubectl delete removes cluster resources - human-gated."
     fi
-    if printf '%s' "$CMD" | grep -Eq 'docker[[:space:]]+(volume[[:space:]]+(rm|prune)|system[[:space:]]+prune[^|]*-a)'; then
+    if printf '%s' "$CMD" | grep -Eq 'docker[[:space:]]+(volume[[:space:]]+(rm|prune)|system[[:space:]]+prune[^|]*(-a|--all))'; then
       emit_deny "13: docker volume/system prune destroys persistent state - human-gated."
     fi
     if printf '%s' "$CMD" | grep -Eq 'aws[[:space:]]+s3[[:space:]]+rm[^|]*--recursive|aws[[:space:]]+s3[[:space:]]+rb|aws[[:space:]]+rds[[:space:]]+delete-db-instance|aws[[:space:]]+dynamodb[[:space:]]+delete-table|gcloud[[:space:]]+sql[[:space:]]+instances[[:space:]]+delete|az[[:space:]]+group[[:space:]]+delete|az[[:space:]]+sql[^|]*[[:space:]]delete'; then
@@ -114,8 +114,10 @@ case "$TOOL" in
     if printf '%s' "$CMD" | grep -Eiq '(vercel[[:space:]]+(deploy[[:space:]]+)?--prod|railway[[:space:]]+up|fly[[:space:]]+deploy|terraform[[:space:]]+apply|kubectl[[:space:]]+apply|helm[[:space:]]+(install|upgrade))'; then
       emit_deny "13: production deploy / infra apply is high-blast-radius - human-gated."
     fi
-    # prod-context catch-all: a mutating kube/helm op against a production context
-    if printf '%s' "$CMD" | grep -Eiq '.(-(kube-)?context[[:space:]=][^[:space:]]*prod)' \
+    # prod-context catch-all: a mutating kube/helm op against a production context or namespace.
+    # Patterns are intentionally `.`-prefixed (not leading `--`) so GNU grep does not parse them
+    # as options; the leading `.` matches the space that always precedes the flag in real commands.
+    if printf '%s' "$CMD" | grep -Eiq '.(-(kube-)?context[[:space:]=][^[:space:]]*prod)|[[:space:]]-n[[:space:]]+[^[:space:]]*prod' \
        && printf '%s' "$CMD" | grep -Eiq '(kubectl|helm)[[:space:]]([^|]*[[:space:]])?(apply|delete|create|replace|patch|scale|rollout|upgrade|install|uninstall|destroy)'; then
       emit_deny "13: mutating operation against a production context - human-gated."
     fi
