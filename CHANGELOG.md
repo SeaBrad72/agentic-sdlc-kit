@@ -3,6 +3,20 @@
 All notable changes to the Agentic SDLC Kit are recorded here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.20.0] - 2026-06-09
+
+Slice 8b — Definition of Deployable. Second sub-slice of Slice 8 (continuity & safe-delivery hardening). Closes gap B1 (release-readiness contract not enforced): converts §10's "every release declares its rollback path before it ships" into a conditional Release gate.
+
+### Added
+- **`conformance/definition-of-deployable.md`** — a conditional release-readiness checklist (Release gate, `DEVELOPMENT-PROCESS.md` §7) mixing **Manual** judgment rows (rollback tested, alerts wired, migration reversible) and **Auto** rows. Carries a "a green script is necessary, not sufficient" callout and *(documented)* / *(tested / wired)* row labels. OWASP DSOMM anchor.
+- **`conformance/deployable-ready.sh`** — a conditional, fail-closed companion script: for a project with a deploy surface (Dockerfile / `environment:` workflow / deploy job) it asserts RUNBOOK has Deploy + Rollback sections and a smoke test is referenced; non-deployable projects skip-pass (N/A). Its success output self-discloses scope (documents present, **not** tested). A **`--selftest`** fixture battery (skip/OK/FAIL) regression-locks the positive path in CI.
+- **`DEVELOPMENT-PROCESS.md` §7** — new conditional **Definition of Deployable** gate (deployable services; Release manager + reviewer); §4 Release and §10 rollback reference the checklist.
+- **`templates/RUNBOOK-TEMPLATE.md`** — a smoke-test slot under §4 Deploy, so an incepted deployable project satisfies the new check.
+- **`conformance/audit-evidence-checklist.md`** — a Release-readiness row (CC8.1 / A.8.31, A.8.32; Auto-conditional).
+
+### Note
+MINOR (2.20.0): additive — a **conditional** Release gate at a human checkpoint (like the threat-model / eval / 15-factor gates), not a new universally-required CI gate. The 8 application CI gate-ids and §14 are unchanged.
+
 ## [2.19.0] - 2026-06-09
 
 Slice 8a — Incident Response standard + blameless postmortem template. First sub-slice of Slice 8 (continuity & safe-delivery hardening). Closes gap A1 (no incident-response standard + a dangling cross-reference).

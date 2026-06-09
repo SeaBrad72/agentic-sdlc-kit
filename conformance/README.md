@@ -17,6 +17,8 @@ A **conformance check** proves that a reference implementation still satisfies i
 | Check | Type | Contract it proves | Gate |
 |-------|------|--------------------|------|
 | `15-factor-checklist.md` | checklist | `DEVELOPMENT-STANDARDS.md` §13 (15-Factor Architecture) | Review (conditional) |
+| `definition-of-deployable.md` | checklist | `DEVELOPMENT-PROCESS.md` §10 / §4 (release readiness) | Release (conditional) |
+| `deployable-ready.sh` | script | `DEVELOPMENT-PROCESS.md` §10 — documented release-safety (RUNBOOK deploy/rollback + smoke); pairs with the checklist | Release / CI (conditional on a deploy surface) |
 | `ci-gates.sh` | script | `DEVELOPMENT-STANDARDS.md` §14 (CI/CD Pipeline) | CI / Definition of Done |
 | `check-links.sh` | script | Docs link integrity (`DEVELOPMENT-STANDARDS.md` §11) | CI |
 | `agent-autonomy.sh` | script | `DEVELOPMENT-PROCESS.md` §13 (autonomy tiers) — guard denies a tier breach | PreToolUse hook / CI |
