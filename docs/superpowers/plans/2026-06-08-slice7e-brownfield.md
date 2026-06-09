@@ -523,5 +523,5 @@ Report the PR URL and stop. Do not merge — Bradley ratifies (governing surface
 ## Notes for the executor
 - **Dependency order:** Task 2 (inception-done wiring) depends on Task 1 (guard-wired.sh existing). Task 8's sweep depends on all prior. Tasks 3–7 are independent edits.
 - **The guard-liveness check is the slice's point:** Task 1 Step 4's negative test (un-wired settings → exit 1) is mandatory evidence it isn't vacuous — the whole slice exists to stop an inactive guard on a live legacy system.
-- **Do-no-harm is absolute here:** no task may auto-edit a `.claude/`. `incept.sh` only warns. All negative-test cleanup uses `rm -rf` on a `mktemp` temp dir ONLY — never on repo paths; restore repo files with `cp`/`mv` from backups.
+- **Do-no-harm is absolute here:** no task may auto-edit a `.claude/`. `incept.sh` only warns. Negative tests build `mktemp` throwaway dirs and **do not delete them** — the active `.claude/` guard denies recursive deletes (and the OS reclaims `mktemp` paths). Never use a recursive-delete command in any step; restore repo files with `cp`/`mv` from backups if needed.
 - **Do not touch** `guard.sh` itself, `agent-autonomy.sh`, profiles, or any `ci.yml` — 7e changes none of them.
