@@ -27,9 +27,11 @@ The kit's **own backlog** (dogfooding `DEVELOPMENT-PROCESS.md` §6). The Foundat
 | 8c ✅ | **DR / backup-restore + BIA** *(shipped v2.21.0)* | standards §10 + process §7/§15 + DoD (NIST 800-34) | drill reference + `BIA-TEMPLATE` + `dr-readiness.md` + `dr-ready.sh` (escalate-only) | `dr-ready.sh --selftest` + `check-links.sh` |
 | 8d ✅ | **Resilience + load/soak verification** *(shipped v2.22.0)* | standards §4/§6 + process §7 (chaos/SRE) | `resilience-verification.md` + `resilience-readiness.md` + `resilience-ready.sh` (conditional, --selftest) | `resilience-ready.sh --selftest` + `check-links.sh` |
 | 8e ✅ | **Progressive-delivery + smoke gates** *(shipped v2.23.0)* | process §10 + standards §14 + 8b checklist | `progressive-delivery.md` + §14 smoke-gate + tightened deployable smoke row | `check-links.sh` + the (tightened) Definition-of-Deployable checklist |
+| 8f ✅ | **DORA metrics collection** *(shipped v2.24.0)* | process §14/§9 (DORA + maturity-gating) | `dora-metrics.md` + `scripts/dora.sh` (GitHub-derivable subset, graceful degradation, --selftest) | `dora.sh --selftest` (CI smoke) + `check-links.sh` |
 | 6 ✅ | **Enterprise addendum** | standards §2 (partial) | compliance-control mapping (SOC2/ISO), secrets-at-scale (Vault/KMS) patterns, RBAC for ratification | `conformance/audit-evidence` checklist — enterprise addendum complete (6a–6d), v3.0.0 milestone |
 
 ## Notes
+- **Slice 8 shipped in v2.24.0** (incident response · definition of deployable · DR/backup-restore · resilience+load · progressive delivery · DORA — the continuity & safe-delivery arc, complete).
 - Order matches the "CI first" priority: governance is only *enforced* once CI and the agent layer are wired.
 - Slices 1–2 convert the kit from *described* governance to *enforced* governance — highest leverage. **Slice 1 shipped in v2.0.0; Slice 2 in v2.1.0 — that conversion is now complete.**
 - Re-prioritize at the kit's L2/L3 retros; this order is the default, not a commitment.

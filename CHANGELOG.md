@@ -3,6 +3,19 @@
 All notable changes to the Agentic SDLC Kit are recorded here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.24.0] - 2026-06-09
+
+Slice 8f — DORA metrics collection. Sixth and final sub-slice of Slice 8 (continuity & safe-delivery hardening). Closes gap C1 (DORA defined but not instrumented). **Completes Slice 8.**
+
+### Added
+- **`docs/operations/dora-metrics.md`** — a collection reference: per-metric GitHub data source + derivation (incl. the adopter-wired change-failure rate / MTTR / retro-closure), the **§9 maturity-gating path** (the home for DORA enforcement — opt-in at scale), and a dashboard pattern. DORA is a feedback instrument, not a gate.
+- **`scripts/dora.sh`** — a real collector for the **GitHub-derivable subset** (release cadence, PR lead time, review latency) via `gh` (gh's built-in `--jq` for date math; no separate `jq`). **Degrades gracefully** — any `gh` failure prints "unavailable" and the script still **exits 0** (a report never fails a pipeline) — and names deploy-freq-proper / change-fail / MTTR / retro-closure as adopter-wired. A `--selftest` asserts the no-`gh` degradation path.
+- **Kit CI** smokes the collector (`dora.sh --selftest`) — proves it executes + degrades, never gates on the numbers.
+- **`DEVELOPMENT-PROCESS.md`** §14 references the doc + collector; §9 cross-references the DORA change-fail / MTTR maturity-gating.
+
+### Note
+MINOR (2.24.0): additive — a reference + a report script + a CI smoke. **No new conformance gate**: DORA-value-gating is deliberately a §9 maturity step, not a baseline (a presence check would be theatre; a value-gate baseline would punish early-stage projects). No new CI gate-id; §14's gate set unchanged. **This release completes Slice 8** (incident response · definition of deployable · DR/backup-restore · resilience+load · progressive delivery · DORA).
+
 ## [2.23.0] - 2026-06-09
 
 Slice 8e — Progressive-delivery reference + smoke gates. Fifth sub-slice of Slice 8 (continuity & safe-delivery hardening). Closes gaps B2 (progressive delivery had no reference) + B3 (post-deploy smoke verification was thin). The reference leg of a triad whose contract (§10) and conformance (8b Definition of Deployable) already shipped.
