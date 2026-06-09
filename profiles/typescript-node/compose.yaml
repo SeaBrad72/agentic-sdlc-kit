@@ -2,6 +2,8 @@
 # COPY & ADAPT to your project root. The app builds from the same Dockerfile that ships.
 services:
   app:
+    # Prod-parity by default (runs the shipped image). For hot-reload during dev,
+    # add a source mount (`volumes: [".:/app"]`) and a dev command.
     build:
       context: .
       target: runtime
