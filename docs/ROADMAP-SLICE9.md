@@ -26,7 +26,7 @@ Legend: **B** = build slice (loop pass) · **A** = analysis run (no production c
 |------|:----:|------|:---:|:---:|
 | **A2** | A | **Adversarial guard red-team** — *do, don't read*: fuzz destructive patterns, encodings, quoting, MCP-tool paths against the live guard; enumerate every bypass (review already found 5: `find -delete`, `truncate`, `shred`, single-file `rm`, exfil) | — | — |
 | **9b** ✅ | B | **Guard hardening & scope** (R2) — *shipped v2.25.0.* Red-team battery 16%→~91%; best-effort self/control-plane protection (closes the self-disable P0 via common verbs/paths; interpreters remain the documented tail); honest reframe; partial exfil + capability-family cloud rules; real boundary documented as Org-owned (`platform-safety-boundary.md`). Residuals by design: interpreter-exfil + var-indirection (deliberate-evasion → platform boundary). MCP-tool coverage deferred to 9d (runtime portability). | P1 | MINOR ✅ |
-| **9a** | B | **Conformance honesty** (R1) — aggregate "ready" output must state *documented vs verified* (not just the script header); add evidence-artifact slots (dated drill log / smoke run id) where feasible; `branch-protection.sh` **fails or redirects** off-GitHub instead of silently passing | P2 | MINOR |
+| **9a** ✅ | B | **Conformance honesty** (R1) — *shipped v2.26.0.* Three-state `branch-protection.sh` (no silent pass; UNVERIFIED=exit 2; CI/`--require`→FAIL); new `verify.sh` classified aggregate ([control] vs [doc]) with an honest footer; README taxonomy + "what a green run means". Surfaced a real gap: the kit's own `main` is unprotected (repo-admin follow-up). Evidence-artifact slots deferred (depth, not Tier-0). | P2 | MINOR ✅ |
 
 ### Stage III — Tier 1: adoption reach
 | Step | Type | What | Sev | Ver |

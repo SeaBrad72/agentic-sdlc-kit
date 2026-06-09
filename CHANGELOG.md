@@ -3,6 +3,20 @@
 All notable changes to the Agentic SDLC Kit are recorded here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.26.0] - 2026-06-09
+
+Conformance honesty — "green ≠ verified" (Slice 9a, the other Tier-0 item of the "Honest Assurance & Adoption Reach" arc). Closes the review's convergent finding #1: conformance checks that pass on documentation/declaration, and a `branch-protection.sh` that silently passed when it could not verify. **MINOR** — additive surfacing + a check behavior change (no new universally-required CI gate).
+
+### Added
+- **`conformance/verify.sh`** — an honest aggregate runner. Classifies every check **[control]** (verifies a working/remote control) vs **[doc]** (verifies documentation / recorded evidence exists, NOT that it was tested), prints a footer stating exactly what a green run does and does not prove, and gates only on **control** failures (and on UNVERIFIED under `--require`/CI). Deterministic `--selftest`.
+- **`conformance/README.md` "What a green run means — and doesn't"** section + a `verify.sh` index row — the control-vs-documentation taxonomy is now first-class.
+
+### Changed
+- **`conformance/branch-protection.sh` is now three-state** (was: silent `exit 0` "Informational" when it could not verify): `exit 0` verified-protected · `exit 1` verified-unprotected · **`exit 2` UNVERIFIED** (no `gh`/remote) — never a silent pass. In CI (`CI` env) or with `--require`, UNVERIFIED escalates to FAIL. Cleaner messaging for the "Branch not protected" (404) and "not readable" (token lacks repo-admin) cases. Adds `--selftest`.
+
+### Note
+Behavior change: adopters who ran `branch-protection.sh` in a local `&&` chain expecting `exit 0` when `gh` is absent will now get `exit 2` (UNVERIFIED). That is the fix — a silent pass was the bug.
+
 ## [2.25.0] - 2026-06-09
 
 Runtime-safety hardening & honest reframe (Slice 9b — first slice of the "Honest Assurance & Adoption Reach" arc). An adversarial red-team of the agent guard found it **~16% effective and self-disabling** (183 payloads → 111 confirmed bypasses); this slice raises empirical effectiveness to **~91%** on the red-team battery, makes the guard protect its own integrity, and corrects the docs that oversold it. **MINOR** — additive guard coverage + new docs; no new universally-required CI gate.
