@@ -65,6 +65,8 @@ check_dir() {
     echo "FAIL: RUNBOOK.md has no Disaster recovery section"
     fail=1
   fi
+  # Placeholder strings below must stay in sync with templates/RUNBOOK-TEMPLATE.md §6;
+  # if that template's RPO/RTO placeholder wording changes, update these greps too.
   if grep -Fq '[< 24h default]' "$rb" || grep -Fq '[< 4h default]' "$rb"; then
     echo "FAIL: RUNBOOK RPO/RTO still hold the template placeholder ([< 24h default] / [< 4h default]) — set real targets"
     fail=1
