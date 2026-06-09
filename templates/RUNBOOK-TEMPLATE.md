@@ -28,6 +28,12 @@ Documented in `.env.example` (committed, placeholders only). Required:
 - Trigger: [per-tier deploy trigger; e.g. CI green on PR → Dev; human approval → Prod]
 - Steps: `[deploy command(s)]`
 
+**Container / Kubernetes deploy (if applicable):**
+- Image: built multi-stage & non-root in CI; pushed to GHCR on merge to `main` with a **digest-bound provenance attestation**.
+- Promote the **attested digest** (never a mutable tag) Dev → QA → UAT → Prod; production promotion is human-gated.
+- Apply `deploy/k8s/` (or `helm upgrade --install` with `deploy/helm/`); verify liveness/readiness probes pass.
+- Rollback: redeploy the previous digest (`kubectl rollout undo deployment/<name>` or re-apply the prior digest).
+
 ## 5. Rollback
 - Fastest path: [feature-flag off / redeploy previous / revert+redeploy]
 - Command: `[rollback command]`
