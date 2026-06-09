@@ -32,26 +32,38 @@ for dir in "$ROOT"/*/; do
     pfail=1
   fi
 
-  # 2. non-root: the FINAL USER directive governs the runtime; it must not be root/0/empty
+  # 2. non-root: the FINAL USER directive governs the runtime. Normalize before matching —
+  #    strip an optional `:group` and lowercase — then reject root/0/empty. Also reject a
+  #    build-time variable (USER $X / ${X}): it resolves at build, so it can't be statically
+  #    attested as non-root. (Docker allows `USER uid:gid`, so a bare `case root|0` is bypassable.)
   last_user=$(grep -E '^[[:space:]]*USER[[:space:]]' "$df" | tail -1 | awk '{print $2}')
-  case "$last_user" in
+  uid=${last_user%%:*}
+  uid=$(printf '%s' "$uid" | tr '[:upper:]' '[:lower:]')
+  case "$uid" in
     "" | root | 0)
       echo "FAIL $name: final USER is root or unset ('$last_user')"
       pfail=1
       ;;
+    *\$*)
+      echo "FAIL $name: final USER is a build-time variable ('$last_user') — cannot be statically attested non-root"
+      pfail=1
+      ;;
   esac
 
-  # 3. sibling ci.yml declares both conditional image gate-ids
+  # 3. sibling ci.yml declares both conditional image gate-ids. Anchored regex (reused from
+  #    ci-gates.sh) so a mention in a comment or quoted value can't satisfy the gate.
   if [ ! -f "$ci" ]; then
     echo "FAIL $name: Dockerfile present but no sibling ci.yml"
     pfail=1
   else
     for id in gate-image-sbom gate-image-provenance; do
-      grep -qE "id:[[:space:]]*$id" "$ci" || { echo "FAIL $name: ci.yml missing $id"; pfail=1; }
+      grep -Eq "^[[:space:]]*(-[[:space:]]+)?id:[[:space:]]*[\"']?${id}[\"']?[[:space:]]*(#.*)?\$" "$ci" \
+        || { echo "FAIL $name: ci.yml missing $id"; pfail=1; }
     done
-    # 4. provenance binds the image digest (not only a file path)
-    grep -qE 'subject-digest|push-to-registry' "$ci" || {
-      echo "FAIL $name: image provenance not digest-bound (need subject-digest or push-to-registry)"
+    # 4. provenance binds the image DIGEST: require `subject-digest:` as a YAML key. That is
+    #    the binding; push-to-registry only controls where the attestation is stored.
+    grep -Eq "^[[:space:]]*subject-digest:" "$ci" || {
+      echo "FAIL $name: image provenance not digest-bound (need a subject-digest: key)"
       pfail=1
     }
   fi
