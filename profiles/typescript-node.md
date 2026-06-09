@@ -41,9 +41,9 @@ Implements the 7 required gates of `DEVELOPMENT-STANDARDS.md` §14. Drop-in refe
 - **`ci.yml`** → copy to `.github/workflows/ci.yml`. GitHub Actions on push/PR to `main`: `npm ci` → lint → type-check → test+coverage(≥80) → build → secret-scan (gitleaks) → dependency scan (`npm audit --audit-level=high`) → SBOM (CycloneDX) → build provenance (`actions/attest-build-provenance`). All green required to merge.
 - **`CODEOWNERS`** → copy to `.github/CODEOWNERS`; routes review so builder ≠ sole reviewer.
 - **`BRANCH-PROTECTION.md`** → how to protect `main` (required check, required review).
+- **Container image supply-chain (this profile ships a service):** the reference `profiles/typescript-node/ci.yml` adds `gate-image-sbom` (Syft/CycloneDX, on PR) and `gate-image-provenance` (digest-bound, push-only) on top of the 8 universal gate-ids. Verified by `conformance/container-supply-chain.sh`.
 
 Conformance: `sh conformance/ci-gates.sh profiles/typescript-node/ci.yml` asserts every gate is present.
-- **Container image supply-chain (this profile ships a service):** the reference `profiles/typescript-node/ci.yml` adds `gate-image-sbom` (Syft/CycloneDX, on PR) and `gate-image-provenance` (digest-bound, push-only) on top of the 8 universal gates. Verified by `conformance/container-supply-chain.sh`.
 
 ## 5. Security implementation
 - **Env/secrets:** `process.env.X` with a fail-fast check; never hardcode. `.env.local` gitignored.
