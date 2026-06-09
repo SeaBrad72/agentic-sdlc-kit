@@ -109,7 +109,7 @@ DISCOVER → PLAN →│spec│→ BUILD → REVIEW →│merge│→ RELEASE �
 | **Plan** | Slice into small vertical increments; acceptance criteria; spec for non-trivial work; **threat-model** sensitive features. Must reach **Definition of Ready**. | Spec gate (human) |
 | **Build** | TDD per `DEVELOPMENT-STANDARDS.md`. L0 reflection-in-action runs continuously. | Self-verified, tests green |
 | **Review** | "Did we build it *right*?" — code + adversarial/multi-lens + **security lens**, routed per ownership. | Merge gate (human) |
-| **Release** | "Done → Live": deploy, feature flags, staged rollout, smoke test, CHANGELOG, rollback ready — see **Safe Change Delivery (§10)**. Breaking changes need explicit approval. | Live in production |
+| **Release** | "Done → Live": deploy, feature flags, staged rollout, smoke test, CHANGELOG, rollback ready — see **Safe Change Delivery (§10)**; verified against `conformance/definition-of-deployable.md`. Breaking changes need explicit approval. | Live in production |
 | **Done** | **Acceptance** ("right thing?"), Definition of Done met, **L1 retro** written. | Closed |
 | **Operate** | Monitor, triage, resolve; **feed signals back to Discover** (§9). | Continuous |
 
@@ -183,10 +183,11 @@ Humans gate only where judgment matters; agents flow at machine speed between ga
 | **Eval gate** *(AI features)* | Do model/prompt outputs meet the eval bar — and did this change not regress evals? | Builder + reviewer |
 | **Compliance gate** *(regulated domains)* | Does this meet the regulatory bar before release? | Security owner + human |
 | **15-Factor conformance** *(deployable services)* | Does the architecture satisfy the applicable 15 factors? (`conformance/15-factor-checklist.md`) | Reviewer + lead |
+| **Definition of Deployable** *(deployable services)* | Is the release safe to promote — rollback ready, smoke + monitoring wired? (`conformance/definition-of-deployable.md`) | Release manager + reviewer |
 | **Acceptance** | Did we build the *right thing*? (intent/need) | Intent owner |
 | **Definition of Done** | Truly complete? (per `DEVELOPMENT-STANDARDS.md`) | Automated + human |
 
-Review and Acceptance fail *differently* and are kept distinct. Threat-model, eval, compliance, and 15-factor gates are **conditional** — they apply to sensitive / AI / regulated / deployable-service work respectively, not every item (don't impose them where they optimize nothing). For AI features, **evals are the dev-time quality bar** — the AI analog of TDD: written alongside the feature, run in CI, and gating like tests (see `DEVELOPMENT-STANDARDS.md`).
+Review and Acceptance fail *differently* and are kept distinct. Threat-model, eval, compliance, 15-factor, and Definition-of-Deployable gates are **conditional** — they apply to sensitive / AI / regulated / deployable-service work respectively, not every item (don't impose them where they optimize nothing). For AI features, **evals are the dev-time quality bar** — the AI analog of TDD: written alongside the feature, run in CI, and gating like tests (see `DEVELOPMENT-STANDARDS.md`).
 
 ---
 
@@ -282,7 +283,7 @@ How to change a running system without breaking it — the release-engineering m
 ### Rollback vs. forward-fix
 - **Default to rollback** when production is degraded and the cause isn't obvious early in the incident — restore service first, diagnose after.
 - **Forward-fix** only when rollback is riskier than the bug (e.g., an irreversible migration already applied) or the fix is trivial and verified.
-- Preference order: **flag-off → redeploy previous → revert + redeploy**. Every release declares its rollback path *before* it ships (the "rollback ready" in §4).
+- Preference order: **flag-off → redeploy previous → revert + redeploy**. Every release declares its rollback path *before* it ships (the "rollback ready" in §4) — captured in `conformance/definition-of-deployable.md`.
 
 ### Supply-chain integrity *(required CI gates)*
 Pin/lock dependencies; scan dependencies for vulnerabilities; generate an **SBOM**; attest build **provenance** for released artifacts. These are **required CI gates on every PR** (`DEVELOPMENT-STANDARDS.md` §14), not optional hooks. Tooling is a project choice (**→ profile**; e.g., the wired Semgrep / Sonatype). A deeper full-tree audit also runs in recurring maintenance (§15).
