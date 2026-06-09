@@ -166,6 +166,24 @@ assert_allow "gcloud list"         '{"tool_name":"Bash","tool_input":{"command":
 assert_allow "terraform plan"      '{"tool_name":"Bash","tool_input":{"command":"terraform plan"}}'
 assert_allow "kubectl describe"    '{"tool_name":"Bash","tool_input":{"command":"kubectl describe pod api"}}'
 
+# --- 9b Layer 2: self/control-plane protection (must DENY) ---
+assert_deny "Write over guard.sh"   '{"tool_name":"Write","tool_input":{"file_path":".claude/hooks/guard.sh","content":"x"}}'
+assert_deny "Edit settings.json"    '{"tool_name":"Edit","tool_input":{"file_path":".claude/settings.json","old_string":"a","new_string":"b"}}'
+assert_deny "Write settings.local"  '{"tool_name":"Write","tool_input":{"file_path":".claude/settings.local.json","content":"x"}}'
+assert_deny "rm guard.sh"           '{"tool_name":"Bash","tool_input":{"command":"rm .claude/hooks/guard.sh"}}'
+assert_deny "redirect over guard"   '{"tool_name":"Bash","tool_input":{"command":"echo x > .claude/hooks/guard.sh"}}'
+assert_deny "chmod 000 guard"       '{"tool_name":"Bash","tool_input":{"command":"chmod 000 .claude/hooks/guard.sh"}}'
+assert_deny "mv guard away"         '{"tool_name":"Bash","tool_input":{"command":"mv .claude/hooks/guard.sh /tmp/g"}}'
+assert_deny "tee over settings"     '{"tool_name":"Bash","tool_input":{"command":"echo {} | tee .claude/settings.json"}}'
+assert_deny "sed -i guard"          '{"tool_name":"Bash","tool_input":{"command":"sed -i s/a/b/ .claude/hooks/guard.sh"}}'
+assert_deny "Write over ci.yml"     '{"tool_name":"Write","tool_input":{"file_path":".github/workflows/ci.yml","content":"x"}}'
+assert_deny "Write over CODEOWNERS" '{"tool_name":"Write","tool_input":{"file_path":"CODEOWNERS","content":"x"}}'
+assert_deny "NotebookEdit guard"    '{"tool_name":"NotebookEdit","tool_input":{"notebook_path":".claude/hooks/guard.sh","new_source":"x"}}'
+# --- 9b Layer 2: control-plane false-positive guards (must ALLOW) ---
+assert_allow "Write app source"     '{"tool_name":"Write","tool_input":{"file_path":"src/app.ts","content":"export const x=1"}}'
+assert_allow "doc mentions workflow" '{"tool_name":"Write","tool_input":{"file_path":"docs/ci-notes.md","content":"about .github/workflows"}}'
+assert_allow "read guard.sh"        '{"tool_name":"Read","tool_input":{"file_path":".claude/hooks/guard.sh"}}'
+
 if [ "$fail" -ne 0 ]; then echo "FAIL: agent-autonomy conformance failed"; exit 1; fi
 echo "OK: agent-autonomy guard denies irreversible actions and allows safe ones"
 exit 0

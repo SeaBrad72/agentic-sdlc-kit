@@ -36,6 +36,20 @@ emit_deny() {
 }
 allow() { exit 0; }   # no output = defer to normal permission flow
 
+# 9b: control-plane paths an agent must never silently modify (guard integrity + gates).
+# Absolute by default; a human may set KIT_GUARD_SELFEDIT=1 in the SESSION environment
+# (an agent cannot — per-command env does not reach this hook process) for deliberate,
+# audited maintenance.
+selfedit_allowed() { [ "${KIT_GUARD_SELFEDIT:-0}" = "1" ]; }
+is_control_plane_path() {
+  case "$1" in
+    *.claude/hooks/guard.sh|*.claude/settings.json|*.claude/settings.local.json|\
+    */.github/workflows/*|.github/workflows/*|*/CODEOWNERS|CODEOWNERS|*/.git/*|.git/*)
+      return 0 ;;
+  esac
+  return 1
+}
+
 # best-effort tool name without jq (only used to decide the fail-safe deny)
 tool_name_grep() {
   printf '%s' "$INPUT" | tr -d '\n' | sed -n 's/.*"tool_name"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p'
@@ -64,6 +78,13 @@ fi
 case "$TOOL" in
   Bash)
     CMD=$(printf '%s' "$INPUT" | jq -r '.tool_input.command // empty' 2>/dev/null || printf '')
+    # 9b: deny Bash mutation of the guard's own files / gates (unless human maintenance escape)
+    if ! selfedit_allowed && printf '%s' "$CMD" | grep -Eq '(\.claude/(hooks/guard\.sh|settings(\.local)?\.json)|\.github/workflows/|/CODEOWNERS|(^|[^a-zA-Z])CODEOWNERS|\.git/config)'; then
+      if printf '%s' "$CMD" | grep -Eq '(^|[^[:alnum:]_])(rm|mv|cp|truncate|shred|chmod|chown|dd|sed|tee|ln)[[:space:]]' \
+         || printf '%s' "$CMD" | grep -Eq '>[[:space:]]*[^[:space:]]*(\.claude/(hooks/guard\.sh|settings)|\.github/workflows/|CODEOWNERS)'; then
+        emit_deny "13: mutating the guard / its config / CI gates via shell is denied (control-plane integrity). Set KIT_GUARD_SELFEDIT=1 for deliberate human maintenance."
+      fi
+    fi
     # recursive rm in any flag arrangement (-rf, -fr, -r -f, --recursive), bounded so
     # 'confirm'/'npm' are not matched, but quoted forms (bash -c "rm -rf") are.
     if printf '%s' "$CMD" | grep -Eq '(^|[^[:alnum:]_])rm[[:space:]]+([^;&|]*[[:space:]])?(-[[:alnum:]]*[rR]|--recursive)'; then
@@ -215,7 +236,10 @@ case "$TOOL" in
     fi
     allow ;;
   Write|Edit|NotebookEdit)
-    FP=$(printf '%s' "$INPUT" | jq -r '.tool_input.file_path // empty' 2>/dev/null || printf '')
+    FP=$(printf '%s' "$INPUT" | jq -r '.tool_input.file_path // .tool_input.notebook_path // empty' 2>/dev/null || printf '')
+    if is_control_plane_path "$FP" && ! selfedit_allowed; then
+      emit_deny "13: modifying the guard / its config / CI gates is denied (control-plane integrity). Set KIT_GUARD_SELFEDIT=1 for deliberate human maintenance."
+    fi
     BASE=$(basename "$FP" 2>/dev/null || printf '%s' "$FP")
     if [ "$BASE" = ".env.example" ]; then allow; fi
     case "$FP" in
