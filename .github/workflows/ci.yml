@@ -25,6 +25,12 @@ jobs:
         run: sh conformance/agent-autonomy.sh
       - name: Profile-completeness conformance
         run: sh conformance/profile-completeness.sh
+      - name: Definition-of-Deployable checklist present
+        run: test -f conformance/definition-of-deployable.md
+      - name: Deployable-ready conditional (N/A at kit root)
+        run: sh conformance/deployable-ready.sh
+      - name: Deployable-ready self-test (skip/OK/FAIL fixtures)
+        run: sh conformance/deployable-ready.sh --selftest
 
   bootstrap:
     runs-on: ubuntu-latest
