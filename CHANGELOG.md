@@ -3,6 +3,23 @@
 All notable changes to the Agentic SDLC Kit are recorded here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.15.0] - 2026-06-08
+
+Slice 7c — Containers & image supply-chain (pattern + reference profile). Third sub-slice of Slice 7. Containers are first-class for services and explicitly absent for non-services.
+
+### Added
+- **Conditional container image supply-chain standard** (`DEVELOPMENT-STANDARDS.md` §14): if a project ships a deployable service image, the image must be multi-stage, non-root, minimal-base, healthchecked, and carry an image SBOM + **build provenance bound to the image digest**. Marked N/A for libraries/CLIs/batch/IaC — no new universal gate.
+- **Reference profile `typescript-node`:** `Dockerfile` (multi-stage, distroless non-root), `.dockerignore`, `compose.yaml`, devcontainer, `deploy/k8s/` + `deploy/helm/` (non-root securityContext, probes, resource limits, digest-pinned image).
+- **`profiles/typescript-node/ci.yml`** extended: `gate-image-sbom` (Syft/CycloneDX, scans on every PR) and a push-only `image-provenance` job — GHCR push + `actions/attest-build-provenance` digest-bound — with `packages: write` scoped to push-to-main. The 8 universal gate-ids are unchanged.
+- **`conformance/container-supply-chain.sh`** — conditional, fail-closed: profiles with a `Dockerfile` must be multi-stage + non-root with image SBOM + digest-bound provenance; profiles without one are N/A (never failed).
+- `_TEMPLATE.md` containerization pattern; `RUNBOOK-TEMPLATE.md` Kubernetes deploy guidance; audit-evidence conditional row.
+
+### Changed
+- `DEVELOPMENT-STANDARDS.md` §13 reinforces the image as the unit of dev/prod parity; `DEVELOPMENT-PROCESS.md` §9 ties promotion to the attested digest.
+
+### Note
+MINOR (2.15.0): no new universally-required CI gate. Image supply-chain is required only when a project ships a service image, so non-service stacks are unaffected. Rolling the pattern to other service profiles is a follow-on slice.
+
 ## [2.14.0] - 2026-06-06
 
 Slice 7b — Multi-persona role touchpoints. Second sub-slice of Slice 7. Makes the kit legible to non-developer roles without becoming a PM/design tool.
