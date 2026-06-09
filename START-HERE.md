@@ -6,6 +6,21 @@ Work top to bottom. Don't enter the development loop until the **Inception Done*
 
 ---
 
+## Who are you? Start here
+
+This guide's numbered steps are the **engineer/lead Inception path**. If you're a different role, start at your row, then return here only for the steps your row points to.
+
+| If you are… | Start with | Then |
+|-------------|-----------|------|
+| **Product Owner / BA / stakeholder** | `templates/FEATURE-REQUEST-TEMPLATE.md` | hand it to the team or drop it on the board (`DEVELOPMENT-PROCESS.md` §6) — no engineering setup needed |
+| **Designer** | the Discovery UX prompt (`DEVELOPMENT-PROCESS.md` §5) + the a11y items in the Definition of Done (`CLAUDE.md`) | attach assets to the spec; own the a11y sign-off at Review |
+| **QA Engineer** | the testing bar (`DEVELOPMENT-STANDARDS.md`) + the UAT acceptance gate (`DEVELOPMENT-PROCESS.md` §9) | own acceptance |
+| **DevOps / SRE** | the environment model (`DEVELOPMENT-PROCESS.md` §9) + `RUNBOOK.md` + CI (`DEVELOPMENT-STANDARDS.md` §14) | own promotion & operate |
+| **Engineer / Lead — new project** | **run `sh scripts/incept.sh`**, then work the judgment steps below | full Inception (steps 1–7) |
+| **Engineer — existing repo (brownfield)** | the steps below, adapting in place | (dedicated brownfield path lands in a later slice) |
+
+---
+
 ## 0. Orient (5 min)
 Read, in order: this file → `CLAUDE.md` (principles + Definition of Done) → `DEVELOPMENT-PROCESS.md` (the loop) → skim `DEVELOPMENT-STANDARDS.md` (the universal bar). Don't read profiles yet — you pick one below.
 
