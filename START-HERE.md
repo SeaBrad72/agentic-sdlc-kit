@@ -8,16 +8,16 @@ Work top to bottom. Don't enter the development loop until the **Inception Done*
 
 ## Who are you? Start here
 
-This guide's numbered steps are the **engineer/lead Inception path**. If you're a different role, start at your row, then return here only for the steps your row points to.
+This guide's numbered steps are the **engineer/lead Inception path**. If you're a different role, start at your row — you generally won't need the numbered engineer steps below.
 
 | If you are… | Start with | Then |
 |-------------|-----------|------|
-| **Product Owner / BA / stakeholder** | `templates/FEATURE-REQUEST-TEMPLATE.md` | hand it to the team or drop it on the board (`DEVELOPMENT-PROCESS.md` §6) — no engineering setup needed |
-| **Designer** | the Discovery UX prompt (`DEVELOPMENT-PROCESS.md` §5) + the a11y items in the Definition of Done (`CLAUDE.md`) | attach assets to the spec; own the a11y sign-off at Review |
-| **QA Engineer** | the testing bar (`DEVELOPMENT-STANDARDS.md`) + the UAT acceptance gate (`DEVELOPMENT-PROCESS.md` §9) | own acceptance |
+| **Product Owner / BA / stakeholder** | skim `CLAUDE.md` for context, then `templates/FEATURE-REQUEST-TEMPLATE.md` | hand it to the team or drop it on the board (`DEVELOPMENT-PROCESS.md` §6) — no engineering setup needed |
+| **Designer** | the UX & accessibility lens in Discovery (`DEVELOPMENT-PROCESS.md` §5) + the a11y items in the Definition of Done (`CLAUDE.md`) | attach assets to the spec; own the a11y sign-off at Review |
+| **QA Engineer** | the testing standards (`DEVELOPMENT-STANDARDS.md` §7) + the UAT acceptance gate (`DEVELOPMENT-PROCESS.md` §9) | own acceptance |
 | **DevOps / SRE** | the environment model (`DEVELOPMENT-PROCESS.md` §9) + `RUNBOOK.md` + CI (`DEVELOPMENT-STANDARDS.md` §14) | own promotion & operate |
 | **Engineer / Lead — new project** | **run `sh scripts/incept.sh`**, then work the judgment steps below | full Inception (steps 1–7) |
-| **Engineer — existing repo (brownfield)** | the steps below, adapting in place | (dedicated brownfield path lands in a later slice) |
+| **Engineer — existing repo (brownfield)** | adapt the numbered steps below to your existing repo | a dedicated brownfield path is planned |
 
 ---
 
