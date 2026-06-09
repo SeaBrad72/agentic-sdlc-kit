@@ -27,16 +27,16 @@
 [...]
 
 ## Rough scope & risk
-> Roughly how big? Any obvious risk, compliance, privacy, or children's-data flag? Anything explicitly out of scope?
-
-[...]
-
-## UX & accessibility
-> Is there a screen or visual surface? Attach/link any sketches or designer handoff. Note accessibility needs (the Definition of Done requires WCAG 2.1 AA for user-facing UI).
+> Roughly how big? Any obvious risk, compliance, privacy, or children's-data flag (e.g. users under 13)? Anything explicitly out of scope?
 
 [...]
 
 ## Innovation / AI lens
 > Could AI materially improve this? Any reusable or product angle? (Optional — leave blank if not applicable.)
+
+[...]
+
+## UX & accessibility
+> Is there a screen or visual surface? Attach/link any sketches or designer handoff. Note accessibility needs (the Definition of Done requires WCAG 2.1 AA for user-facing UI).
 
 [...]
