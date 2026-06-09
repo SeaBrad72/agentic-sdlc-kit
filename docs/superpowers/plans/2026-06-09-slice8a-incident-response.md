@@ -476,14 +476,16 @@ Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>"
 Run:
 ```bash
 sh conformance/check-links.sh; echo "links=$?"
-sh conformance/ci-gates.sh .github/workflows/ci.yml; echo "ci-gates=$?"
+for p in profiles/*/ci.yml; do sh conformance/ci-gates.sh "$p" >/dev/null 2>&1 || echo "FAIL $p"; done; echo "ci-gates done"
 sh conformance/profile-completeness.sh; echo "profiles=$?"
 sh conformance/agent-autonomy.sh; echo "autonomy=$?"
 sh conformance/container-supply-chain.sh; echo "containers=$?"
 sh conformance/backlog-adapters.sh; echo "backlog=$?"
 sh conformance/guard-wired.sh; echo "guard=$?"
 ```
-Expected: `links=0`, `ci-gates=0`, `profiles=0`, `autonomy=0`, `containers=0` (or skip-N/A pass), `backlog=0`, `guard=0`. (`inception-done.sh` is expected to FAIL at the kit root and is intentionally NOT run here — see `conformance/README.md`.)
+Expected: `links=0`, no `FAIL` lines from the ci-gates loop (all 10 profiles pass), `profiles=0`, `autonomy=0`, `containers=0` (or skip-N/A pass), `backlog=0`, `guard=0`. (`inception-done.sh` is expected to FAIL at the kit root and is intentionally NOT run here — see `conformance/README.md`.)
+
+> **ci-gates target:** `ci-gates.sh` validates the **8 application gate-ids**, which live in **profile** `ci.yml` files — run it against `profiles/*/ci.yml` (as the kit's own CI does, `.github/workflows/ci.yml:21`). Do NOT run it against the kit's own `.github/workflows/ci.yml`: that is the meta/conformance pipeline, not an application pipeline, so it lacks those gate-ids and fails by design (on `main` too — not a regression).
 
 - [ ] **Step 2: Final spec-coverage greps**
 
