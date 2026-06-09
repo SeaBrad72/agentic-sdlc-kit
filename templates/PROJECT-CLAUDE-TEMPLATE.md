@@ -54,7 +54,7 @@ This file holds only what is **specific to this project**.
 
 ## 4. Roles (this project)
 
-> Fill each function from `DEVELOPMENT-PROCESS.md` §2 with a human or agent. One may hold several; builder ≠ reviewer; humans ratify.
+> Fill each function from `DEVELOPMENT-PROCESS.md` §2 with a human or agent. One may hold several; builder ≠ reviewer; humans ratify. For a role-oriented view (PO/BA · Designer · QA · DevOps/SRE mapped to these functions), see the **Personas** table in §2.
 
 | Function | Who/what |
 |----------|----------|

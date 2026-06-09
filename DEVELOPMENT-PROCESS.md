@@ -39,6 +39,22 @@ Roles are **functions, each mappable to a human or an agent** — not job titles
 
 **Enforced separations:** the **Builder is never the sole Reviewer** of their own work; **ratification of governance/standards/doc changes is always human** (agents propose, humans ratify).
 
+### Personas (who holds which function)
+
+The functions above are authoritative. **Personas are lenses on them** — an enterprise puts named roles around the loop; this maps each to the function it holds, where it plugs in, and its entry/exit artifact. One person or agent may hold several (as above).
+
+| Persona | Holds function(s) | Plugs in at | Entry → exit artifact |
+|---------|-------------------|-------------|-----------------------|
+| **Product Owner / BA** | Intent owner | Discover → Plan; accepts increments | `FEATURE-REQUEST` in → accepted increment out |
+| **Designer** | *informs Intent owner (advisory — no standalone §2 function)* | Discover (UX input) → Review (a11y sign-off) | design assets / UX handoff in → accessibility sign-off |
+| **Engineer** | Builder (often also Reviewer / Lead) | Plan → Build → Review | spec in → reviewed PR out |
+| **QA Engineer** | Reviewer (test lens) + acceptance | Review + UAT acceptance gate (§9 — "Environments & promotion") | test strategy/cases in → UAT sign-off out |
+| **DevOps / SRE** | On-call / operator | Release → Operate (promotion, deploy, rollback, monitoring) | promotion run in → operated service out |
+| **Security owner** | Security owner | the security / ratification gate (§7, §13) | threat model in → gate pass / governed exception |
+| **Lead / Agent** | Lead / integrator, Builder | the whole loop | the board in → integrated, ratified work out |
+
+QA's UAT acceptance ties to the Dev→QA→UAT→Prod model (§9); Designer's a11y sign-off ties to the Definition-of-Done accessibility item.
+
 ---
 
 ## 3. Project Inception (Phase 0)
@@ -110,6 +126,7 @@ Discovery turns a raw idea into a **validated candidate** before it earns a plac
 - **Success metric / hypothesis** — how will we know it worked? State it as a measurable hypothesis.
 - **Rough scope & risk** — small enough to slice? Any obvious risk/complexity/compliance flags?
 - **Innovation lens** — could AI materially improve this? Is there a reusable or product angle? (The surviving spirit of the archived innovation pipeline, as a prompt — not a separate doc.)
+- **UX & accessibility lens** — is there a user-experience or visual surface? If so, the Designer informs the candidate here; capture rough flows/assets and flag the WCAG 2.1 AA accessibility obligation that the Definition of Done will check.
 
 **Output:** a candidate item with intent + a validation note, ready for Plan. Items that fail validation go to the roadmap parking lot, not the board.
 
@@ -381,6 +398,7 @@ Artifacts are created **and maintained**, not written once. Each has a producing
 | Project `CLAUDE.md` | Inception (from template) | config/stack change | lead |
 | ADR (incl. ADR-000 stack) | Inception / Plan | decision superseded | deciding agent + human |
 | Spec (design) | Plan | scope changes | author agent + human |
+| Design assets / UX handoff | Discover → Plan (referenced in spec) | UX surface changes | designer (informs intent owner) |
 | Code + tests | Build | every change | building agent |
 | README | Build / Done | feature or setup change | building agent |
 | `.env.example` | Inception / Build | any new env var | building agent |
