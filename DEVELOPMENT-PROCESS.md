@@ -423,6 +423,7 @@ Cadence-triggered (not intake-triggered) work that flows through the same board 
 - Security scans
 - Stale feature-flag cleanup (flag debt)
 - Backup-restore verification (prove DR actually works — how: `docs/continuity/backup-restore-drill.md`; gate: `conformance/dr-readiness.md`)
+- Resilience drill refresh (re-run fault-injection + load/soak after any dependency or failure-path change — how: `docs/operations/resilience-verification.md`; gate: `conformance/resilience-readiness.md`)
 - Documentation-freshness sweeps (RUNBOOK/README still accurate)
 
 ---
