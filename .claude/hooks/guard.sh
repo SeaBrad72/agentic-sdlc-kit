@@ -1,6 +1,15 @@
 #!/bin/sh
-# guard.sh — PreToolUse hook enforcing the §13 autonomy matrix (DEVELOPMENT-PROCESS.md).
-# Denies irreversible / high-blast-radius actions; defers everything else to normal
+# guard.sh — PreToolUse hook: a BEST-EFFORT SPEED BUMP for honest agent mistakes,
+# NOT a security boundary. A determined or compromised agent CAN bypass a shell
+# deny-list (novel tools, language interpreters, obfuscation), and data exfiltration
+# has no reliable command signature. The REAL boundary is platform-owned: a
+# network-egress allowlist, separate production credentials, a sandboxed filesystem,
+# and scoped short-lived tokens — see docs/enterprise/platform-safety-boundary.md.
+# This guard reduces ACCIDENTAL blast radius and protects its own integrity; it does
+# not contain a hostile process. Adopt it together with the platform boundary.
+#
+# Enforces the §13 autonomy matrix (DEVELOPMENT-PROCESS.md): denies common
+# irreversible / high-blast-radius actions; defers everything else to normal
 # permission handling. Reads the tool-call JSON on stdin and, when a denied pattern
 # matches the relevant input FIELD ONLY (Bash .command / Write|Edit .file_path) — not
 # the whole payload — prints a deny decision and exits 0. Field-scoping means editing a
