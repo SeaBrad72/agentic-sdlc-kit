@@ -37,6 +37,12 @@ jobs:
         run: sh conformance/dr-ready.sh
       - name: DR-ready self-test (na/stateless/ok/placeholder/no-bia fixtures)
         run: sh conformance/dr-ready.sh --selftest
+      - name: Resilience-readiness checklist present
+        run: test -f conformance/resilience-readiness.md
+      - name: Resilience-ready conditional (N/A at kit root)
+        run: sh conformance/resilience-ready.sh
+      - name: Resilience-ready self-test (na/no-surface/ok/placeholder/missing fixtures)
+        run: sh conformance/resilience-ready.sh --selftest
 
   bootstrap:
     runs-on: ubuntu-latest
