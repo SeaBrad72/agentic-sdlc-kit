@@ -18,7 +18,7 @@ Copy this file into your project (or your release record). For each item: mark *
 | 5 | Progressive-delivery plan — canary / blue-green / staged (§10); N/A at Stage 1 with reason *(wired)* | | | Manual |
 | 6 | Smoke test **defined** and post-deploy result recorded *(tested)* | | | Manual |
 | 7 | Smoke test **referenced** in RUNBOOK or a workflow *(documented)* | | | **Auto:** `deployable-ready.sh` |
-| 8 | Monitoring / alerts wired on the change's critical paths (§3) *(wired)* | | | Manual |
+| 8 | Monitoring / alerts wired on the change's critical paths (`DEVELOPMENT-STANDARDS.md` §3) *(wired)* | | | Manual |
 | 9 | Supply-chain CI gates green — SBOM + provenance (§14) *(documented)* | | | **Auto:** `ci-gates.sh <workflow>` |
 | 10 | RUNBOOK has a **Deploy** section + a **Rollback** section *(documented)* | | | **Auto:** `deployable-ready.sh` |
 | 11 | CHANGELOG entry recorded for this release (§15) | | | Manual |
@@ -34,7 +34,7 @@ Copy this file into your project (or your release record). For each item: mark *
 | 5 | Progressive delivery *(wired)* | Y | staged: 10% canary → full, watch error rate (§9) | Manual ✅ |
 | 6 | Smoke defined + result *(tested)* | Y | post-deploy smoke job; run #1423 green | Manual ✅ |
 | 7 | Smoke referenced *(documented)* | Y | `smoke` step in `deploy.yml` + RUNBOOK §4 | Auto ✅ |
-| 8 | Monitoring/alerts *(wired)* | Y | Sentry alert rule + p95 latency alert on the changed route (§3) | Manual ✅ |
+| 8 | Monitoring/alerts *(wired)* | Y | Sentry alert rule + p95 latency alert on the changed route (`DEVELOPMENT-STANDARDS.md` §3) | Manual ✅ |
 | 9 | Supply-chain gates *(documented)* | Y | `gate-sbom` + `gate-provenance` green (profile ci.yml) | Auto ✅ |
 | 10 | RUNBOOK Deploy + Rollback *(documented)* | Y | RUNBOOK §4, §5 | Auto ✅ |
 | 11 | CHANGELOG entry | Y | CHANGELOG `## [1.4.0]` | Manual ✅ |

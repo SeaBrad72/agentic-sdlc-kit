@@ -53,7 +53,7 @@ Rows (each sourced from §4 Release + §10 Safe Change Delivery):
 
 | Item | Check |
 |------|-------|
-| Rollback path **declared before ship** — preference order flag-off → redeploy previous → revert (§10) | Manual |
+| Rollback path **declared before ship** — preference order flag-off → redeploy previous → revert (§10); the RUNBOOK Rollback section is the auto-checkable proxy | **Auto:** `deployable-ready.sh` |
 | Rollback path **tested** — the chosen path was actually exercised | Manual |
 | DB migration **reversible** — down-path tested, expand-contract; **N/A** if no migration | Manual |
 | Feature flags have **owner + expiry**; **N/A** if no flags (a flag with no expiry is a defect, §10) | Manual |
