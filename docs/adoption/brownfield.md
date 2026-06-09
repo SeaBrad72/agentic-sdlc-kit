@@ -54,10 +54,10 @@ If your repo already has a `.claude/`, **do not overwrite it.** Keep your hooks 
    }
    ```
 
-   **If `hooks.PreToolUse` already exists:** do **not** paste a second `hooks` block (that makes invalid duplicate-key JSON and your guard or your existing hooks may silently vanish). Add only the **array element** into your existing `PreToolUse` list:
+   **If `hooks.PreToolUse` already exists:** do **not** paste a second `hooks` block (that makes invalid duplicate-key JSON and your guard or your existing hooks may silently vanish). Add only this **array element** as a new entry inside your existing `PreToolUse` list (it is a fragment, not a whole file — don't paste the surrounding `//` line):
 
-   ```json
-   // inside your existing "PreToolUse": [ ... ] array, add:
+   ```jsonc
+   // ↓ add this object as an element of your existing "PreToolUse": [ ... ] array
    {
      "matcher": "Bash|Write|Edit|NotebookEdit",
      "hooks": [
