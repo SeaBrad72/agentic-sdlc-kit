@@ -1,6 +1,15 @@
 #!/bin/sh
-# guard.sh — PreToolUse hook enforcing the §13 autonomy matrix (DEVELOPMENT-PROCESS.md).
-# Denies irreversible / high-blast-radius actions; defers everything else to normal
+# guard.sh — PreToolUse hook: a BEST-EFFORT SPEED BUMP for honest agent mistakes,
+# NOT a security boundary. A determined or compromised agent CAN bypass a shell
+# deny-list (novel tools, language interpreters, obfuscation), and data exfiltration
+# has no reliable command signature. The REAL boundary is platform-owned: a
+# network-egress allowlist, separate production credentials, a sandboxed filesystem,
+# and scoped short-lived tokens — see docs/enterprise/platform-safety-boundary.md.
+# This guard reduces ACCIDENTAL blast radius and protects its own integrity; it does
+# not contain a hostile process. Adopt it together with the platform boundary.
+#
+# Enforces the §13 autonomy matrix (DEVELOPMENT-PROCESS.md): denies common
+# irreversible / high-blast-radius actions; defers everything else to normal
 # permission handling. Reads the tool-call JSON on stdin and, when a denied pattern
 # matches the relevant input FIELD ONLY (Bash .command / Write|Edit .file_path) — not
 # the whole payload — prints a deny decision and exits 0. Field-scoping means editing a
@@ -26,6 +35,20 @@ emit_deny() {
   exit 0
 }
 allow() { exit 0; }   # no output = defer to normal permission flow
+
+# 9b: control-plane paths an agent must never silently modify (guard integrity + gates).
+# Absolute by default; a human may set KIT_GUARD_SELFEDIT=1 in the SESSION environment
+# (an agent cannot — per-command env does not reach this hook process) for deliberate,
+# audited maintenance.
+selfedit_allowed() { [ "${KIT_GUARD_SELFEDIT:-0}" = "1" ]; }
+is_control_plane_path() {
+  case "$1" in
+    *.claude/hooks/guard.sh|*.claude/settings.json|*.claude/settings.local.json|\
+    */.github/workflows/*|.github/workflows/*|*/CODEOWNERS|CODEOWNERS|*/.git/*|.git/*)
+      return 0 ;;
+  esac
+  return 1
+}
 
 # best-effort tool name without jq (only used to decide the fail-safe deny)
 tool_name_grep() {
@@ -55,10 +78,68 @@ fi
 case "$TOOL" in
   Bash)
     CMD=$(printf '%s' "$INPUT" | jq -r '.tool_input.command // empty' 2>/dev/null || printf '')
+    # 9b: deny Bash mutation of the guard's own files / gates (unless human maintenance escape).
+    # core.hooksPath redirection disables ALL hooks at once — deny it outright.
+    if ! selfedit_allowed && printf '%s' "$CMD" | grep -Eq 'git[[:space:]]+config[[:space:]]+([^;&|]*[[:space:]])?core\.hooksPath'; then
+      emit_deny "13: git config core.hooksPath would disable the agent guard - human-gated. Set KIT_GUARD_SELFEDIT=1 for deliberate human maintenance."
+    fi
+    # control-plane target present (directory-level too: bare .claude / .git / .github/workflows / CODEOWNERS)
+    if ! selfedit_allowed && printf '%s' "$CMD" | grep -Eq '(\.claude(/|[[:space:]]|$)|\.github/workflows|/CODEOWNERS|(^|[^a-zA-Z.])CODEOWNERS|\.git(/|[[:space:]]|$))'; then
+      if printf '%s' "$CMD" | grep -Eq '(^|[^[:alnum:]_])(rm|rmdir|mv|cp|truncate|shred|chmod|chown|dd|sed|tee|ln|install|patch)[[:space:]]' \
+         || printf '%s' "$CMD" | grep -Eq '(^|[^[:alnum:]_])git[[:space:]]+(checkout|restore)([[:space:]]|$)' \
+         || printf '%s' "$CMD" | grep -Eq '>[[:space:]]*[^[:space:]]*(\.claude|\.github/workflows|CODEOWNERS|\.git)'; then
+        emit_deny "13: mutating the guard / its config / CI gates via shell is denied (control-plane integrity). Set KIT_GUARD_SELFEDIT=1 for deliberate human maintenance."
+      fi
+    fi
     # recursive rm in any flag arrangement (-rf, -fr, -r -f, --recursive), bounded so
     # 'confirm'/'npm' are not matched, but quoted forms (bash -c "rm -rf") are.
     if printf '%s' "$CMD" | grep -Eq '(^|[^[:alnum:]_])rm[[:space:]]+([^;&|]*[[:space:]])?(-[[:alnum:]]*[rR]|--recursive)'; then
       emit_deny "13: recursive rm is irreversible - human-gated."
+    fi
+    # 9b: non-recursive rm of a DANGEROUS target — a glob, a data/critical file extension,
+    # an absolute path, or a dotfile of record. Anchored to command position so a commit
+    # message mentioning rm is not matched. Plain relative single files (rm stale.txt,
+    # rm dist/bundle.js) remain ALLOWED to avoid over-blocking normal dev work.
+    if printf '%s' "$CMD" | grep -Eq '(^|[;&|][[:space:]]*)(sudo[[:space:]]+)?rm[[:space:]]'; then
+      if printf '%s' "$CMD" | grep -Eq '(^|[;&|][[:space:]]*)(sudo[[:space:]]+)?rm[[:space:]]+([^;&|]*[[:space:]])?(--[[:space:]]+)?[^;&|[:space:]]*[*?[][^;&|[:space:]]*([[:space:]]|$)' \
+         || printf '%s' "$CMD" | grep -Eiq '(^|[;&|][[:space:]]*)(sudo[[:space:]]+)?rm[[:space:]][^;&|]*\.(db|sqlite|sqlite3|sql|dump|pgdump|bak|rdb|mdb)([[:space:]]|$)' \
+         || printf '%s' "$CMD" | grep -Eq '(^|[;&|][[:space:]]*)(sudo[[:space:]]+)?rm[[:space:]]+([^;&|]*[[:space:]])?/[^[:space:]]' \
+         || printf '%s' "$CMD" | grep -Eq '(^|[;&|][[:space:]]*)(sudo[[:space:]]+)?rm[[:space:]][^;&|]*(\.env|/\.git)([[:space:]]|$|/)' \
+         || printf '%s' "$CMD" | grep -Eq '(^|[;&|][[:space:]]*)(sudo[[:space:]]+)?rm[[:space:]]+([^;&|]*[[:space:]])?\.env([[:space:]]|$)'; then
+        emit_deny "13: rm of a glob, data file, absolute path, or dotfile-of-record can be irreversible - human-gated."
+      fi
+    fi
+    # 9b: non-rm destruction primitives. Binaries are anchored to COMMAND POSITION
+    # (start, or after a ; && || | separator, optional sudo) so a word like "truncate"
+    # inside a commit message is NOT matched — only an actually-invoked command is.
+    if printf '%s' "$CMD" | grep -Eq '(^|[;&|][[:space:]]*)(sudo[[:space:]]+)?(truncate|shred|wipefs|blkdiscard|mkfs(\.[a-z0-9]+)?)([[:space:]]|$)'; then
+      emit_deny "13: in-place file/device destruction (truncate/shred/wipefs/blkdiscard/mkfs) is irreversible - human-gated."
+    fi
+    # dd is a scalpel like rm: deny only when of= targets a device or a data-file extension
+    # (dd of=test-fixture.img stays allowed; dd of=/dev/sda and dd of=db.sqlite are denied).
+    if printf '%s' "$CMD" | grep -Eq '(^|[;&|][[:space:]]*)(sudo[[:space:]]+)?dd[[:space:]]' \
+       && printf '%s' "$CMD" | grep -Eiq 'of=(/dev/|[^[:space:]]*\.(db|sqlite|sqlite3|sql|dump|pgdump|bak|rdb|mdb)([[:space:]]|$))'; then
+      emit_deny "13: dd of= a device or data file overwrites it irreversibly - human-gated."
+    fi
+    # redirection/empty-source truncation of an existing target
+    if printf '%s' "$CMD" | grep -Eq '(^|[;&|][[:space:]]*):[[:space:]]*>[[:space:]]*[^[:space:]&|;]+' \
+       || printf '%s' "$CMD" | grep -Eq '/dev/null[[:space:]]*>[[:space:]]*[^[:space:]&|;]+' \
+       || printf '%s' "$CMD" | grep -Eq '(^|[;&|][[:space:]]*)(cat|cp)[[:space:]]+/dev/null[[:space:]]+[>]?[[:space:]]*[^[:space:]&|;]+' \
+       || printf '%s' "$CMD" | grep -Eq '(^|[;&|][[:space:]]*)echo[[:space:]]+-n[[:space:]]*>[[:space:]]*[^[:space:]&|;]+'; then
+      emit_deny "13: redirection/empty-source truncation zeroes a file irreversibly - human-gated."
+    fi
+    if printf '%s' "$CMD" | grep -Eq '(^|[;&|][[:space:]]*)(sudo[[:space:]]+)?find[[:space:]]+[^|]*-delete([[:space:]]|$)' \
+       || printf '%s' "$CMD" | grep -Eq '(^|[;&|][[:space:]]*)(sudo[[:space:]]+)?find[[:space:]]+[^|]*-exec[[:space:]]+(rm|shred|truncate)([[:space:]]|$)'; then
+      emit_deny "13: find -delete / -exec rm performs bulk irreversible deletion - human-gated."
+    fi
+    if printf '%s' "$CMD" | grep -Eq '(^|[;&|][[:space:]]*)(sudo[[:space:]]+)?rsync[[:space:]]+[^|]*--delete([[:space:]]|$|[^a-z])'; then
+      emit_deny "13: rsync --delete mirrors a source and removes destination files irreversibly - human-gated."
+    fi
+    if printf '%s' "$CMD" | grep -Eq '(^|[;&|][[:space:]]*)git[[:space:]]+clean[[:space:]]+[^|]*-[a-z]*[fdx]'; then
+      emit_deny "13: git clean -f/-d/-x force-deletes untracked/ignored files irreversibly - human-gated."
+    fi
+    if printf '%s' "$CMD" | grep -Eq '(^|[;&|][[:space:]]*)(sudo[[:space:]]+)?mv[[:space:]]+[^;&|]*[[:space:]]/dev/null([[:space:]]|$)'; then
+      emit_deny "13: moving a file onto /dev/null destroys its contents - human-gated."
     fi
     if printf '%s' "$CMD" | grep -Eq 'git[[:space:]]+reset[[:space:]]+.*--hard'; then
       emit_deny "13: git reset --hard discards work irreversibly - human-gated."
@@ -69,11 +150,11 @@ case "$TOOL" in
     if printf '%s' "$CMD" | grep -Eq '(npm|yarn|pnpm)[[:space:]]+publish'; then
       emit_deny "13: publishing a package is externally irreversible - human-gated."
     fi
-    if printf '%s' "$CMD" | grep -Eq 'git[[:space:]]+push.*(--force|--force-with-lease|[[:space:]]-f([[:space:]]|$)|[[:space:]+]\+[^[:space:]]*[[:space:]]*$)'; then
+    if printf '%s' "$CMD" | grep -Eq 'git[[:space:]]+(-c[[:space:]]+[^[:space:]]+[[:space:]]+)*push.*(--force|--force-with-lease|[[:space:]]-f([[:space:]]|$)|[[:space:]+]\+[^[:space:]]*[[:space:]]*$)'; then
       emit_deny "13: force-push rewrites published history - human-gated."
     fi
-    # push to main/master in any refspec form: 'main', '+main', 'HEAD:main', 'x:master'
-    if printf '%s' "$CMD" | grep -Eq 'git[[:space:]]+push.*[[:space:]:+/](main|master)([[:space:]]|:|$)'; then
+    # push to main/master in any refspec form: 'main', '+main', 'HEAD:main', 'x:master' (incl. git -c … push)
+    if printf '%s' "$CMD" | grep -Eq 'git[[:space:]]+(-c[[:space:]]+[^[:space:]]+[[:space:]]+)*push.*[[:space:]:+/](main|master)([[:space:]]|:|$)'; then
       emit_deny "13: pushing directly to main/master bypasses review - open a PR (human-gated)."
     fi
     # destructive SQL via a DB client
@@ -108,8 +189,38 @@ case "$TOOL" in
     if printf '%s' "$CMD" | grep -Eq 'aws[[:space:]]+s3[[:space:]]+rm[^|]*--recursive|aws[[:space:]]+s3[[:space:]]+rb|aws[[:space:]]+rds[[:space:]]+delete-db-instance|aws[[:space:]]+dynamodb[[:space:]]+delete-table|gcloud[[:space:]]+sql[[:space:]]+instances[[:space:]]+delete|az[[:space:]]+group[[:space:]]+delete|az[[:space:]]+sql[^|]*[[:space:]]delete'; then
       emit_deny "13: cloud resource deletion (storage/DB/instance) is irreversible - human-gated."
     fi
-    if printf '%s' "$CMD" | grep -Eq '(curl|wget)[^|]*\|[[:space:]]*(sudo[[:space:]]+)?(sh|bash)([[:space:]]|$)'; then
-      emit_deny "13: piping a remote script into a shell is high-blast-radius - human-gated."
+    # 9b: cloud/infra destruction as capability families (verb-agnostic across vendors)
+    if printf '%s' "$CMD" | grep -Eq '(^|[;&|][[:space:]]*)terraform[[:space:]]+(destroy|apply)([[:space:]]|$)'; then
+      emit_deny "13: terraform destroy/apply changes real infrastructure - human-gated."
+    fi
+    if printf '%s' "$CMD" | grep -Eiq '(^|[;&|][[:space:]]*)(aws|gcloud|az)[[:space:]][^|]*[[:space:]](delete|delete-[a-z-]+|terminate-[a-z-]+|remove|rb|destroy)([[:space:]]|$)'; then
+      emit_deny "13: cloud resource deletion/termination is irreversible - human-gated."
+    fi
+    if printf '%s' "$CMD" | grep -Eq '(^|[;&|][[:space:]]*)helm[[:space:]]+(uninstall|delete)([[:space:]]|$)' \
+       || printf '%s' "$CMD" | grep -Eq '(^|[;&|][[:space:]]*)kubectl[[:space:]]+(drain|cordon)([[:space:]]|$)'; then
+      emit_deny "13: helm uninstall / kubectl drain disrupts running workloads - human-gated."
+    fi
+    if printf '%s' "$CMD" | grep -Eiq '(mongosh?|cockroach|psql|mysql)[^|]*(dropDatabase|drop[[:space:]]+database)' \
+       || printf '%s' "$CMD" | grep -Eiq '(^|[;&|][[:space:]]*)(liquibase[[:space:]]+dropAll|flyway[[:space:]]+undo)'; then
+      emit_deny "13: database drop via a client/migration tool is irreversible - human-gated."
+    fi
+    if printf '%s' "$CMD" | grep -Eq '(curl|wget|base64[[:space:]]+(-d|--decode)|xxd[[:space:]]+-r)[^|]*\|[[:space:]]*(sudo[[:space:]]+)?(sh|bash|zsh|dash)([[:space:]]|$)'; then
+      emit_deny "13: piping a fetched/decoded payload into a shell is high-blast-radius - human-gated."
+    fi
+    # 9b: data-exfiltration channels (PARTIAL — binary-name denial only; interpreters
+    # (python -c, node -e) remain channels. The real control is the platform network-egress
+    # allowlist — see docs/enterprise/platform-safety-boundary.md. This is a speed bump.)
+    if printf '%s' "$CMD" | grep -Eq '(^|[;&|][[:space:]]*)(sudo[[:space:]]+)?(scp|sftp)[[:space:]]' \
+       || printf '%s' "$CMD" | grep -Eq '(curl|wget)[[:space:]][^|]*(-T[[:space:]]|--upload-file|-F[[:space:]]*[^[:space:]&|;]*@|--data-binary[[:space:]]*@|--post-file)' \
+       || printf '%s' "$CMD" | grep -Eq '\|[[:space:]]*(nc|ncat|netcat)[[:space:]]+[^[:space:]]' \
+       || printf '%s' "$CMD" | grep -Eq '(^|[;&|][[:space:]]*)rclone[[:space:]]+(copy|sync|move)[[:space:]][^|]*[a-zA-Z0-9_-]+:' \
+       || printf '%s' "$CMD" | grep -Eq '\|[[:space:]]*mail[[:space:]]'; then
+      emit_deny "13: possible data exfiltration (scp/sftp/curl-upload/nc/rclone/mail). Partial guard - the boundary is the platform egress allowlist - human-gated."
+    fi
+    # 9b: eval of a command substitution hides the real command from inspection.
+    # Anchored to command position so "eval $(...)" inside a commit message is NOT matched.
+    if printf '%s' "$CMD" | grep -Eq '(^|[;&|][[:space:]]*)(sudo[[:space:]]+)?eval[[:space:]]+[^;&|]*(\$\(|`)'; then
+      emit_deny "13: eval of a command substitution obscures the executed command - human-gated."
     fi
     if printf '%s' "$CMD" | grep -Eiq '(vercel[[:space:]]+(deploy[[:space:]]+)?--prod|railway[[:space:]]+up|fly[[:space:]]+deploy|terraform[[:space:]]+apply|kubectl[[:space:]]+apply|helm[[:space:]]+(install|upgrade))'; then
       emit_deny "13: production deploy / infra apply is high-blast-radius - human-gated."
@@ -131,7 +242,20 @@ case "$TOOL" in
     fi
     allow ;;
   Write|Edit|NotebookEdit)
-    FP=$(printf '%s' "$INPUT" | jq -r '.tool_input.file_path // empty' 2>/dev/null || printf '')
+    FP=$(printf '%s' "$INPUT" | jq -r '.tool_input.file_path // .tool_input.notebook_path // empty' 2>/dev/null || printf '')
+    # normalize trivial path tricks (//, /./) so .claude//hooks/guard.sh etc. cannot bypass
+    FPN=$(printf '%s' "$FP" | sed -e 's#//*#/#g' -e 's#/\./#/#g')
+    BASEFP=$(basename "$FP" 2>/dev/null || printf '%s' "$FP")
+    if ! selfedit_allowed && { is_control_plane_path "$FP" || is_control_plane_path "$FPN"; }; then
+      emit_deny "13: modifying the guard / its config / CI gates is denied (control-plane integrity). Set KIT_GUARD_SELFEDIT=1 for deliberate human maintenance."
+    fi
+    # basename match catches dot-dot and separator tricks for the named control-plane files
+    if ! selfedit_allowed; then
+      case "$BASEFP" in
+        guard.sh|settings.json|settings.local.json|CODEOWNERS)
+          emit_deny "13: modifying a control-plane file ($BASEFP) is denied (control-plane integrity). Set KIT_GUARD_SELFEDIT=1 for deliberate human maintenance." ;;
+      esac
+    fi
     BASE=$(basename "$FP" 2>/dev/null || printf '%s' "$FP")
     if [ "$BASE" = ".env.example" ]; then allow; fi
     case "$FP" in
