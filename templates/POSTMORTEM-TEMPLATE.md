@@ -8,6 +8,7 @@
 - Fill every section in plain language; bullet points are fine.
 - Times in UTC. Keep the timeline factual and chronological.
 - Hand the finished file to the team and link each action item to its backlog entry.
+- Save the completed postmortem where your project keeps incident records (e.g. a `postmortems/` directory) and link it from the incident's board item (`DEVELOPMENT-PROCESS.md` §6).
 
 ---
 
@@ -26,7 +27,7 @@
 
 | Time (UTC) | Event |
 |------------|-------|
-| [hh:mm] | [what happened] |
+| [YYYY-MM-DD hh:mm] | [what happened] |
 
 ## 4. Root cause(s) & contributing factors
 > The systems view ("5 whys" is a useful tool). **Blameless:** describe what in the system allowed this, not who.
