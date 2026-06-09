@@ -46,7 +46,7 @@ The functions above are authoritative. **Personas are lenses on them** — an en
 | Persona | Holds function(s) | Plugs in at | Entry → exit artifact |
 |---------|-------------------|-------------|-----------------------|
 | **Product Owner / BA** | Intent owner | Discover → Plan; accepts increments | `FEATURE-REQUEST` in → accepted increment out |
-| **Designer** | *informs Intent owner (advisory — no standalone §2 function)* | Discover (UX input) → Review (a11y sign-off) | design assets/handoff in → accessibility sign-off |
+| **Designer** | *informs Intent owner (advisory — no standalone §2 function)* | Discover (UX input) → Review (a11y sign-off) | design assets / UX handoff in → accessibility sign-off |
 | **Engineer** | Builder (often also Reviewer / Lead) | Plan → Build → Review | spec in → reviewed PR out |
 | **QA Engineer** | Reviewer (test lens) + acceptance | Review + UAT acceptance gate (§9 — "Environments & promotion") | test strategy/cases in → UAT sign-off out |
 | **DevOps / SRE** | On-call / operator | Release → Operate (promotion, deploy, rollback, monitoring) | promotion run in → operated service out |
@@ -126,7 +126,7 @@ Discovery turns a raw idea into a **validated candidate** before it earns a plac
 - **Success metric / hypothesis** — how will we know it worked? State it as a measurable hypothesis.
 - **Rough scope & risk** — small enough to slice? Any obvious risk/complexity/compliance flags?
 - **Innovation lens** — could AI materially improve this? Is there a reusable or product angle? (The surviving spirit of the archived innovation pipeline, as a prompt — not a separate doc.)
-- **UX & accessibility lens** — is there a user-experience or visual surface? If so, the Designer informs the candidate here; capture rough flows/assets and flag the WCAG 2.1 AA a11y obligation that the Definition of Done will check.
+- **UX & accessibility lens** — is there a user-experience or visual surface? If so, the Designer informs the candidate here; capture rough flows/assets and flag the WCAG 2.1 AA accessibility obligation that the Definition of Done will check.
 
 **Output:** a candidate item with intent + a validation note, ready for Plan. Items that fail validation go to the roadmap parking lot, not the board.
 
