@@ -22,23 +22,32 @@ The semver rule (`MAINTAINING.md`): MAJOR = a new **universally-required CI gate
 - **Manual + Auto rows in one checklist**, mirroring `audit-evidence-checklist.md` (which already mixes `Manual` and `**Auto:**` rows). The Auto rows name the command (`ci-gates.sh`, `deployable-ready.sh`); the Manual rows require evidence a reviewer signs off.
 - **No new CI gate-id.** The 8 application gate-ids (`ci-gates.sh`) are unchanged. Deployability readiness is a *checklist/Review-style* conformance, not one of the 8 pipeline gates — so `ci-gates.sh` and the §14 contract are untouched.
 - **Framework anchor, not a crosswalk** — one-line **OWASP DSOMM** nod (deployment/release maturity), per the arc's fold-in decision.
+- **Anti-false-assurance is a contract requirement, not a nicety** (added after design review). The split creates a real hazard: an *automated* green check carries more authority than a manual checkbox, so a passing `deployable-ready.sh` could be misread as "safe to deploy" when it only proves the rollback path is *written down*. Two mandatory, reviewed mitigations close this:
+  1. **The script's success output must state its own scope** — it confirms documentation presence, explicitly **not** that rollback/alerts/migrations were tested. This wording is part of the deliverable and is verified in §8.
+  2. **The checklist must carry a bold "necessary, not sufficient" callout** distinguishing the Auto rows (*documented*) from the Manual rows (*tested / wired*, reviewer-evidenced). The Auto-vs-Manual boundary is the load-bearing honesty of this slice.
+- **The check tests itself in CI** (added after design review). To remedy weak dogfooding — the kit has no deploy surface, so plain CI only ever hits the script's N/A path — `deployable-ready.sh` gets a **`--selftest`** mode that builds `mktemp` fixtures and asserts skip/OK/FAIL, mirroring how `agent-autonomy.sh` is its own case-battery. Kit CI runs `--selftest`, regression-locking the positive and FAIL paths in the pipeline, not just at dev time.
 
 ## 4. Deliverables
 
 | # | File | Change |
 |---|------|--------|
 | A | `conformance/definition-of-deployable.md` (new) | Conditional release-readiness checklist (blank table + worked ts-node example), Manual + Auto rows |
-| B | `conformance/deployable-ready.sh` (new) | Companion conditional, fail-closed script for the Auto subset |
+| B | `conformance/deployable-ready.sh` (new) | Companion conditional, fail-closed script for the Auto subset; scope-disclaiming success output; `--selftest` fixture battery |
 | C | `DEVELOPMENT-PROCESS.md` §7 (gates table) | New conditional gate row: **Definition of Deployable** *(deployable services)* → Release manager + reviewer |
 | D | `DEVELOPMENT-PROCESS.md` §4 (Release stage) + §10 (rollback line) | Point "rollback ready" / "declares its rollback path before it ships" at `conformance/definition-of-deployable.md` |
 | E | `conformance/README.md` (index + "kinds" note) | Two new index rows (checklist + script) |
 | F | `conformance/audit-evidence-checklist.md` | Row: **Release readiness · Definition of Deployable** (CC8.1 / A.8.31, A.8.32; **Auto (conditional)** → `deployable-ready.sh`) |
-| G | `.github/workflows/ci.yml` (conformance job) | Two steps: `test -f conformance/definition-of-deployable.md` (present, mirrors 15-factor) + run `deployable-ready.sh` (N/A skip-pass at root proves validity) |
+| G | `.github/workflows/ci.yml` (conformance job) | Three steps: `test -f conformance/definition-of-deployable.md` (present, mirrors 15-factor); run `deployable-ready.sh` (N/A skip-pass at root proves the conditional); run `deployable-ready.sh --selftest` (exercises skip/OK/FAIL fixtures — the positive-path regression-lock) |
 | Meta | `VERSION` 2.20.0 · `CHANGELOG.md` · `docs/ROADMAP-KIT.md` (8b row) |
 
 ## 5. Detailed design — `conformance/definition-of-deployable.md`
 
 House style matches `15-factor-checklist.md`: a title, a one-paragraph "proves … / conditional" intro naming the Release gate and the N/A rule, a `## How to use`, a **blank** checklist table, then a **worked example**. Column set: `Item · Applies? (Y / N+reason) · Evidence (where/how) · Check`.
+
+**Mandatory header callout (the anti-false-assurance line, verbatim intent):**
+> **What the Auto rows prove — and don't.** The `deployable-ready.sh` rows confirm the release-safety procedures are *written down* (RUNBOOK has Deploy + Rollback sections) and a smoke test is *referenced*. They do **not** verify the rollback was tested, alerts are wired, or the migration down-path works — those are the **Manual** rows, signed off by the release manager with evidence. **A green script is necessary, not sufficient.**
+
+Auto rows are labelled *(documented)* and Manual rows that assert behaviour are labelled *(tested / wired)* so the distinction is visible at the row level, not just in the callout.
 
 Rows (each sourced from §4 Release + §10 Safe Change Delivery):
 
@@ -75,7 +84,16 @@ If none match → print `N/A: not a deployable service (no Dockerfile / deploy w
 3. `RUNBOOK.md` contains a **Rollback** heading — `grep -Eiq '^#{1,6}[[:space:]].*rollback'`.
 4. A **smoke-test signal** — `smoke` appears (case-insensitive) in `RUNBOOK.md` **or** any `.github/workflows/*.yml`.
 
-Exit non-zero if any assertion failed; else print `deployable-ready: OK`.
+Exit non-zero if any assertion failed; else print a **scope-disclaiming** success line (mandatory wording, verified in §8):
+`deployable-ready: OK — release-readiness DOCS present. NOTE: this verifies documentation only, NOT that rollback/alerts/migrations were tested. Those are Manual rows in definition-of-deployable.md requiring release-manager evidence.`
+(The N/A skip line carries the same spirit: it states the project has no deploy surface, not that it is "release-ready".)
+
+**`--selftest` mode (the CI regression-lock).** When invoked as `sh conformance/deployable-ready.sh --selftest`, the script does not check the current project; instead it builds `mktemp` fixtures and asserts each outcome, exiting 0 only if all behave:
+- empty dir → N/A skip (exit 0);
+- `Dockerfile` + `RUNBOOK.md` with Deploy + Rollback headings + a `smoke` mention → OK (exit 0);
+- `Dockerfile` + RUNBOOK with Deploy but **no** Rollback heading → FAIL (exit 1) — asserted as the *expected* failure;
+- no Dockerfile but a workflow containing `environment:` + complete RUNBOOK → OK (exit 0).
+This mirrors `agent-autonomy.sh`'s self-contained case battery and is what makes the positive/FAIL paths regression-locked in kit CI (where the kit root itself only ever exercises the N/A path). Fixtures are left in their `mktemp` dirs (no `rm -rf`, per the 7e guard lesson).
 
 **Robustness (lessons carried from 7c/7d/7e):**
 - Grep patterns anchored to heading lines so a passing mention in prose can't satisfy the "section present" checks (a heading is required, not a stray word) — except the smoke *signal*, which is intentionally a looser presence check (a smoke test may be referenced in a CI step name, not a heading).
@@ -96,13 +114,14 @@ Exit non-zero if any assertion failed; else print `deployable-ready: OK`.
 - **§10 rollback line** (line 285) — append to "declares its rollback path before it ships": "— captured in `conformance/definition-of-deployable.md`".
 - **`conformance/README.md`** — add two index rows (checklist → Release gate; script → Release/CI, conditional). Keep the "Two kinds of check" note accurate (this pairs both kinds for one contract).
 - **`audit-evidence-checklist.md`** — insert after the "RUNBOOK · DR / rollback" row: `| Release readiness · Definition of Deployable | CC8.1 / A.8.31, A.8.32 | filled \`definition-of-deployable.md\` + script output | **Auto (conditional):** \`sh conformance/deployable-ready.sh\` | |`.
-- **`.github/workflows/ci.yml`** conformance job — add `- name: Definition-of-Deployable checklist present` → `run: test -f conformance/definition-of-deployable.md`; and `- name: Deployable-ready conformance (N/A at kit root)` → `run: sh conformance/deployable-ready.sh`.
+- **`.github/workflows/ci.yml`** conformance job — add three steps: `- name: Definition-of-Deployable checklist present` → `run: test -f conformance/definition-of-deployable.md`; `- name: Deployable-ready conditional (N/A at kit root)` → `run: sh conformance/deployable-ready.sh`; `- name: Deployable-ready self-test (skip/OK/FAIL fixtures)` → `run: sh conformance/deployable-ready.sh --selftest`.
 - **DSOMM anchor** — one line in the checklist intro: "Aligns with OWASP DSOMM (deployment/release maturity)."
 
 ## 8. Validation / testing
 
 - `sh conformance/deployable-ready.sh` at the kit root → `N/A … skipping`, exit 0.
-- The four `mktemp` fixture cases above pass (skip / OK / FAIL / OK-via-workflow).
+- `sh conformance/deployable-ready.sh --selftest` → exit 0 (all four fixture cases behave: skip / OK / FAIL-as-expected / OK-via-workflow).
+- **Anti-false-assurance wording present:** the script's OK output contains "documentation only, NOT that rollback/alerts/migrations were tested" (grep-assert in the plan), and `definition-of-deployable.md` contains the bold "necessary, not sufficient" callout.
 - `sh conformance/check-links.sh` → 0 (new files' refs resolve; §7/§4/§10/README/audit rows link real paths).
 - `sh conformance/ci-gates.sh profiles/*/ci.yml` (all 10) → green (no gate-id change); `profile-completeness.sh`, `agent-autonomy.sh`, `container-supply-chain.sh`, `backlog-adapters.sh`, `guard-wired.sh` → green (no regression).
 - `grep` confirms: §7 has the new gate row; `conformance/README.md` indexes both new files; `audit-evidence-checklist.md` has the release-readiness row.
@@ -110,6 +129,8 @@ Exit non-zero if any assertion failed; else print `deployable-ready: OK`.
 
 ## 9. Risks & mitigations
 
+- **False assurance — a green script misread as "safe to deploy"** (the primary concern raised at design review). The script only proves release-safety is *documented*, never *tested/wired*. Mitigation (now a contract requirement, §3): the script's success output self-discloses its scope; the checklist carries a bold "necessary, not sufficient" callout; Auto rows are labelled *(documented)* and behavioural Manual rows *(tested / wired)*; the **release manager signs the Manual rows with evidence** — the checklist, not the script, is the gate of record. §8 grep-asserts the wording so it can't silently regress.
+- **Weak dogfooding — kit CI only hits the N/A path** (secondary concern). Mitigation: the `--selftest` fixture battery exercises skip/OK/FAIL in kit CI, so a regression in the positive or fail path breaks the pipeline, not just a dev-time run.
 - **Deploy-surface detection false-negative** (a deployable project the script calls N/A). Mitigation: three independent triggers (Dockerfile / `environment:` / deploy job); documented in the checklist intro so a reviewer can still apply the Manual checklist even if the script skips. The script *assists*; the checklist is the gate of record.
 - **Deploy-surface false-positive at kit root** (script wrongly thinks the kit is deployable and then fails on a missing RUNBOOK.md). Mitigation: the kit root has no root `Dockerfile` and its `.github/workflows/ci.yml` has no `environment:` key and no `deploy` job — verified to hit the N/A path. The §14 doc *snippet* showing `environment: production` lives inside `DEVELOPMENT-STANDARDS.md` (a `.md`, not a workflow), so it cannot trip the detector. (Plan must re-verify this at build time.)
 - **Heading-grep too strict/loose.** Mitigation: section checks require a Markdown heading (`#{1,6}`) so prose mentions don't pass; the smoke check is intentionally looser (presence), documented as such.
@@ -126,7 +147,8 @@ Exit non-zero if any assertion failed; else print `deployable-ready: OK`.
 ## 11. Definition of Done
 
 - `conformance/definition-of-deployable.md` created (blank table + worked ts-node example, Manual + Auto rows, DSOMM anchor, N/A convention shown).
-- `conformance/deployable-ready.sh` created — conditional, fail-closed, skip-passes when no deploy surface; the four fixture cases pass; negative-tested.
+- `conformance/deployable-ready.sh` created — conditional, fail-closed, skip-passes when no deploy surface; **scope-disclaiming success output**; **`--selftest`** exercises skip/OK/FAIL and passes; negative-tested.
+- **Anti-false-assurance wording shipped and asserted:** script OK output discloses "documentation only, NOT … tested"; `definition-of-deployable.md` has the bold "necessary, not sufficient" callout + *(documented)*/*(tested / wired)* row labels.
 - §7 gate row added; §4 + §10 reference the checklist; `conformance/README.md` indexes both; `audit-evidence-checklist.md` row added.
 - `.github/workflows/ci.yml` runs the two new steps; kit CI green.
 - All conformance green; `check-links.sh` 0; no §14/gate-id change; no other conformance regressed.
