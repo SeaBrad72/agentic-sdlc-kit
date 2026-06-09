@@ -17,6 +17,8 @@ Turn disaster recovery from an unverified claim into a provable capability. `DEV
 - **Checklist + companion script** (the 8b pattern). Manual rows carry the judgment (backups exist; the drill *actually restored data*; RTO/RPO *actuals met* the targets); the script auto-verifies the documented floor (a BIA artifact exists; RUNBOOK §6 DR fields are filled, not placeholder; a restore-drill date is recorded).
 - **Conditional + fail-closed**, mirroring `deployable-ready.sh` / `container-supply-chain.sh`. Detection of a **persistent-data surface**; no surface → N/A skip-pass (stateless tools/CLIs/libraries are not nagged about backups). Skip-passes at the kit root.
 - **Anti-false-assurance is a contract requirement** (carried from 8b). A recorded "Restore verified: 2026-06-01" does **not** prove the restore succeeded or met RTO. So `dr-ready.sh`'s success output self-discloses it checks the drill was **recorded**, not that it **worked**; the checklist holds "drill actually restored data + met RTO" as **Manual** rows, signed by the on-call/operator. The checklist carries the bold "a green script is necessary, not sufficient" callout and *(documented)* / *(tested / verified)* row labels. A **`--selftest`** fixture battery (incl. a negative stateless fixture) regression-locks the positive path in kit CI.
+- **`N/A` is non-absolving and the script is escalate-only** (added after design review — the directional-safety fix). For a *continuity* gate the dangerous error is a **false negative**: a real data project whose surface the detector misses prints `N/A` and ships with unproven DR. Conservative detection (needed to avoid nagging stateless tools) *increases* that risk, so it must be paired with a non-absolving `N/A`: the script may only ever **escalate** (detect → require), never **exempt**. Its `N/A` output **self-incriminates** — "if this project handles durable data, this N/A is WRONG — apply `dr-readiness.md` manually." The **BIA at Inception (a human deciding criticality) is the primary path**; the script is a backstop. The checklist intro states the `N/A` is advisory, and the checklist — applied by a human — is the gate of record.
+- **DR-readiness is anchored to the Definition of Done** (added after design review — the enforcement fix). BIA-as-Inception-prompt is only real if it is backstopped by a gate nothing ships past. The kit's gates sit at Review/Release/recurring (Inception is deliberately light), so enforcement belongs in the **Definition of Done**, not a hard Inception gate: add "**DR proven for data services**" to the DoD **Production** line (`CLAUDE.md`). A data service cannot be "done" without a passed DR-readiness check.
 - **Framework anchor, not a crosswalk** — one-line **NIST SP 800-34** (contingency planning) nod in the drill reference + the checklist, per the arc's fold-in decision.
 - **No new universally-required CI gate.** The 8 application gate-ids and §14 are unchanged. DR readiness is a conditional checklist/Review-style gate.
 
@@ -34,6 +36,7 @@ Turn disaster recovery from an unverified claim into a provable capability. `DEV
 | H | `DEVELOPMENT-PROCESS.md` §15 (recurring) + §7 (gates) | §15 item references the drill doc; §7 adds a conditional **DR readiness** gate (data services) |
 | I | `conformance/README.md` + `audit-evidence-checklist.md` | Index the two checks; a DR-drill audit row |
 | J | `.github/workflows/ci.yml` | `dr-ready.sh` present + N/A + `--selftest` (3 steps) |
+| K | `CLAUDE.md` (DoD Production line) | Add "DR proven for data services (`conformance/dr-readiness.md`)" — anchors the DR-readiness gate to a checkpoint nothing ships past |
 | Meta | `VERSION` 2.21.0 · `CHANGELOG.md` · `docs/ROADMAP-KIT.md` (8c row) |
 
 ## 4. Detailed design — `docs/continuity/backup-restore-drill.md`
@@ -52,7 +55,7 @@ House style = guidance blockquotes + `[...]` fill-ins (like the other templates)
 ## 6. Detailed design — `conformance/dr-readiness.md` + `conformance/dr-ready.sh`
 
 ### Checklist (`dr-readiness.md`)
-Mirrors `definition-of-deployable.md`: intro (Checklist-type; conditional N/A for non-data projects; NIST 800-34 + §10 anchor), the bold **"a green script is necessary, not sufficient"** callout, `## How to use`, a blank table, a worked example, an N/A note. Rows:
+Mirrors `definition-of-deployable.md`: intro (Checklist-type; conditional N/A for non-data projects; NIST 800-34 + §10 anchor), the bold **"a green script is necessary, not sufficient"** callout, `## How to use`, a blank table, a worked example, an N/A note. The intro **must** also state: *the script's `N/A` is advisory only — detection is conservative and can miss a data project; if this project handles durable data, this checklist applies regardless of what the script prints. The script escalates, never exempts.* Rows:
 
 | # | Item | Check |
 |---|------|-------|
@@ -72,7 +75,7 @@ POSIX `sh`, `set -eu`, structured like `deployable-ready.sh`. Operates on a proj
 - `.env.example` declares a DB/connection URL var — `grep -Eiq 'DATABASE_URL|DB_URL|POSTGRES|MYSQL|MONGO|REDIS_URL|CONNECTION_STRING'`;
 - a migrations/db directory exists — `prisma/`, `migrations/`, `db/migrate/`, `alembic/`;
 - a compose file declares a database service — a `compose.yaml`/`docker-compose.yml` with `image: (postgres|mysql|mariadb|mongo|redis)`.
-None → `N/A: … no persistent-data surface … skipping`, exit 0.
+None → a **self-incriminating, non-absolving** N/A line, exit 0: `N/A: no persistent-data surface detected (no DB url / migrations dir / compose db) — skipping. WARNING: if this project handles durable data, this N/A is WRONG — detection is conservative; apply conformance/dr-readiness.md manually. This check escalates (detect → require); it never exempts a data project.` (The script can only add a requirement, never remove one; the BIA-at-Inception and the human-applied checklist are the real gate.)
 
 **When data-handling, assert (fail-closed accumulator):**
 1. A BIA artifact exists — `docs/continuity/BIA.md`.
@@ -101,6 +104,7 @@ Each miss → `FAIL <reason>` + remediation hint. Success → a **scope-disclaim
 - **`conformance/README.md`** — two index rows (checklist → Review/recurring conditional; script → conditional on a data surface).
 - **`audit-evidence-checklist.md`** — a row: `| DR drill · backup-restore | CC7.5, A1.2 / A.5.29, A.8.13 | BIA + RUNBOOK §6 + recorded drill date | **Auto (conditional):** \`sh conformance/dr-ready.sh\` | |` (after the existing RUNBOOK DR/rollback row).
 - **`.github/workflows/ci.yml`** conformance job — three steps: checklist present; `dr-ready.sh` (N/A at root); `dr-ready.sh --selftest`.
+- **`CLAUDE.md` DoD Production line** — append "· **DR proven for data services** (`conformance/dr-readiness.md`)" to: `**Production** — deployed · smoke-tested · no errors in logs · rollback path ready · monitoring/alerting on critical paths.` This makes a passed DR-readiness check part of "done" for any data service — the mandatory anchor that backstops the BIA-as-Inception-prompt. (STANDARDS §12 defers to `CLAUDE.md`, so no edit there.)
 
 ## 8. Validation / testing
 
@@ -115,9 +119,9 @@ Each miss → `FAIL <reason>` + remediation hint. Success → a **scope-disclaim
 ## 9. Risks & mitigations
 
 - **False assurance — a recorded drill date misread as "DR works."** Mitigation (contract): script self-discloses scope; checklist holds "restored + RTO met" as Manual; bold callout; grep-asserted wording. The on-call/operator signs the Manual rows.
-- **Persistent-data detection false-positive** (a stateless project with an incidental `REDIS_URL` for caching gets nagged for a BIA). Mitigation: conservative triggers; an inline comment; the checklist is the gate of record (a reviewer can mark the whole check N/A with a reason); a negative selftest fixture. *Note:* a cache-only `REDIS_URL` is a known edge — documented in the checklist intro as "if your only 'data' is ephemeral cache, mark N/A — no durable data to recover".
-- **Detection false-negative** (a data project the script calls N/A). Mitigation: three triggers; the checklist gate-of-record catches it; the Inception step prompts the BIA regardless.
-- **Inception step ignored** (no hard gate). Accepted tradeoff (your decision): the DR conformance at Review/pre-launch is the enforcement point; Inception only prompts.
+- **Detection false-negative — the primary vulnerability** (a real data project the detector misses → `N/A` → DR never enforced → unprotected production data ships silently). For a continuity gate this is far worse than a false positive. Mitigation (now a contract requirement, §2/§6): the script is **escalate-only** and its `N/A` is **self-incriminating** ("if you handle durable data this N/A is WRONG — apply the checklist"); the **BIA-at-Inception** (human criticality call) is the primary path; and **DR-readiness is anchored to the Definition of Done** for data services, so the silent gap surfaces at a gate nothing ships past. Three detection triggers reduce the miss rate; the human checklist is the gate of record.
+- **Persistent-data detection false-positive** (a stateless project with an incidental cache `REDIS_URL` gets nagged for a BIA). Lower-severity (annoyance, not danger). Mitigation: conservative triggers; an inline comment; the checklist can be marked N/A-with-reason by a reviewer; a negative selftest fixture; the checklist intro documents the cache-only edge ("if your only 'data' is ephemeral cache, mark N/A — no durable data to recover").
+- **Inception step ignored** (no hard Inception gate). Mitigation (now explicit): enforcement is not at Inception — it is the DR-readiness check anchored to the **Definition of Done** for data services. Inception only prompts; "done" requires the proof. Consistent with the kit's gate-placement belief (gates at Review/Release/recurring, not Inception).
 - **Subshell-loses-`fail` / guard-blocks-cleanup / param clobber.** Mitigations: current-shell accumulator (7d); leave fixtures (7e); `_`-prefixed params (8b).
 
 ## 10. Out of scope
@@ -133,8 +137,9 @@ Each miss → `FAIL <reason>` + remediation hint. Success → a **scope-disclaim
 
 - `docs/continuity/backup-restore-drill.md` created (drill how-to, isolated-env do-no-harm rule, NIST 800-34 anchor).
 - `templates/BIA-TEMPLATE.md` created (criticality tiers + per-tier RTO/RPO).
-- `conformance/dr-readiness.md` (callout, Manual + Auto rows, worked example, N/A note) + `conformance/dr-ready.sh` (conditional, fail-closed, scope-disclaiming, `--selftest`, dash-clean) created; the five fixture cases pass.
-- §10 tiered RTO/RPO; RUNBOOK §6 per-tier option; START-HERE BIA step + conditional Inception-Done line; §15 references the drill; §7 conditional DR-readiness gate.
+- `conformance/dr-readiness.md` (callout, Manual + Auto rows, worked example, N/A-is-advisory note) + `conformance/dr-ready.sh` (conditional, fail-closed, **escalate-only / self-incriminating N/A**, scope-disclaiming success, `--selftest`, dash-clean) created; the five fixture cases pass.
+- §10 tiered RTO/RPO; RUNBOOK §6 per-tier option; START-HERE BIA step + conditional Inception-Done line; §15 references the drill; §7 conditional DR-readiness gate; **`CLAUDE.md` DoD Production line includes "DR proven for data services"**.
+- **Directional-safety wording shipped + grep-asserted:** the script's N/A contains "if this project handles durable data, this N/A is WRONG"; the DoD Production line contains "DR proven for data services".
 - `conformance/README.md` indexes both; `audit-evidence-checklist.md` DR-drill row; kit CI runs present + N/A + selftest.
 - All conformance green; `check-links.sh` 0; no §14/gate-id change; anti-false-assurance wording shipped + grep-asserted.
 - `VERSION` 2.21.0; CHANGELOG 2.21.0 entry; ROADMAP 8c row.
