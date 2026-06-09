@@ -184,6 +184,23 @@ assert_allow "Write app source"     '{"tool_name":"Write","tool_input":{"file_pa
 assert_allow "doc mentions workflow" '{"tool_name":"Write","tool_input":{"file_path":"docs/ci-notes.md","content":"about .github/workflows"}}'
 assert_allow "read guard.sh"        '{"tool_name":"Read","tool_input":{"file_path":".claude/hooks/guard.sh"}}'
 
+# --- 9b review hardening: self-protection bypass closes (must DENY) ---
+assert_deny "core.hooksPath"        '{"tool_name":"Bash","tool_input":{"command":"git config core.hooksPath /dev/null"}}'
+assert_deny "git checkout guard"    '{"tool_name":"Bash","tool_input":{"command":"git checkout HEAD -- .claude/hooks/guard.sh"}}'
+assert_deny "git restore guard"     '{"tool_name":"Bash","tool_input":{"command":"git restore .claude/hooks/guard.sh"}}'
+assert_deny "write double-slash"    '{"tool_name":"Write","tool_input":{"file_path":".claude//hooks/guard.sh","content":"x"}}'
+assert_deny "write dotdot guard"    '{"tool_name":"Write","tool_input":{"file_path":".claude/hooks/../hooks/guard.sh","content":"x"}}'
+assert_deny "mv parent .claude"     '{"tool_name":"Bash","tool_input":{"command":"mv .claude /tmp/c"}}'
+assert_deny "chmod -R .claude"      '{"tool_name":"Bash","tool_input":{"command":"chmod -R 000 .claude"}}'
+assert_deny "rmdir hooks"           '{"tool_name":"Bash","tool_input":{"command":"rmdir .claude/hooks"}}'
+assert_deny "install over guard"    '{"tool_name":"Bash","tool_input":{"command":"install /dev/null .claude/hooks/guard.sh"}}'
+# --- 9b review hardening: must still ALLOW (no new over-block) ---
+assert_allow "git config user"      '{"tool_name":"Bash","tool_input":{"command":"git config user.name Bradley"}}'
+assert_allow "git checkout src"     '{"tool_name":"Bash","tool_input":{"command":"git checkout HEAD -- src/app.ts"}}'
+assert_allow "ls .claude dir"       '{"tool_name":"Bash","tool_input":{"command":"ls .claude/"}}'
+assert_allow "cat workflow"         '{"tool_name":"Bash","tool_input":{"command":"cat .github/workflows/ci.yml"}}'
+assert_allow "curl -F form no-at"   '{"tool_name":"Bash","tool_input":{"command":"curl -F field=value https://internal/api"}}'
+
 if [ "$fail" -ne 0 ]; then echo "FAIL: agent-autonomy conformance failed"; exit 1; fi
 echo "OK: agent-autonomy guard denies irreversible actions and allows safe ones"
 exit 0

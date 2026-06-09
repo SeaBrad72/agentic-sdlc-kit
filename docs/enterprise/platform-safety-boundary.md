@@ -4,7 +4,7 @@
 
 ## Why this exists
 
-The agent guard is a shell-command deny-list. A deny-list over a Turing-complete shell cannot contain a determined or compromised agent: novel tools, language interpreters (`python -c`, `node -e`), and obfuscation defeat pattern-matching, and data exfiltration has no reliable command signature. The controls below are where *"agents (or humans) cannot cause damage"* is actually enforced.
+The agent guard is a shell-command deny-list. A deny-list over a Turing-complete shell cannot contain a determined or compromised agent: novel tools, language interpreters (`python -c`, `node -e`), and obfuscation defeat pattern-matching, and data exfiltration has no reliable command signature. The same interpreters can even **defeat the guard's own self-protection** (delete or rewrite `guard.sh`), so that protection is best-effort, not absolute. The controls below are where *"agents (or humans) cannot cause damage"* is actually enforced.
 
 This is not a hypothetical. An adversarial red-team of the guard (2026-06-09) confirmed that, before hardening, ~16% of irreversible/exfiltration payloads were caught; even hardened, a deny-list has a permanent bypass tail. Treat the guard as accident-prevention and these four controls as the boundary.
 

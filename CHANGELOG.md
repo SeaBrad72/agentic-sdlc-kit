@@ -9,7 +9,7 @@ Runtime-safety hardening & honest reframe (Slice 9b — first slice of the "Hone
 
 ### Added
 - **Hardened deny-list** in `.claude/hooks/guard.sh`: non-rm destruction (`truncate`/`dd of=`/`shred`/`mkfs`/`wipefs`/`blkdiscard`/`find -delete`/`rsync --delete`/`git clean`/redirect-truncation/`mv →/dev/null`); **scalpel `rm`** (denies globs, data-file extensions, absolute paths, dotfiles-of-record while keeping plain `rm stale.txt` allowed); obfuscation-technique denial (`<decode> | sh`, `eval $(…)`, `git -c … push` indirection); **partial** exfiltration denial (`scp`/`sftp`/`curl`-upload/`wget --post-file`/`nc`/`rclone`/`mail`, honestly labelled partial); cloud/infra **capability families** (`terraform destroy`, `*-delete`/`terminate-*` across aws/gcloud/az, `helm uninstall`, `kubectl drain`, DB `drop` via clients/migration tools).
-- **Absolute self/control-plane protection**: no agent `Bash`/`Write`/`Edit`/`NotebookEdit` may modify `guard.sh`, `settings.json`/`.local`, `.github/workflows/`, `CODEOWNERS`, or `.git/` internals — fixes the `NotebookEdit` `notebook_path` blind spot. Human-only `KIT_GUARD_SELFEDIT=1` maintenance escape (an agent cannot set it; the hook process env is human-controlled).
+- **Best-effort self/control-plane protection** (not absolute — see residuals): no agent `Bash`/`Write`/`Edit`/`NotebookEdit` may modify `guard.sh`, `settings.json`/`.local`, `.github/workflows/`, `CODEOWNERS`, or `.git/` internals via the common verbs/paths — fixes the `NotebookEdit` `notebook_path` blind spot. Post-review hardening closed `git config core.hooksPath`, `git checkout/restore` of the guard, path-normalization tricks (`//`, `/./`, `..`, basename), and parent-directory ops (`mv .claude`, `chmod -R`, `rmdir`). Human-only `KIT_GUARD_SELFEDIT=1` maintenance escape (an agent cannot set it; the hook process env is human-controlled).
 - **`docs/enterprise/platform-safety-boundary.md`** — the Org-owned *real* boundary (network-egress allowlist, separate prod credentials, sandboxed FS, scoped tokens), mapped into `compliance-crosswalk.md`.
 - **Regression corpus**: `conformance/agent-autonomy.sh` extended with the red-team bypasses (deny) plus over-block guards (allow) and a self-protection block — locking the fix in CI.
 
@@ -17,7 +17,7 @@ Runtime-safety hardening & honest reframe (Slice 9b — first slice of the "Hone
 - **Honest reframe** of the guard across its header, `.claude/README.md`, and `DEVELOPMENT-PROCESS.md` §13: a **best-effort speed bump for honest mistakes, not a security boundary**. The real boundary is platform-owned.
 
 ### Known residuals (by design — the deny-list tail)
-- **Interpreter exfiltration** (`python3 -c`, `node -e`) is not pattern-blockable; the control is the platform egress allowlist (Layer 3).
+- **Interpreters** (`python3 -c`, `node -e`) are not pattern-blockable — they can both **exfiltrate** data *and* **delete/rewrite the guard itself** (self-protection is best-effort, not absolute). The control is the platform sandbox + egress allowlist (Layer 3).
 - **Variable-indirection obfuscation** (`X=rm; $X -rf`) is a *deliberate* evasion; the guard targets honest mistakes — deliberate evasion is the platform boundary's job.
 
 ## [2.24.1] - 2026-06-09

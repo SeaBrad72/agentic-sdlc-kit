@@ -78,10 +78,16 @@ fi
 case "$TOOL" in
   Bash)
     CMD=$(printf '%s' "$INPUT" | jq -r '.tool_input.command // empty' 2>/dev/null || printf '')
-    # 9b: deny Bash mutation of the guard's own files / gates (unless human maintenance escape)
-    if ! selfedit_allowed && printf '%s' "$CMD" | grep -Eq '(\.claude/(hooks/guard\.sh|settings(\.local)?\.json)|\.github/workflows/|/CODEOWNERS|(^|[^a-zA-Z])CODEOWNERS|\.git/config)'; then
-      if printf '%s' "$CMD" | grep -Eq '(^|[^[:alnum:]_])(rm|mv|cp|truncate|shred|chmod|chown|dd|sed|tee|ln)[[:space:]]' \
-         || printf '%s' "$CMD" | grep -Eq '>[[:space:]]*[^[:space:]]*(\.claude/(hooks/guard\.sh|settings)|\.github/workflows/|CODEOWNERS)'; then
+    # 9b: deny Bash mutation of the guard's own files / gates (unless human maintenance escape).
+    # core.hooksPath redirection disables ALL hooks at once — deny it outright.
+    if ! selfedit_allowed && printf '%s' "$CMD" | grep -Eq 'git[[:space:]]+config[[:space:]]+([^;&|]*[[:space:]])?core\.hooksPath'; then
+      emit_deny "13: git config core.hooksPath would disable the agent guard - human-gated. Set KIT_GUARD_SELFEDIT=1 for deliberate human maintenance."
+    fi
+    # control-plane target present (directory-level too: bare .claude / .git / .github/workflows / CODEOWNERS)
+    if ! selfedit_allowed && printf '%s' "$CMD" | grep -Eq '(\.claude(/|[[:space:]]|$)|\.github/workflows|/CODEOWNERS|(^|[^a-zA-Z.])CODEOWNERS|\.git(/|[[:space:]]|$))'; then
+      if printf '%s' "$CMD" | grep -Eq '(^|[^[:alnum:]_])(rm|rmdir|mv|cp|truncate|shred|chmod|chown|dd|sed|tee|ln|install|patch)[[:space:]]' \
+         || printf '%s' "$CMD" | grep -Eq '(^|[^[:alnum:]_])git[[:space:]]+(checkout|restore)([[:space:]]|$)' \
+         || printf '%s' "$CMD" | grep -Eq '>[[:space:]]*[^[:space:]]*(\.claude|\.github/workflows|CODEOWNERS|\.git)'; then
         emit_deny "13: mutating the guard / its config / CI gates via shell is denied (control-plane integrity). Set KIT_GUARD_SELFEDIT=1 for deliberate human maintenance."
       fi
     fi
@@ -205,7 +211,7 @@ case "$TOOL" in
     # (python -c, node -e) remain channels. The real control is the platform network-egress
     # allowlist — see docs/enterprise/platform-safety-boundary.md. This is a speed bump.)
     if printf '%s' "$CMD" | grep -Eq '(^|[;&|][[:space:]]*)(sudo[[:space:]]+)?(scp|sftp)[[:space:]]' \
-       || printf '%s' "$CMD" | grep -Eq '(curl|wget)[[:space:]][^|]*(-T[[:space:]]|--upload-file|-F[[:space:]]|--data-binary[[:space:]]*@|--post-file)' \
+       || printf '%s' "$CMD" | grep -Eq '(curl|wget)[[:space:]][^|]*(-T[[:space:]]|--upload-file|-F[[:space:]]*[^[:space:]&|;]*@|--data-binary[[:space:]]*@|--post-file)' \
        || printf '%s' "$CMD" | grep -Eq '\|[[:space:]]*(nc|ncat|netcat)[[:space:]]+[^[:space:]]' \
        || printf '%s' "$CMD" | grep -Eq '(^|[;&|][[:space:]]*)rclone[[:space:]]+(copy|sync|move)[[:space:]][^|]*[a-zA-Z0-9_-]+:' \
        || printf '%s' "$CMD" | grep -Eq '\|[[:space:]]*mail[[:space:]]'; then
@@ -237,8 +243,18 @@ case "$TOOL" in
     allow ;;
   Write|Edit|NotebookEdit)
     FP=$(printf '%s' "$INPUT" | jq -r '.tool_input.file_path // .tool_input.notebook_path // empty' 2>/dev/null || printf '')
-    if is_control_plane_path "$FP" && ! selfedit_allowed; then
+    # normalize trivial path tricks (//, /./) so .claude//hooks/guard.sh etc. cannot bypass
+    FPN=$(printf '%s' "$FP" | sed -e 's#//*#/#g' -e 's#/\./#/#g')
+    BASEFP=$(basename "$FP" 2>/dev/null || printf '%s' "$FP")
+    if ! selfedit_allowed && { is_control_plane_path "$FP" || is_control_plane_path "$FPN"; }; then
       emit_deny "13: modifying the guard / its config / CI gates is denied (control-plane integrity). Set KIT_GUARD_SELFEDIT=1 for deliberate human maintenance."
+    fi
+    # basename match catches dot-dot and separator tricks for the named control-plane files
+    if ! selfedit_allowed; then
+      case "$BASEFP" in
+        guard.sh|settings.json|settings.local.json|CODEOWNERS)
+          emit_deny "13: modifying a control-plane file ($BASEFP) is denied (control-plane integrity). Set KIT_GUARD_SELFEDIT=1 for deliberate human maintenance." ;;
+      esac
     fi
     BASE=$(basename "$FP" 2>/dev/null || printf '%s' "$FP")
     if [ "$BASE" = ".env.example" ]; then allow; fi
