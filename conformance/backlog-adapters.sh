@@ -18,8 +18,8 @@ for f in "$INCEPT" "$PROC" "$GUIDE"; do
   [ -f "$f" ] || { echo "FAIL: missing $f" >&2; exit 1; }
 done
 
-# incept's canonical set line (single source in the script)
-backends=$(grep -E '^BACKLOG_BACKENDS=' "$INCEPT" | head -1)
+# incept's canonical set (just the space-separated tokens inside the quotes)
+backends=$(grep -E '^BACKLOG_BACKENDS=' "$INCEPT" | head -1 | sed 's/.*="//; s/".*//')
 # the §6 backend-table region only (avoid false matches elsewhere in the doc)
 proc6=$(awk '/^## 6\. Work Items/{f=1} f{print} /^## 7\./{f=0}' "$PROC")
 
@@ -27,8 +27,9 @@ fail=0
 # token | display-name pattern (display used in §6 + guide headings)
 while IFS='|' read -r token pat; do
   [ -n "$token" ] || continue
+  # space-bounded match so a future substring token (e.g. 'ad' vs 'ado') can't false-match
   case " $backends " in
-    *"$token"*) : ;;
+    *" $token "*) : ;;
     *) echo "FAIL: $INCEPT BACKLOG_BACKENDS missing '$token'"; fail=1 ;;
   esac
   printf '%s\n' "$proc6" | grep -q "$pat" || { echo "FAIL: $PROC §6 backend table missing '$pat'"; fail=1; }
