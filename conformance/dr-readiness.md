@@ -20,7 +20,7 @@ Copy this file into your project (or your DR record). For each item: mark **Appl
 | 5 | Restore drill **succeeded** — data actually restored, integrity verified *(verified)* | | | Manual |
 | 6 | RTO/RPO **actuals met** the tier targets in the last drill *(verified)* | | | Manual |
 | 7 | Backups stored durably + access-controlled (off-host / off-region) *(verified)* | | | Manual |
-| 8 | Drill scheduled as recurring maintenance (§15) *(documented)* | | | Manual |
+| 8 | Drill scheduled as recurring maintenance (§15) | | | Manual |
 
 ## Worked example — a deployable HTTP service with a Postgres database
 
@@ -33,6 +33,6 @@ Copy this file into your project (or your DR record). For each item: mark **Appl
 | 5 | Drill succeeded *(verified)* | Y | restored to isolated env; row-count + checksum match (drill log) | Manual ✅ |
 | 6 | RTO/RPO actuals met *(verified)* | Y | restore took 38m (< 1h target); data loss 4m (< 15m) | Manual ✅ |
 | 7 | Durable + access-controlled *(verified)* | Y | backups in separate region bucket, IAM-restricted | Manual ✅ |
-| 8 | Drill scheduled *(documented)* | Y | quarterly recurring board item (§15) | Manual ✅ |
+| 8 | Drill scheduled | Y | quarterly recurring board item (§15) | Manual ✅ |
 
 > A stateless service, CLI, or library marks the whole check **N/A — no persistent data to recover**; `dr-ready.sh` skip-passes such a project automatically. **If your only "data" is an ephemeral cache (e.g. a cache-only `REDIS_URL`), mark N/A — there is no durable data to recover.**
