@@ -114,11 +114,11 @@ case "$TOOL" in
     if printf '%s' "$CMD" | grep -Eq '(npm|yarn|pnpm)[[:space:]]+publish'; then
       emit_deny "13: publishing a package is externally irreversible - human-gated."
     fi
-    if printf '%s' "$CMD" | grep -Eq 'git[[:space:]]+push.*(--force|--force-with-lease|[[:space:]]-f([[:space:]]|$)|[[:space:]+]\+[^[:space:]]*[[:space:]]*$)'; then
+    if printf '%s' "$CMD" | grep -Eq 'git[[:space:]]+(-c[[:space:]]+[^[:space:]]+[[:space:]]+)*push.*(--force|--force-with-lease|[[:space:]]-f([[:space:]]|$)|[[:space:]+]\+[^[:space:]]*[[:space:]]*$)'; then
       emit_deny "13: force-push rewrites published history - human-gated."
     fi
-    # push to main/master in any refspec form: 'main', '+main', 'HEAD:main', 'x:master'
-    if printf '%s' "$CMD" | grep -Eq 'git[[:space:]]+push.*[[:space:]:+/](main|master)([[:space:]]|:|$)'; then
+    # push to main/master in any refspec form: 'main', '+main', 'HEAD:main', 'x:master' (incl. git -c … push)
+    if printf '%s' "$CMD" | grep -Eq 'git[[:space:]]+(-c[[:space:]]+[^[:space:]]+[[:space:]]+)*push.*[[:space:]:+/](main|master)([[:space:]]|:|$)'; then
       emit_deny "13: pushing directly to main/master bypasses review - open a PR (human-gated)."
     fi
     # destructive SQL via a DB client
@@ -153,8 +153,13 @@ case "$TOOL" in
     if printf '%s' "$CMD" | grep -Eq 'aws[[:space:]]+s3[[:space:]]+rm[^|]*--recursive|aws[[:space:]]+s3[[:space:]]+rb|aws[[:space:]]+rds[[:space:]]+delete-db-instance|aws[[:space:]]+dynamodb[[:space:]]+delete-table|gcloud[[:space:]]+sql[[:space:]]+instances[[:space:]]+delete|az[[:space:]]+group[[:space:]]+delete|az[[:space:]]+sql[^|]*[[:space:]]delete'; then
       emit_deny "13: cloud resource deletion (storage/DB/instance) is irreversible - human-gated."
     fi
-    if printf '%s' "$CMD" | grep -Eq '(curl|wget)[^|]*\|[[:space:]]*(sudo[[:space:]]+)?(sh|bash)([[:space:]]|$)'; then
-      emit_deny "13: piping a remote script into a shell is high-blast-radius - human-gated."
+    if printf '%s' "$CMD" | grep -Eq '(curl|wget|base64[[:space:]]+(-d|--decode)|xxd[[:space:]]+-r)[^|]*\|[[:space:]]*(sudo[[:space:]]+)?(sh|bash|zsh|dash)([[:space:]]|$)'; then
+      emit_deny "13: piping a fetched/decoded payload into a shell is high-blast-radius - human-gated."
+    fi
+    # 9b: eval of a command substitution hides the real command from inspection.
+    # Anchored to command position so "eval $(...)" inside a commit message is NOT matched.
+    if printf '%s' "$CMD" | grep -Eq '(^|[;&|][[:space:]]*)(sudo[[:space:]]+)?eval[[:space:]]+[^;&|]*(\$\(|`)'; then
+      emit_deny "13: eval of a command substitution obscures the executed command - human-gated."
     fi
     if printf '%s' "$CMD" | grep -Eiq '(vercel[[:space:]]+(deploy[[:space:]]+)?--prod|railway[[:space:]]+up|fly[[:space:]]+deploy|terraform[[:space:]]+apply|kubectl[[:space:]]+apply|helm[[:space:]]+(install|upgrade))'; then
       emit_deny "13: production deploy / infra apply is high-blast-radius - human-gated."

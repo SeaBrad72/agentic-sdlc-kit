@@ -123,6 +123,19 @@ assert_allow "rm stale txt 1b"     '{"tool_name":"Bash","tool_input":{"command":
 assert_allow "rm build artifact"   '{"tool_name":"Bash","tool_input":{"command":"rm dist/bundle.js"}}'
 assert_allow "rm old lockfile"     '{"tool_name":"Bash","tool_input":{"command":"rm package-lock-old.json"}}'
 
+# --- 9b Layer 1c: obfuscation technique denial (must DENY) ---
+assert_deny "base64 pipe sh"       '{"tool_name":"Bash","tool_input":{"command":"echo Y20gLXJmIC8= | base64 -d | sh"}}'
+assert_deny "base64 pipe bash"     '{"tool_name":"Bash","tool_input":{"command":"echo aaa | base64 --decode | bash"}}'
+assert_deny "eval cmd-subst"       '{"tool_name":"Bash","tool_input":{"command":"eval \"$(echo cm0gLXJm | base64 -d)\""}}'
+assert_deny "eval backticks"       '{"tool_name":"Bash","tool_input":{"command":"eval `echo something`"}}'
+assert_deny "git -c push force"    '{"tool_name":"Bash","tool_input":{"command":"git -c protocol.x=y push --force origin main"}}'
+assert_deny "git -c push main"     '{"tool_name":"Bash","tool_input":{"command":"git -c core.pager=cat push origin main"}}'
+# --- 9b Layer 1c: over-block guards (must ALLOW) ---
+assert_allow "base64 decode file"  '{"tool_name":"Bash","tool_input":{"command":"base64 -d payload.b64 > out.bin"}}'
+assert_allow "eval in commit msg"  '{"tool_name":"Bash","tool_input":{"command":"git commit -m \"add eval guard tests\""}}'
+assert_allow "eval subst in msg"   '{"tool_name":"Bash","tool_input":{"command":"git commit -m \"doc eval \\$(cmd) obfuscation rule\""}}'
+assert_allow "git -c feature push" '{"tool_name":"Bash","tool_input":{"command":"git -c core.pager=cat push origin feature/x"}}'
+
 if [ "$fail" -ne 0 ]; then echo "FAIL: agent-autonomy conformance failed"; exit 1; fi
 echo "OK: agent-autonomy guard denies irreversible actions and allows safe ones"
 exit 0
