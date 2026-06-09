@@ -31,6 +31,7 @@ The kit's **own backlog** (dogfooding `DEVELOPMENT-PROCESS.md` §6). The Foundat
 | 6 ✅ | **Enterprise addendum** | standards §2 (partial) | compliance-control mapping (SOC2/ISO), secrets-at-scale (Vault/KMS) patterns, RBAC for ratification | `conformance/audit-evidence` checklist — enterprise addendum complete (6a–6d), v3.0.0 milestone |
 
 ## Notes
+- **Slice 8 shipped in v2.24.0** (incident response · definition of deployable · DR/backup-restore · resilience+load · progressive delivery · DORA — the continuity & safe-delivery arc, complete).
 - Order matches the "CI first" priority: governance is only *enforced* once CI and the agent layer are wired.
 - Slices 1–2 convert the kit from *described* governance to *enforced* governance — highest leverage. **Slice 1 shipped in v2.0.0; Slice 2 in v2.1.0 — that conversion is now complete.**
 - Re-prioritize at the kit's L2/L3 retros; this order is the default, not a commitment.
