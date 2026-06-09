@@ -3,6 +3,21 @@
 All notable changes to the Agentic SDLC Kit are recorded here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.22.0] - 2026-06-09
+
+Slice 8d — Resilience + load/soak verification. Fourth sub-slice of Slice 8 (continuity & safe-delivery hardening). Closes gap A3 (resilience principles + load/soak asserted but never verified). Chaos-engineering / SRE anchor.
+
+### Added
+- **`docs/operations/resilience-verification.md`** — a stack-neutral how-to: the fault-injection drill (breaker trips, retries back off, degrades gracefully) and the load/soak test (find the knee, catch leaks), with the isolated-env do-no-harm rule and "recorded ≠ passed".
+- **`conformance/resilience-readiness.md`** — a conditional resilience checklist (Manual judgment rows + Auto record rows) with a "necessary, not sufficient" callout; verifies `DEVELOPMENT-STANDARDS.md` §4 + §6.
+- **`conformance/resilience-ready.sh`** — a conditional, fail-closed companion: for a project with a deploy surface it asserts RUNBOOK §8 records a load/soak date and a fault-injection date (non-placeholder); otherwise N/A. Self-discloses scope (recorded ≠ actually resilient). `--selftest` battery. Stack-neutral (checks a dated record, not load-test tooling).
+- **`DEVELOPMENT-PROCESS.md`** — a conditional **Resilience readiness** gate (§7).
+- **`DEVELOPMENT-STANDARDS.md`** — §4 and §6 now point at the verification reference ("verify these — don't just assert them"); RUNBOOK §8 gains the resilience-record lines.
+- **`audit-evidence-checklist.md`** — a resilience row (A1.2, A1.3 / A.8.6, A.8.16; Auto-conditional).
+
+### Note
+MINOR (2.22.0): additive — a conditional Review gate, a checklist, a record-script, and a reference. No new universally-required CI gate; no DoD anchor (proportionate — a resilience miss is a reliability risk caught at Review, not data loss). The 8 application gate-ids and §14 are unchanged.
+
 ## [2.21.0] - 2026-06-09
 
 Slice 8c — DR / backup-restore drill + BIA-at-Inception. Third sub-slice of Slice 8 (continuity & safe-delivery hardening). Closes gap A2 (DR was prose-only — no reference, no drill proof, no criticality tiering, no BIA). NIST SP 800-34 anchor.

@@ -34,6 +34,7 @@ Copy this file into your project (or your audit/review record). For each control
 | Architecture decisions recorded | CC1.2, CC3.1 / A.5.4 | `docs/ADR-*` files | Manual (files present) | |
 | RUNBOOK · DR / rollback | CC7.4, CC7.5 / A.5.29, A.8.13 | RUNBOOK | Manual (file present) | |
 | DR drill · backup-restore | CC7.5, A1.2 / A.5.29, A.8.13, A.8.14 | BIA (`docs/continuity/BIA.md`) + RUNBOOK §6 + recorded drill date + drill log | **Auto (conditional):** `sh conformance/dr-ready.sh` | |
+| Resilience · load/soak + fault-injection | A1.2, A1.3 / A.8.6, A.8.16 | resilience-verification records (RUNBOOK §8) + drill/load logs | **Auto (conditional):** `sh conformance/resilience-ready.sh` | |
 | Release readiness · Definition of Deployable | CC8.1 / A.8.31, A.8.32 | filled `definition-of-deployable.md` + script output | **Auto (conditional):** `sh conformance/deployable-ready.sh` | |
 | Cost governance · rate-limiting | CC7.1 / A.8.6 | config, budget alerts | Manual | |
 | Personnel / HR security | CC1.4 / A.6.1–A.6.6 | org program (outside the kit) | Manual — **Org-owned** | |
