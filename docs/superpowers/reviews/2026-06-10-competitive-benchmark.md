@@ -16,10 +16,10 @@ The market is independently arriving at the same operating model this kit alread
 
 Internal developer platforms are adding agent entry points to tooling that was designed for humans clicking through a portal:
 
-- **Backstage 1.43** ships experimental MCP token support and a `plugin-mcp-actions-backend` that exposes Scaffolder actions to agents such as Claude and Cursor.
+- **Backstage 1.43** ships experimental MCP token support and a `plugin-mcp-actions-backend` that exposes Scaffolder actions to agents such as Claude and Cursor ([Platform Engineering](https://platformengineering.com/features/backstage-1-43-when-internal-developer-platforms-start-acting-like-platforms/)).
 - **Harness Knowledge Agent** and **Spacelift** are layering agent access onto their existing catalog/IaC surfaces.
 
-The camp's own community states the core mismatch plainly: *"golden paths built for portal UIs, forms, and wizards don't translate to agent invocation."* These platforms have catalogs, UIs, and token brokers — but their governance was built for a human at a keyboard, and agent invocation is being retrofitted onto it.
+The camp's own community states the core mismatch plainly: *"golden paths built for portal UIs, forms, and wizards don't translate to agent invocation"* ([Platform Engineering](https://platformengineering.com/features/backstage-1-43-when-internal-developer-platforms-start-acting-like-platforms/)). These platforms have catalogs, UIs, and token brokers — but their governance was built for a human at a keyboard, and agent invocation is being retrofitted onto it.
 
 ### (b) ADLC governance frameworks — right model, but norms not conformance
 
@@ -45,7 +45,7 @@ The kit sits where the two camps haven't yet met. Three properties together are 
 
 ## Business case
 
-The field's own data is the argument for guardrails-first adoption. AI adoption layered onto weak governance and poor catalog hygiene was associated with a **+30% change-failure rate** and **+23.5% incidents per PR**. Agents amplify whatever discipline (or lack of it) they are dropped into. The kit is the guardrails-first answer: the assurance layer that makes agent throughput safe to lean on rather than a multiplier of existing risk.
+Published field data — **not a kit measurement** — is the argument for guardrails-first adoption. The [Cortex 2026 Engineering Benchmark Report (reported by QASource)](https://www.qasource.com/blog/ai-generated-code-security-risks) found **incidents per pull request up 23.5% year-over-year** even as PR volume grew ~20%, with **change-failure rates rising comparably (~30%)** as AI adoption scaled on weak governance and catalog hygiene; empirical studies of failed agentic PRs corroborate the pattern ([arXiv 2601.15195](https://arxiv.org/abs/2601.15195)). The figures describe the *industry*, not this kit, and are presented as directional evidence — agents amplify whatever discipline (or lack of it) they are dropped into. The kit is the guardrails-first answer: the assurance layer that makes agent throughput safe to lean on rather than a multiplier of existing risk.
 
 ---
 
@@ -57,12 +57,17 @@ The kit is **not a platform.** It has no UI, no service catalog, and no token br
 
 ## Sources
 
-- [How agentic AI will reshape engineering workflows in 2026 — CIO](https://www.cio.com/article/how-agentic-ai-will-reshape-engineering-workflows-in-2026/)
-- [Agentic software development takes the lead — Forrester](https://www.forrester.com/blogs/agentic-software-development-takes-the-lead/)
-- [Securing the ADLC — Cycode](https://cycode.com/blog/securing-the-adlc/)
-- [The agentic development lifecycle explained — EPAM](https://www.epam.com/insights/blogs/agentic-development-lifecycle-explained)
-- [Agent development lifecycle (ADLC) — IBM](https://www.ibm.com/think/topics/agent-development-lifecycle)
-- [Backstage 1.43 — Platform Engineering](https://platformengineering.org/blog/backstage-1-43)
-- [The agentic SDLC guide — CodeRabbit](https://www.coderabbit.ai/blog/agentic-sdlc-guide)
-- [From governance norms to enforceable controls — arXiv](https://arxiv.org/abs/2510.00000)
-- [Knowledge activation for agentic development — arXiv](https://arxiv.org/abs/2510.00001)
+**Business-case data (industry, not a kit measurement):**
+- [AI-generated code security risks: why incidents per PR rose 23.5% (Cortex 2026 Engineering Benchmark Report, reported by QASource)](https://www.qasource.com/blog/ai-generated-code-security-risks)
+- [Where do AI coding agents fail? An empirical study of failed agentic pull requests — arXiv 2601.15195](https://arxiv.org/abs/2601.15195)
+
+**Landscape & frameworks:**
+- [How agentic AI will reshape engineering workflows in 2026 — CIO](https://www.cio.com/article/4134741/how-agentic-ai-will-reshape-engineering-workflows-in-2026.html)
+- [Agentic software development takes the lead — Forrester](https://www.forrester.com/blogs/agentic-software-development-takes-the-lead-from-code-assistants-to-orchestrated-sdlc-agents/)
+- [Securing the ADLC — Cycode](https://cycode.com/blog/securing-adlc/)
+- [The agentic development lifecycle explained — EPAM](https://www.epam.com/insights/ai/blogs/agentic-development-lifecycle-explained)
+- [Agent development lifecycle (ADLC) — IBM](https://www.ibm.com/think/topics/agent-development-lifecycle-adlc)
+- [Backstage 1.43: when internal developer platforms start acting like platforms — Platform Engineering](https://platformengineering.com/features/backstage-1-43-when-internal-developer-platforms-start-acting-like-platforms/)
+- [A guide to the agentic software development lifecycle — CodeRabbit](https://www.coderabbit.ai/guides/agentic-sdlc)
+- [From governance norms to enforceable controls: a layered translation method for runtime guardrails in agentic AI — arXiv 2604.05229](https://arxiv.org/abs/2604.05229)
+- [Knowledge activation: AI skills as the institutional-knowledge primitive for agentic software development — arXiv 2603.14805](https://arxiv.org/abs/2603.14805)
