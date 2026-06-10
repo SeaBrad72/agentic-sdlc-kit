@@ -381,21 +381,23 @@ fi
 if [ "${1:-}" = "--selftest" ]; then
   fail=0
   Z=0000000000000000000000000000000000000000
-  check() { # desc remote-ref local-sha remote-sha want
-    if guard_check_push "$2" "$3" "$4" >/dev/null 2>&1; then got=allow; else got=deny; fi
+  # Hermetic: build a throwaway 2-commit repo so ancestry (merge-base) is deterministic
+  # regardless of the ambient checkout depth (a shallow CI clone has no usable history).
+  T=$(mktemp -d)
+  ( cd "$T" && git init -q \
+      && git -c user.email=t@kit -c user.name=kit commit -q --allow-empty -m c1 \
+      && git -c user.email=t@kit -c user.name=kit commit -q --allow-empty -m c2 )
+  HEAD=$(cd "$T" && git rev-parse HEAD)
+  PREV=$(cd "$T" && git rev-parse HEAD~1)
+  check() { # desc remote-ref local-sha remote-sha want  (merge-base runs in the temp repo)
+    if ( cd "$T" && guard_check_push "$2" "$3" "$4" ) >/dev/null 2>&1; then got=allow; else got=deny; fi
     if [ "$got" = "$5" ]; then echo "PASS $5: $1"; else echo "FAIL (wanted $5): $1"; fail=1; fi
   }
-  HEAD=$(git rev-parse HEAD 2>/dev/null || printf '%s' "$Z")
-  PREV=$(git rev-parse HEAD~1 2>/dev/null || printf '')
   check "push to main"        refs/heads/main "$HEAD" "$Z"   deny
   check "delete main"         refs/heads/main "$Z"    "$HEAD" deny
   check "new feature branch"  refs/heads/feature/x "$HEAD" "$Z" allow
-  if [ -n "$PREV" ]; then
-    check "fast-forward push"   refs/heads/feature/x "$HEAD" "$PREV" allow
-    check "force (non-ff) push" refs/heads/feature/x "$PREV" "$HEAD" deny
-  else
-    echo "SKIP: force/ff cases (need >=2 commits)"
-  fi
+  check "fast-forward push"   refs/heads/feature/x "$HEAD" "$PREV" allow
+  check "force (non-ff) push" refs/heads/feature/x "$PREV" "$HEAD" deny
   [ "$fail" -eq 0 ] && { echo "OK: pre-push selftest"; exit 0; } || { echo "FAIL: pre-push selftest"; exit 1; }
 fi
 
