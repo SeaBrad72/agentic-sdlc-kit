@@ -113,8 +113,9 @@ Still a **speed bump, not a boundary**. `--no-verify` bypasses the git hook; a r
 
 ## Out of scope / deferred
 
-- A Windows-native (non-POSIX) guard. The hooks are POSIX `sh`; Windows adopters run them under Git-Bash/WSL (stated).
-- Per-runtime *first-party plugins* (a Cursor extension, an Aider plugin). 9d-b ships the portable `kit-guard` CLI + wiring docs; turning that into a packaged plugin per runtime is a later, optional slice.
+- **PATH-shims — the named coverage-depth upgrade.** The pre-push hook enforces only the git-history denials (all a git hook can see); the `kit-guard` CLI covers the full matrix but needs the runtime to call it. The way to get *automatic* full-matrix coverage off-Claude — for any runtime AND humans, with **no** runtime integration — is a future `kit-guard install-shims` mode: drop tiny wrappers for the dangerous binaries (`rm`, `dropdb`, `kubectl`, …) into a dir prepended to `PATH`, each running `kit-guard cmd "…" || exit` then `exec`-ing the real binary. It is just another consumer of the same core, so 9d-b's architecture makes it a small addition — but it is **invasive with sharp edges** (non-interactive shells, absolute-path bypass, `PATH` ordering, perf) and earns its own opt-in slice. Named here so the coverage ceiling is honest.
+- **Windows-native (non-POSIX) guard — deliberately NOT done.** A PowerShell/cmd port would be a **second implementation** of the red-teamed matrix, forking single-source-of-truth and doubling the red-team burden. The hooks are POSIX `sh`; Windows adopters run them under **WSL / Git-Bash**, where they work unchanged. The docs state this positively (use WSL/Git-Bash; do not fork the matrix).
+- **Per-runtime first-party plugins** (a Cursor extension, an Aider plugin). Those runtimes already inherit the universal pre-push hook and can wire `kit-guard`; a packaged per-runtime plugin couples to that runtime's internals for marginal gain. **Demand-driven** — build only if a real adopter on that runtime requests it, not speculatively.
 - Expanding the deny-matrix itself (new destructive tools). 9d-b is a **portability** slice — it moves the existing matrix without changing what it denies. Matrix growth is its own change, regression-locked separately.
 
 ## Known implications
