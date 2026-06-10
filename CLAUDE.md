@@ -66,7 +66,7 @@ A feature is NOT done until ALL are true:
 **CI/CD** — pipeline green · build succeeds · the 7 required gates pass, incl. secret-scan and SBOM+provenance · no known high/critical vulnerabilities (per `DEVELOPMENT-STANDARDS.md` §14).
 **Docs** — README, API docs, ADRs, and **RUNBOOK** updated · `.env.example` current · known issues/tech-debt captured · **project resumable cold by another engineer or agent**.
 **Review & merge** — PR reviewed (builder ≠ sole reviewer) · approved · merged · branch deleted.
-**Accessibility** — keyboard-navigable · screen-reader/contrast checks pass (for user-facing UI).
+**Accessibility** — keyboard-navigable · screen-reader/contrast checks pass (for user-facing UI); recorded in an a11y sign-off (`templates/A11Y-SIGNOFF-TEMPLATE.md`).
 **Production** — deployed · smoke-tested (post-deploy gate; `docs/operations/progressive-delivery.md`) · no errors in logs · rollback path ready · monitoring/alerting on critical paths · **DR proven for data services** (`conformance/dr-readiness.md`).
 
 **If any box is unchecked, it isn't done.**

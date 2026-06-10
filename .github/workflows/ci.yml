@@ -39,6 +39,10 @@ jobs:
         run: sh conformance/stack-selection.sh
       - name: Stack-selection self-test
         run: sh conformance/stack-selection.sh --selftest
+      - name: Persona-artifact completeness (QA/Designer templates present + named)
+        run: sh conformance/persona-artifacts.sh
+      - name: Persona-artifact self-test
+        run: sh conformance/persona-artifacts.sh --selftest
       - name: Definition-of-Deployable checklist present
         run: test -f conformance/definition-of-deployable.md
       - name: Deployable-ready conditional (N/A at kit root)
