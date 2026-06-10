@@ -22,13 +22,16 @@ BACKLOG_BACKENDS="md github jira ado linear gitlab"
 # is open — see docs/operations/ci-platforms.md); these are the two with a worked reference.
 CI_PLATFORMS="github gitlab"
 
+# reqval: a value-taking flag must have a value (else dash's `shift 2` would fail
+# under set -e/-u and abort with a confusing error instead of a clean exit 2).
+reqval() { [ "$1" -ge 2 ] || { echo "incept: $2 requires a value" >&2; exit 2; }; }
 while [ $# -gt 0 ]; do
   case "$1" in
-    --name) NAME="$2"; shift 2 ;;
-    --intent-owner) OWNER="$2"; shift 2 ;;
-    --stack) STACK="$2"; shift 2 ;;
-    --backlog) BACKLOG="$2"; shift 2 ;;
-    --ci) CI="$2"; shift 2 ;;
+    --name) reqval $# --name; NAME="$2"; shift 2 ;;
+    --intent-owner) reqval $# --intent-owner; OWNER="$2"; shift 2 ;;
+    --stack) reqval $# --stack; STACK="$2"; shift 2 ;;
+    --backlog) reqval $# --backlog; BACKLOG="$2"; shift 2 ;;
+    --ci) reqval $# --ci; CI="$2"; shift 2 ;;
     --noninteractive) INTERACTIVE=0; shift ;;
     -h|--help) echo "usage: incept.sh [--name N] [--intent-owner O] [--stack S] [--backlog md|github|jira|ado|linear|gitlab] [--ci github|gitlab] [--noninteractive]"; exit 0 ;;
     *) echo "unknown arg: $1" >&2; exit 2 ;;

@@ -35,7 +35,7 @@ stack_tools() {  # print "tool|hint" lines for a stack; return 1 if unknown
 STACK=""; SELFTEST=0
 while [ $# -gt 0 ]; do
   case "$1" in
-    --stack) STACK="${2:-}"; shift 2 ;;
+    --stack) [ $# -ge 2 ] || { echo "preflight: --stack requires a value" >&2; exit 2; }; STACK=$2; shift 2 ;;
     --selftest) SELFTEST=1; shift ;;
     -h|--help) echo "usage: preflight.sh [--stack <name>] [--selftest]"; exit 0 ;;
     *) echo "preflight: unknown arg: $1" >&2; exit 2 ;;
@@ -64,14 +64,15 @@ need sh  "any POSIX shell"
 if [ -n "$STACK" ]; then
   echo "Stack toolchain ($STACK):"
   if tools=$(stack_tools "$STACK"); then
-    oldIFS=$IFS; IFS='
-'
-    for line in $tools; do
-      [ -n "$line" ] || continue
-      t=${line%%|*}; hint=${line#*|}
+    # Split "tool|hint" lines with IFS local to `read` (no global IFS mutation), fed via a
+    # here-doc — a here-doc is a redirection, not a pipe, so the loop runs in THIS shell and
+    # the `miss` accumulator propagates (a `| while` pipe would lose it in a subshell).
+    while IFS='|' read -r t hint; do
+      [ -n "$t" ] || continue
       need "$t" "$hint"
-    done
-    IFS=$oldIFS
+    done <<EOF
+$tools
+EOF
   else
     echo "  (no toolchain map for '$STACK' — see profiles/$STACK.md)"
   fi
