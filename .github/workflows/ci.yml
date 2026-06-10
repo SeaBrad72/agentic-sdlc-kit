@@ -35,6 +35,10 @@ jobs:
         run: sh hooks/pre-push --selftest
       - name: Profile-completeness conformance
         run: sh conformance/profile-completeness.sh
+      - name: Stack-selection completeness (decision aid present + per-profile sections)
+        run: sh conformance/stack-selection.sh
+      - name: Stack-selection self-test
+        run: sh conformance/stack-selection.sh --selftest
       - name: Definition-of-Deployable checklist present
         run: test -f conformance/definition-of-deployable.md
       - name: Deployable-ready conditional (N/A at kit root)
