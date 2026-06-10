@@ -7,6 +7,15 @@
 
 ---
 
+## Best for / Avoid when
+
+**Best for:** Performance- and safety-critical systems, embedded-adjacent, WASM.
+**Avoid when:** Rapid CRUD where delivery velocity dominates; exploratory prototyping.
+
+Choosing a stack? Compare all profiles → [../docs/STACK-SELECTION.md](../docs/STACK-SELECTION.md).
+
+---
+
 ## 1. Toolchain
 - **Runtime:** Rust stable (pin via `rust-toolchain.toml`) · **Deps:** Cargo (`Cargo.lock` committed)
 - **Format/lint:** `cargo fmt` + `cargo clippy` · **Types:** the compiler (`cargo check`)

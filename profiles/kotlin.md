@@ -7,6 +7,15 @@
 
 ---
 
+## Best for / Avoid when
+
+**Best for:** Modern-language JVM services; Android; Spring with less ceremony.
+**Avoid when:** Non-JVM targets; minimal-dependency tiny CLIs.
+
+Choosing a stack? Compare all profiles → [../docs/STACK-SELECTION.md](../docs/STACK-SELECTION.md).
+
+---
+
 ## 1. Toolchain
 - **Runtime:** JDK 21 (Temurin) · **Build/deps:** Gradle (Kotlin DSL) via wrapper `./gradlew`
 - **Format/lint:** ktlint (format) + detekt (static analysis) · **Types:** the compiler (`compileKotlin`)

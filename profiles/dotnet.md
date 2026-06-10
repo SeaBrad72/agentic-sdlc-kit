@@ -7,6 +7,15 @@
 
 ---
 
+## Best for / Avoid when
+
+**Best for:** C#/Azure enterprise, Windows shops, high-performance services.
+**Avoid when:** One-off scripts; teams with no .NET familiarity.
+
+Choosing a stack? Compare all profiles → [../docs/STACK-SELECTION.md](../docs/STACK-SELECTION.md).
+
+---
+
 ## 1. Toolchain
 - **Runtime:** .NET 8 LTS · **Build/deps:** `dotnet` CLI + NuGet (lockfile `packages.lock.json`, `RestoreLockedMode` in CI)
 - **Format/lint:** `dotnet format` + Roslyn analyzers (`TreatWarningsAsErrors`) · **Types:** the compiler (`dotnet build` = type-check)
