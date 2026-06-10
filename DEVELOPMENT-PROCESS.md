@@ -128,7 +128,7 @@ Discovery turns a raw idea into a **validated candidate** before it earns a plac
 - **Success metric / hypothesis** — how will we know it worked? State it as a measurable hypothesis.
 - **Rough scope & risk** — small enough to slice? Any obvious risk/complexity/compliance flags?
 - **Innovation lens** — could AI materially improve this? Is there a reusable or product angle? (The surviving spirit of the archived innovation pipeline, as a prompt — not a separate doc.)
-- **UX & accessibility lens** — is there a user-experience or visual surface? If so, the Designer informs the candidate here; capture rough flows/assets and flag the WCAG 2.1 AA accessibility obligation that the Definition of Done will check. The Designer signs the WCAG check at Review using templates/A11Y-SIGNOFF-TEMPLATE.md.
+- **UX & accessibility lens** — is there a user-experience or visual surface? If so, the Designer informs the candidate here; capture rough flows/assets and flag the WCAG 2.1 AA accessibility obligation that the Definition of Done will check. The Designer signs the WCAG check at Review using `templates/A11Y-SIGNOFF-TEMPLATE.md`.
 
 **Output:** a candidate item with intent + a validation note, ready for Plan. Items that fail validation go to the roadmap parking lot, not the board.
 
@@ -246,7 +246,7 @@ Changes flow through a promotion pipeline with a gate between each tier:
 |------|---------|------------------------|
 | **Dev** | Active development / integration | CI green on the PR |
 | **QA** | Automated + integration acceptance | Dev green + test suite/integration pass |
-| **UAT** | Stakeholder / business acceptance | QA green + acceptance sign-off (PO/QA) (record it with templates/UAT-SIGNOFF-TEMPLATE.md) |
+| **UAT** | Stakeholder / business acceptance | QA green + acceptance sign-off (PO/QA) (record it with `templates/UAT-SIGNOFF-TEMPLATE.md`) |
 | **Prod** | Live users | UAT sign-off + **human approval (release manager)** |
 
 **Production promotion is always human-gated** regardless of agent autonomy tier (§13) — it is in the irreversible/high-blast set. Promotion is forward-only through the tiers; no skipping straight to Prod.
