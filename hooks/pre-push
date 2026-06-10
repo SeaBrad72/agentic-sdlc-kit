@@ -1,0 +1,49 @@
+#!/bin/sh
+# pre-push — kit runtime guard for git (any runtime + humans). Sources the shared
+# deny-matrix core and blocks force-push / push-to-main BEFORE the network round-trip.
+# Deliberate override: git push --no-verify. A SPEED BUMP, not a boundary
+# (docs/enterprise/platform-safety-boundary.md). Run `sh hooks/pre-push --selftest` to test.
+# Fail-open-with-warning if the core is missing: a missing optional file must not brick
+# all pushes (the real boundary is platform-owned); it warns loudly instead.
+ROOT=$(git rev-parse --show-toplevel 2>/dev/null) || ROOT=.
+CORE="${KIT_GUARD_CORE:-$ROOT/.claude/hooks/guard-core.sh}"
+if [ ! -f "$CORE" ]; then
+  echo "kit pre-push: guard-core.sh not found ($CORE) — allowing push UNPROTECTED." >&2
+  exit 0
+fi
+. "$CORE"
+
+if [ "${1:-}" = "--selftest" ]; then
+  fail=0
+  Z=0000000000000000000000000000000000000000
+  check() { # desc remote-ref local-sha remote-sha want
+    if guard_check_push "$2" "$3" "$4" >/dev/null 2>&1; then got=allow; else got=deny; fi
+    if [ "$got" = "$5" ]; then echo "PASS $5: $1"; else echo "FAIL (wanted $5): $1"; fail=1; fi
+  }
+  HEAD=$(git rev-parse HEAD 2>/dev/null || printf '%s' "$Z")
+  PREV=$(git rev-parse HEAD~1 2>/dev/null || printf '')
+  check "push to main"        refs/heads/main "$HEAD" "$Z"   deny
+  check "delete main"         refs/heads/main "$Z"    "$HEAD" deny
+  check "new feature branch"  refs/heads/feature/x "$HEAD" "$Z" allow
+  if [ -n "$PREV" ]; then
+    check "fast-forward push"   refs/heads/feature/x "$HEAD" "$PREV" allow
+    check "force (non-ff) push" refs/heads/feature/x "$PREV" "$HEAD" deny
+  else
+    echo "SKIP: force/ff cases (need >=2 commits)"
+  fi
+  [ "$fail" -eq 0 ] && { echo "OK: pre-push selftest"; exit 0; } || { echo "FAIL: pre-push selftest"; exit 1; }
+fi
+
+# Normal invocation: git passes "<local-ref> <local-sha> <remote-ref> <remote-sha>" per line on stdin.
+status=0
+while read -r local_ref local_sha remote_ref remote_sha; do
+  [ -n "${remote_ref:-}" ] || continue
+  if reason=$(guard_check_push "$remote_ref" "$local_sha" "$remote_sha"); then
+    :
+  else
+    echo "kit guard: $reason" >&2
+    echo "  override (deliberate): git push --no-verify" >&2
+    status=1
+  fi
+done
+exit $status
