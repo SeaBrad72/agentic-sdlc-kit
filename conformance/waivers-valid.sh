@@ -25,11 +25,15 @@ MAX_DAYS=90
 trim() { printf '%s' "$1" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//'; }
 is_date() { printf '%s' "$1" | grep -Eq '^[0-9]{4}-[0-9]{2}-[0-9]{2}$'; }
 has_nonascii() { printf '%s' "$1" | LC_ALL=C grep -q '[^ -~]'; }
-# normalize a gate cell: lowercase, drop html-comments + markdown emphasis, trim non-alnum edges.
+# normalize a gate cell: lowercase, strip markdown emphasis, trim non-alnum edges. Does NOT
+# remove html-comment CONTENTS (that would let `coverage<!--x-->secret-scan` collapse to
+# `coverage`); residual junk like `<`, spaces, or comment markers leaves the token non-clean
+# and is rejected by the `^[a-z0-9-]+$` check at the call site (positive validation).
 gnorm() {
   printf '%s' "$1" | tr '[:upper:]' '[:lower:]' \
-    | sed -e 's/<!--.*-->//g' -e 's/[`*_~]//g' -e 's/^[^a-z0-9]*//' -e 's/[^a-z0-9]*$//'
+    | sed -e 's/^[^a-z0-9]*//' -e 's/[^a-z0-9]*$//'
 }
+is_clean_gate() { printf '%s' "$1" | grep -Eq '^[a-z0-9][a-z0-9-]*$'; }
 # epoch at noon UTC for a YYYY-MM-DD (DST-safe whole-day math); GNU then BSD.
 to_epoch() {
   date -u -d "$1 12:00:00" +%s 2>/dev/null || date -u -j -f "%Y-%m-%d %T" "$1 12:00:00" +%s 2>/dev/null
@@ -40,11 +44,17 @@ to_epoch() {
 # start with one is a malformed row -> emit a sentinel so validation fails closed.
 extract_rows() {
   awk '
-    /^##[[:space:]]+Active waivers/ { insec=1; next }
+    /^##[[:space:]]+Active waivers/ { insec=1; afterhdr=0; hdrseen=0; next }
     /^##[[:space:]]/ { insec=0 }
-    insec && /^\|[[:space:]]*-+/ { afterhdr=1; next }     # separator row: data follows
-    insec && afterhdr && /^\|/ { print; next }            # data row
-    insec && afterhdr && NF>0 && /\|/ { print "__MALFORMED__" $0 }  # row missing leading pipe
+    !insec { next }
+    /^\|[[:space:]]*-+/ { afterhdr=1; next }                 # the |---| separator
+    # exactly one header row is allowed before the separator; consume it.
+    !afterhdr && /^\|/ && !hdrseen { hdrseen=1; next }
+    # ANY other table-shaped line before the separator (extra header, data above the
+    # separator, or — if no separator ever appears — every data row) is MALFORMED: fail closed.
+    !afterhdr && (/^\|/ || (NF>0 && /\|/)) { print "__MALFORMED__" $0; next }
+    afterhdr && /^\|/ { print; next }                       # data row (after separator)
+    afterhdr && NF>0 && /\|/ { print "__MALFORMED__" $0 }    # data row missing leading pipe
   ' "$1"
 }
 
@@ -74,6 +84,9 @@ validate_register() {
       echo "FAIL: waiver gate '$gate' contains non-ASCII characters (possible homoglyph) — rejected"; vfail=1; continue
     fi
     g=$(gnorm "$gate")
+    if ! is_clean_gate "$g"; then
+      echo "FAIL: waiver gate '$gate' is not a clean single token (markup/comment/whitespace/extra tokens) — rejected"; vfail=1; continue
+    fi
     ng_hit=0
     for ng in $NONNEGOTIABLE; do [ "$g" = "$ng" ] && ng_hit=1; done
     if [ "$ng_hit" = "1" ]; then
@@ -146,6 +159,14 @@ selftest() {
   expect smuggle 1 "row containing Gate+Reason text still validated (expired) -> FAIL"
   mk nopipe 'secret-scan | x | @jdoe | 2099-01-01 | 2099-02-01 | y | @sec |'
   expect nopipe 1 "row missing leading pipe -> FAIL (not silently dropped)"
+  mk comment '| coverage<!--a-->secret-scan<!--b--> | x | @jdoe | 2099-01-01 | 2099-02-01 | y | @sec |'
+  expect comment 1 "html-comment-embedded gate -> FAIL (not normalized into allow-list)"
+  # no separator row: header present, data rows must NOT be silently dropped
+  printf '## Active waivers\n\n| Gate | Reason | Owner | Opened | Expires | Remediation plan | Ratified-by |\n| secret-scan | x | @jdoe | 2099-01-01 | 2099-02-01 | y | @sec |\n' > "$d/nosep"
+  expect nosep 1 "no separator row -> data flagged malformed -> FAIL"
+  # data row ABOVE the separator must not be ignored
+  printf '## Active waivers\n\n| Gate | Reason | Owner | Opened | Expires | Remediation plan | Ratified-by |\n| secret-scan | x | @jdoe | 2099-01-01 | 2099-02-01 | y | @sec |\n|--|--|--|--|--|--|--|\n' > "$d/databefore"
+  expect databefore 1 "data row above separator -> FAIL (not skipped)"
   # no register -> N/A pass
   if main "$d/does-not-exist.md" >/dev/null 2>&1; then echo "selftest PASS: no register -> N/A pass"; else echo "selftest FAIL: no register should N/A-pass"; st=1; fi
   [ "$st" = "0" ] && echo "waivers-valid --selftest: OK"
