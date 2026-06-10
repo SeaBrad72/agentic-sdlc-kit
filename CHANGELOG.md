@@ -3,6 +3,19 @@
 All notable changes to the Agentic SDLC Kit are recorded here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.33.0] - 2026-06-10
+
+Persona symmetry (Slice 9i, Tier 2 of the "Honest Assurance & Adoption Reach" arc). Closes the SDLC-personas finding (review 6/10): QA and Designer were named with "→ exit artifact" promises that dissolved. **MINOR** — additive templates + annotations + a completeness check; no new DoD requirement.
+
+### Added
+- **`templates/TEST-PLAN-TEMPLATE.md`** — QA's dedicated artifact (scope, levels, cases↔acceptance-criteria traceability, environments, entry/exit).
+- **`templates/UAT-SIGNOFF-TEMPLATE.md`** / **`templates/A11Y-SIGNOFF-TEMPLATE.md`** — auditable per-gate sign-off records (signer/date/gate/evidence/decision; the a11y one carries the WCAG 2.1 AA checklist + axe/Lighthouse evidence).
+- **`conformance/persona-artifacts.sh`** — completeness drift-guard (templates exist + named in the §2 persona table); `--selftest`. CI-gated.
+
+### Changed
+- **`DEVELOPMENT-PROCESS.md` §2 persona table annotated** dedicated-vs-shared (PO/QA/Designer own dedicated artifacts; DevOps/SRE works through the RUNBOOK) — the asymmetry is now explicit, not over-promised. §9 UAT gate and §5 Designer lens reference their sign-off records.
+- **`CLAUDE.md` DoD Accessibility line** names `A11Y-SIGNOFF` as its auditable evidence (no new requirement).
+
 ## [2.32.0] - 2026-06-10
 
 Stack-decision aid (Slice 9g, Tier 2 of the "Honest Assurance & Adoption Reach" arc). Closes the stack-undecided persona (review 5/10): the "⭐ key step" now has comparison material, and `incept` no longer silently defaults. **MINOR** — additive docs + a notice + a completeness check.
