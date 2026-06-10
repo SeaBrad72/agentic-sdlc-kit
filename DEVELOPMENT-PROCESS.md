@@ -53,7 +53,7 @@ The functions above are authoritative. **Personas are lenses on them** — an en
 | **Security owner** | Security owner | the security / ratification gate (§7, §13) | threat model in → gate pass / governed exception |
 | **Lead / Agent** | Lead / integrator, Builder | the whole loop | the board in → integrated, ratified work out |
 
-*Dedicated* = a template this persona owns in `templates/`; *shared* = the persona works through another artifact (no persona-specific template). The asymmetry is deliberate — not every lens needs its own template.
+Markers above: *dedicated* = a template this persona owns in `templates/`; *shared* = the persona works through another artifact (no persona-specific template). The unmarked core roles (Engineer, Security owner, Lead/Agent) likewise work through shared artifacts — the spec/PR, the security gate, and the board — not a persona-specific template. The asymmetry is deliberate: not every lens needs its own template.
 
 QA's UAT acceptance ties to the Dev→QA→UAT→Prod model (§9); Designer's a11y sign-off ties to the Definition-of-Done accessibility item.
 
