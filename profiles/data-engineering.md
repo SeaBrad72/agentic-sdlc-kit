@@ -7,6 +7,15 @@
 
 ---
 
+## Best for / Avoid when
+
+**Best for:** ETL/ELT, batch & stream pipelines, warehouse/lakehouse work.
+**Avoid when:** Interactive apps / request-serving APIs.
+
+Choosing a stack? Compare all profiles → [../docs/STACK-SELECTION.md](../docs/STACK-SELECTION.md).
+
+---
+
 ## 1. Toolchain
 - **Runtime:** Python 3.12+ · **Deps:** `uv` (lockfile `uv.lock`)
 - **Transform:** **dbt-core** (warehouse SQL) · **Orchestrate:** **Dagster** (asset-centric + asset checks)

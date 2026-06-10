@@ -7,6 +7,15 @@
 
 ---
 
+## Best for / Avoid when
+
+**Best for:** Large transactional enterprise services; mature JVM ecosystem; big teams.
+**Avoid when:** Cold-start-sensitive tiny serverless; quick throwaway scripts.
+
+Choosing a stack? Compare all profiles → [../docs/STACK-SELECTION.md](../docs/STACK-SELECTION.md).
+
+---
+
 ## 1. Toolchain
 - **Runtime:** JDK 21 (Temurin) · **Build/deps:** Maven via wrapper `./mvnw` (reproducible)
 - **Format/lint:** Spotless (format) + Checkstyle (lint) · **Types:** the compiler (`mvn compile` = type-checking)

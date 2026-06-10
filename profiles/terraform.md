@@ -7,6 +7,15 @@
 
 ---
 
+## Best for / Avoid when
+
+**Best for:** Infrastructure-as-code, cloud provisioning.
+**Avoid when:** Application logic — it provisions infra, it is not an app stack (pair with an app profile).
+
+Choosing a stack? Compare all profiles → [../docs/STACK-SELECTION.md](../docs/STACK-SELECTION.md).
+
+---
+
 ## 1. Toolchain
 - **Engine:** Terraform ≥1.6 (HCL); providers pinned via `.terraform.lock.hcl` (committed)
 - **Format/lint:** `terraform fmt` + **tflint** (provider ruleset) · **Validate:** `terraform validate`

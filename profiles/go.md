@@ -7,6 +7,15 @@
 
 ---
 
+## Best for / Avoid when
+
+**Best for:** Networked services, CLIs, high-concurrency, single-binary cloud infra.
+**Avoid when:** Rich desktop GUIs; heavy data-science/numerics.
+
+Choosing a stack? Compare all profiles → [../docs/STACK-SELECTION.md](../docs/STACK-SELECTION.md).
+
+---
+
 ## 1. Toolchain
 - **Runtime:** Go 1.22+ · **Deps:** Go modules (`go.mod`/`go.sum` committed)
 - **Format/lint:** `gofmt` + `golangci-lint` · **Types:** the compiler (`go vet` / `go build`)

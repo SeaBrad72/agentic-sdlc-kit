@@ -7,6 +7,15 @@
 
 ---
 
+## Best for / Avoid when
+
+**Best for:** Data, ML, scripting, APIs, automation, glue; rapid development.
+**Avoid when:** Perf-critical hot loops without native extensions; mobile front-ends.
+
+Choosing a stack? Compare all profiles → [../docs/STACK-SELECTION.md](../docs/STACK-SELECTION.md).
+
+---
+
 ## 1. Toolchain
 - **Runtime:** Python 3.12+ · **Package/deps:** `uv` (lockfile `uv.lock` committed; exact pins for prod)
 - **Format/lint:** `ruff` (format + lint; replaces black/isort/flake8) · **Types:** `mypy` (strict)

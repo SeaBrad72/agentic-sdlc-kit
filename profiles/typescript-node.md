@@ -7,6 +7,15 @@
 
 ---
 
+## Best for / Avoid when
+
+**Best for:** Full-stack web, APIs, SPAs, serverless; large JS/TS ecosystem; fast iteration.
+**Avoid when:** CPU-bound numeric/parallel work; hard real-time; tight memory.
+
+Choosing a stack? Compare all profiles → [../docs/STACK-SELECTION.md](../docs/STACK-SELECTION.md).
+
+---
+
 ## 1. Toolchain
 - **Runtime:** Node.js 24 LTS · **Language:** TypeScript (strict mode)
 - **Package manager:** npm (lockfile committed; exact versions for production apps)

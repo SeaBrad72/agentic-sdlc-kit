@@ -7,6 +7,15 @@
 
 ---
 
+## Best for / Avoid when
+
+**Best for:** Model training/serving, experiments, eval-driven development.
+**Avoid when:** Plain web APIs with no ML component.
+
+Choosing a stack? Compare all profiles → [../docs/STACK-SELECTION.md](../docs/STACK-SELECTION.md).
+
+---
+
 ## 1. Toolchain
 - **Runtime:** Python 3.12+ · **Deps:** `uv` (lockfile `uv.lock`; exact pins for prod)
 - **Format/lint:** `ruff` (+ `nbqa ruff` for notebooks) · **Types:** `mypy`
