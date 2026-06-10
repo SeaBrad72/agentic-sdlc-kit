@@ -13,20 +13,22 @@
 set -eu
 
 is_num() { printf '%s' "$1" | grep -Eq '^[0-9]+(\.[0-9]+)?$'; }
+# a coverage percent is a number in [0,100]
+is_pct() { is_num "$1" && awk -v n="$1" 'BEGIN{exit !(n>=0 && n<=100)}'; }
 # ge A B -> exit 0 if A >= B (decimal-tolerant)
 ge() { awk -v a="$1" -v b="$2" 'BEGIN{exit !(a>=b)}'; }
 gt() { awk -v a="$1" -v b="$2" 'BEGIN{exit !(a>b)}'; }
 
 ratchet() {
   cur=$1; base_file=$2
-  if ! is_num "$cur"; then echo "coverage-ratchet: current coverage '$cur' is not a number" >&2; return 2; fi
+  if ! is_pct "$cur"; then echo "coverage-ratchet: current coverage '$cur' is not a percent in [0,100]" >&2; return 2; fi
   if [ ! -f "$base_file" ]; then
     printf '%s\n' "$cur" > "$base_file"
     echo "coverage-ratchet: seeded baseline $cur in $base_file (first run) — OK. Commit this file; raise it as coverage improves."
     return 0
   fi
   base=$(head -n1 "$base_file" | tr -d '[:space:]')
-  if ! is_num "$base"; then echo "coverage-ratchet: baseline '$base' in $base_file is not a number" >&2; return 2; fi
+  if ! is_pct "$base"; then echo "coverage-ratchet: baseline '$base' in $base_file is not a percent in [0,100]" >&2; return 2; fi
   if ge "$cur" "$base"; then
     if gt "$cur" "$base"; then
       echo "coverage-ratchet: OK — $cur% ≥ baseline $base% (improved). Bump the floor: echo $cur > $base_file"
@@ -53,6 +55,7 @@ selftest() {
   printf '60\n' > "$d/b"; exp 59.9 "$d/b" 1 "below baseline -> FAIL"
   # bad input
   exp abc "$d/b" 2 "non-numeric current -> error(2)"
+  exp 150 "$d/b" 2 "out-of-range (>100) current -> error(2)"
   [ "$st" = "0" ] && echo "coverage-ratchet --selftest: OK"
   return "$st"
 }
