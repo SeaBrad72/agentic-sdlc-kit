@@ -14,7 +14,8 @@ set -eu
 
 NAME="${INCEPT_NAME:-}"; OWNER="${INCEPT_INTENT_OWNER:-}"
 STACK="${INCEPT_STACK:-typescript-node}"; BACKLOG="${INCEPT_BACKLOG:-md}"; INTERACTIVE=1
-STACK_EXPLICIT=0
+# A stack chosen via INCEPT_STACK is deliberate too — only an un-set stack is a silent default.
+[ -n "${INCEPT_STACK:-}" ] && STACK_EXPLICIT=1 || STACK_EXPLICIT=0
 CI="${INCEPT_CI:-github}"
 # Canonical named backlog backends (one source of truth — conformance/backlog-adapters.sh
 # asserts this set agrees with DEVELOPMENT-PROCESS.md §6 and docs/work-tracking/adapters.md).
