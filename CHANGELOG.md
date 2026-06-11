@@ -3,6 +3,21 @@
 All notable changes to the Agentic SDLC Kit are recorded here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.41.0] - 2026-06-11
+
+Egress-allowlist reference + conformance (Slice 11b — Containment arc, the honest W2). Ships a default-deny network-egress reference and verifies the platform control is declared + attested-wired. **MINOR** — conditional three-state check + reference docs; no new universal gate.
+
+### Added
+- **`docs/operations/egress-control.md`** — default-deny network-egress reference (k8s `NetworkPolicy` paved road + cloud-egress-firewall / forward-proxy patterns + how to attest).
+- **`conformance/egress-policy.sh`** — three-state check (PASS declared+attested · UNVERIFIED declared-not-attested · FAIL networked-undeclared · N/A no-surface), escalating UNVERIFIED→FAIL under CI/`--require`; `--selftest` corpus; CI-wired. Pairs with `conformance/egress-readiness.md` (Auto vs Manual).
+- **RUNBOOK** egress attestation line (`templates/RUNBOOK-TEMPLATE.md`).
+
+### Changed
+- Compliance crosswalk + audit-evidence: egress row **Org-owned → Kit-assisted** (reference shipped + wiring verified). `platform-safety-boundary.md` notes egress is now reference-shipped + verify-wired.
+
+### Honesty
+- The check **never inspects traffic** — PASS = declared + attested, not "packets are dropped" (a Manual row). Interpreter/DNS/build-tool exfil is impossible to gate in-process (A8 Part 2); enforcement stays platform-owned. UNVERIFIED is a first-class non-pass.
+
 ## [2.40.0] - 2026-06-11
 
 MCP capability gate (Slice 11a — Containment arc). Closes W3: the guard now sees MCP tool calls and denies un-allowlisted destructive/egress MCP capabilities by default. **MINOR** — additive in-kit control + a portable contract; no universal gate added.
