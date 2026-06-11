@@ -75,3 +75,9 @@ A new subcommand that loads a policy file (default `.claude/mcp-policy.json`) an
 - A freshly-adopted project is **protected against un-allowlisted destructive MCP calls by default** — W3 closed without configuration; projects allowlist what they need.
 - The gate is honest about its ceiling (name-reveals-capability; obfuscation + egress remain the platform's job), so it does not re-introduce false assurance.
 - A future MCP server with an unusual action vocabulary may hit a false-positive deny → the project adds an allowlist/override entry (deny-by-default favors safety).
+
+## Post-review hardening (security-owner lens, 2026-06-11)
+The independent security review returned **SHIP-WITH-NITS** (no exploitable bypass). Two findings were folded into 11a before merge:
+- **Compound-name evasion (MED→closed in-kit):** the original heuristic matched only the action's *leading* verb, so a read prefix masked a destructive tail (`get_and_delete`, `fetchAndExport` classified read). The classifier now **tokenizes** the action (camelCase→snake, lowercased) and downgrades to destructive if **any** token is a destructive verb — while whole-token matching keeps legit read compounds allowed (`list_deployments`≠`deploy`). This also makes non-verb lookalikes (`getter`, `counter`) fail-closed. A *renamed* action (`get_data` that secretly exfiltrates) remains uncatchable by name and stays the platform boundary's job — the disclosed ceiling is unchanged.
+- **Green-while-dark (LOW→closed):** `conformance/mcp-policy.sh` now also asserts the `settings.json` PreToolUse matcher routes `mcp__*`, so classification can't pass while the live hook is silently disconnected.
+- **Server-wildcard breadth (LOW):** documented — `mcp__server__*` admits every tool on that server; the policy `_comment` and `runtime-guards.md` advise preferring exact-tool allows.

@@ -25,9 +25,27 @@ deny  "fail-closed verb"   "mcp__weird__frobnicate"        "" ""
 # allow read-only by default
 allow "db read"            "mcp__postgres__query"          "" ""
 allow "list"               "mcp__github__list_issues"      "" ""
+# read-prefixed compounds: legit read nouns stay read; destructive verb tokens downgrade to deny
+allow "compound read noun" "mcp__deploy__list_deployments" "" ""
+allow "get_updates noun"   "mcp__feed__get_updates"        "" ""
+deny  "read+destructive"   "mcp__fs__get_and_delete"       "" ""
+deny  "camelCase exfil"    "mcp__rep__fetchAndExport"      "" ""
+deny  "camelCase getDelete" "mcp__fs__getDelete"           "" ""
+# non-verb lookalikes are not read VERBS -> fail-closed (getter != get, counter != count)
+deny  "getter not a verb"  "mcp__x__getter"                "" ""
+deny  "counter not a verb" "mcp__x__counter"               "" ""
 # allowlist + wildcard + override escape hatches
 allow "allowlisted exact"  "mcp__filesystem__delete_file"  "mcp__filesystem__delete_file" ""
 allow "allowlisted wild"   "mcp__filesystem__write_file"   "mcp__filesystem__*" ""
 allow "override to read"   "mcp__reports__export_csv"      "" "mcp__reports__export_csv=read"
 
-[ "$fail" -eq 0 ] && { echo "OK: MCP capability gate classifies correctly"; exit 0; } || { echo "FAIL: mcp-policy"; exit 1; }
+# the gate must be WIRED, not just correct: assert the Claude PreToolUse matcher routes mcp__*.
+# Without this, classification could pass while the live hook never sees MCP calls (green-while-dark).
+SETTINGS="${KIT_GUARD_SETTINGS:-.claude/settings.json}"
+if [ -f "$SETTINGS" ] && grep -q 'PreToolUse' "$SETTINGS" && grep -Eq '"matcher":[[:space:]]*"[^"]*mcp__' "$SETTINGS"; then
+  echo "PASS wired: settings.json PreToolUse matcher routes mcp__*"
+else
+  echo "FAIL (gate dark): settings.json PreToolUse matcher does not route mcp__* ($SETTINGS)"; fail=1
+fi
+
+[ "$fail" -eq 0 ] && { echo "OK: MCP capability gate classifies correctly and is wired"; exit 0; } || { echo "FAIL: mcp-policy"; exit 1; }
