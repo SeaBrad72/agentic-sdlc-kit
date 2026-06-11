@@ -191,9 +191,13 @@ guard_check_command() {
 #   <tool>      a Claude MCP tool name, mcp__<server>__<action> (action = segment after the last __)
 #   <allowlist> newline list of exact mcp__server__action OR mcp__server__* wildcards (explicit permit)
 #   <overrides> newline list of "mcp__server__action=class" (reclassify; class 'read'/'data.read' => allow)
-# Decision: allowlist > override-class > action-verb heuristic > fail-closed deny.
-# Honest ceiling: classifies by what the NAME reveals; obfuscated/renamed actions and real egress are
-# NOT caught here (egress is the platform allowlist — docs/enterprise/platform-safety-boundary.md).
+# Decision: allowlist > override-class > tokenized action-verb heuristic > fail-closed deny.
+#   The heuristic tokenizes the action (camelCase->snake, lowercased): the first token must be a
+#   read verb to allow, and ANY destructive verb token downgrades to deny (so get_and_delete /
+#   fetchAndExport deny; list_deployments / get_updates stay read - the noun is not the verb).
+# Honest ceiling: classifies by what the NAME reveals; a renamed action (get_data that exfiltrates),
+# a server wildcard that admits a destructive tool, and real egress are NOT caught here
+# (egress is the platform allowlist — docs/enterprise/platform-safety-boundary.md).
 guard_check_mcp() {
   t=$1; al=$2; ov=$3
   # 1. explicit allowlist: exact tool, or its server wildcard (mcp__server__*)
@@ -203,13 +207,19 @@ guard_check_mcp() {
   act=${t##*__}
   cls=$(printf '%s\n' "$ov" | while IFS='=' read -r k v; do [ "$k" = "$t" ] && { printf '%s' "$v"; break; }; done || true)
   if [ -z "$cls" ]; then
-    if printf '%s' "$act" | grep -Eiq '^(read|get|list|search|query|fetch|describe|show|view|find|count)([_-]|[A-Z]|$)'; then
-      cls=read
-    elif printf '%s' "$act" | grep -Eiq '^(delete|drop|destroy|remove|truncate|reset|write|update|create|insert|upsert|patch|put|set|upload|publish|deploy|send|post|email|notify|apply|merge|push|revoke|rotate|export|download)([_-]|[A-Z]|$)'; then
-      cls=destructive
-    else
-      cls=unknown
-    fi
+    # Tokenize the action: split camelCase to snake, lowercase, turn _/- into spaces.
+    # Whole-token verb matching keeps legit compounds read (list_deployments, get_updates -
+    # 'deployments'/'updates' are not the verbs 'deploy'/'update') while downgrading a read-
+    # prefixed action that carries a destructive verb token (get_and_delete, fetchAndExport).
+    rverbs=' read get list search query fetch describe show view find count '
+    dverbs=' delete drop destroy remove truncate reset write update create insert upsert patch put set upload publish deploy send post email notify apply merge push revoke rotate export download '
+    norm=$(printf '%s' "$act" | sed 's/\([a-zA-Z0-9]\)\([A-Z]\)/\1_\2/g' | tr 'A-Z_-' 'a-z  ')
+    first=${norm%% *}
+    cls=unknown
+    case "$rverbs" in *" $first "*) cls=read ;; esac
+    for tok in $norm; do
+      case "$dverbs" in *" $tok "*) cls=destructive; break ;; esac
+    done
   fi
   case "$cls" in
     read|data.read) return 0 ;;
