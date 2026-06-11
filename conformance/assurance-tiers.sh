@@ -15,16 +15,22 @@ check_file() {
   if [ ! -f "$cw" ]; then echo "FAIL: crosswalk not found ($cw)"; return 1; fi
   fail=0
   # assert_tier <row-label-regex> <expected-tier> <human-name>
+  # Match only a TABLE ROW (starts with '|', label in the FIRST cell) so a prose mention of the
+  # control name can't be picked instead of the row; then compare the LAST table cell (the
+  # Responsibility column) EXACTLY — never a substring anywhere in the row — so a stale tier word
+  # left in the row's prose can't mask a revert. Both are required for the guard to be un-gameable.
   assert_tier() {
     _lab="$1"; _tier="$2"; _name="$3"
-    _row=$(grep -iE "$_lab" "$cw" | head -1 || true)
+    _row=$(grep -iE "^\|[^|]*$_lab" "$cw" | head -1 || true)
     if [ -z "$_row" ]; then
       echo "FAIL: no crosswalk row for $_name (/$_lab/)"; fail=1; return 0
     fi
-    if printf '%s' "$_row" | grep -qF "$_tier"; then
+    # extract the final '| ... |' cell and trim surrounding whitespace
+    _last=$(printf '%s' "$_row" | sed 's/.*|\([^|]*\)|[[:space:]]*$/\1/; s/^[[:space:]]*//; s/[[:space:]]*$//')
+    if [ "$_last" = "$_tier" ]; then
       echo "PASS: $_name -> $_tier"
     else
-      echo "FAIL: $_name must be '$_tier' — its crosswalk row carries a different tier (drift / silent revert?)"; fail=1
+      echo "FAIL: $_name must be '$_tier' — its Responsibility cell is '$_last' (drift / silent revert?)"; fail=1
     fi
   }
   assert_tier 'MCP capability gate'        'Kit-enforced' 'MCP capability gate'
@@ -33,7 +39,7 @@ check_file() {
   assert_tier 'scoped short-lived tokens'  'Kit-assisted' 'scoped short-lived tokens'
   assert_tier 'separate prod credentials'  'Kit-assisted' 'separate prod credentials'
   if [ "$fail" -ne 0 ]; then echo "assurance-tiers: FAIL ($cw)"; return 1; fi
-  echo "assurance-tiers: OK — arc controls stated at their real tier ($cw)"
+  echo "assurance-tiers: OK — arc controls stated at their expected tier ($cw)"
   return 0
 }
 
@@ -62,8 +68,35 @@ selftest() {
   grep -v 'MCP capability gate' "$good" > "$miss"
   if check_file "$miss" >/dev/null 2>&1; then echo "selftest FAIL: missing MCP row should FAIL"; st=1; else echo "selftest PASS: missing MCP row -> FAIL"; fi
 
+  # un-gameable #1: row reverted to Org-owned but a stale 'Kit-assisted' left in the row's prose
+  # must NOT false-pass (we compare the final cell, not a substring).
+  prose_in_row="$base/prose-in-row.md"
+  {
+    printf '%s\n' "$hdr"
+    printf '| Agent/runtime MCP capability gate (deny-by-default) | x | x | x | x | ev | Kit-enforced |\n'
+    printf '| Agent/runtime platform boundary · network-egress allowlist | x | x | x | x | once aspired to Kit-assisted | Org-owned |\n'
+    printf '| Agent/runtime platform boundary · sandboxed filesystem | x | x | x | x | ev | Kit-assisted |\n'
+    printf '| Agent/runtime platform boundary · scoped short-lived tokens | x | x | x | x | ev | Kit-assisted |\n'
+    printf '| Agent/runtime platform boundary · separate prod credentials (SoD) | x | x | x | x | ev | Kit-assisted |\n'
+  } > "$prose_in_row"
+  if check_file "$prose_in_row" >/dev/null 2>&1; then echo "selftest FAIL: stale tier in row-prose + reverted cell should FAIL"; st=1; else echo "selftest PASS: stale tier in row-prose -> FAIL (final cell wins)"; fi
+
+  # un-gameable #2: a prose line ABOVE the table naming the control at the right tier must NOT
+  # mask a reverted table row (we only match lines starting with '|').
+  prose_above="$base/prose-above.md"
+  {
+    printf 'Note: the network-egress allowlist remains Kit-assisted in our intent.\n'
+    printf '%s\n' "$hdr"
+    printf '| Agent/runtime MCP capability gate (deny-by-default) | x | x | x | x | ev | Kit-enforced |\n'
+    printf '| Agent/runtime platform boundary · network-egress allowlist | x | x | x | x | ev | Org-owned |\n'
+    printf '| Agent/runtime platform boundary · sandboxed filesystem | x | x | x | x | ev | Kit-assisted |\n'
+    printf '| Agent/runtime platform boundary · scoped short-lived tokens | x | x | x | x | ev | Kit-assisted |\n'
+    printf '| Agent/runtime platform boundary · separate prod credentials (SoD) | x | x | x | x | ev | Kit-assisted |\n'
+  } > "$prose_above"
+  if check_file "$prose_above" >/dev/null 2>&1; then echo "selftest FAIL: prose-above-table should not mask reverted row"; st=1; else echo "selftest PASS: prose above table -> FAIL (table row wins)"; fi
+
   if [ "$st" -ne 0 ]; then echo "assurance-tiers --selftest: FAIL" >&2; return 1; fi
-  echo "assurance-tiers --selftest: OK (correct/reverted/missing all behaved; fixtures left in $base)"
+  echo "assurance-tiers --selftest: OK (correct/reverted/missing/prose-in-row/prose-above all behaved; fixtures left in $base)"
   return 0
 }
 
