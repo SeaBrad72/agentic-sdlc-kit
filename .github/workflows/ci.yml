@@ -101,6 +101,8 @@ jobs:
         run: sh conformance/containment-ready.sh --selftest
       - name: Assurance-tiers drift-guard self-test (crosswalk tiers)
         run: sh conformance/assurance-tiers.sh --selftest
+      - name: Eval-ready self-test (AI-feature eval discipline)
+        run: sh conformance/eval-ready.sh --selftest
       - name: DORA collector smoke (executes + degrades cleanly)
         run: sh scripts/dora.sh --selftest
       - name: branch-protection three-state self-test (no silent pass)
