@@ -32,7 +32,7 @@
 - **Prompt-injection / AI abuse** *(if an AI feature)*: [untrusted-input → model guardrails, output validation] — N/A if no model
 
 ## Agentic-AI lens (if an autonomous / tool-using agent) — OWASP Agentic Top 10
-*Mark **N/A — not an agent** if the AI feature does not plan/act with tools. Full coverage map: `docs/enterprise/ai-governance-crosswalk.md`.*
+*Mark **N/A — not an agent** if the AI feature does not plan/act with tools. The rows below are a curated subset — the full ASI01–10 coverage map is in `docs/enterprise/ai-governance-crosswalk.md`.*
 
 | Agentic risk | Considered? | Mitigation (link the control) |
 |---|---|---|
