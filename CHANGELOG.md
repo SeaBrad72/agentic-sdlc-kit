@@ -3,6 +3,18 @@
 All notable changes to the Agentic SDLC Kit are recorded here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.51.0] - 2026-06-11
+
+Safe Non-Prod arc, Slice SNP-1 — cross-stack test-data management. Closes the "never use prod data unsanitized — but *how*?" gap with a stack-neutral pattern + a light conditional check. The foundation preview environments (SNP-2) will seed from. **MINOR** — guidance + conditional check + RUNBOOK record.
+
+### Added
+- **`docs/operations/test-data-management.md`** — stack-neutral patterns: the **classify-then-handle** rule (public ok · PII/children's → synthetic or masked, never raw prod), synthetic generation, anonymization/masking (mask-on-extract), deterministic seeds, and the anti-patterns.
+- **`conformance/test-data-ready.sh`** + **`test-data-readiness.md`** — conditional, fail-closed check (binds on a **data surface**: DB url in `.env.example`, a migrations/prisma/alembic dir, or a DB service in compose) asserting the RUNBOOK §2 records the test-data approach (not the placeholder); N/A for pure-compute projects. Wired into `verify.sh` (now 7 doc-checks) + CI.
+- **`templates/RUNBOOK-TEMPLATE.md`** §2 records the test-data approach; **`DEVELOPMENT-STANDARDS.md`** §7 gains a test-data principle.
+
+### Honesty
+- A green check proves the approach is **recorded**, never that the data is *actually* synthetic/masked or that no prod data leaked — those stay Manual rows. Conditional + proportional: non-data projects → N/A (zero overhead). US-aware: PII / children's data → masked or synthetic (COPPA-grade).
+
 ## [2.50.0] - 2026-06-11
 
 Responsible-AI arc, Slice RAI-3 — AI-governance crosswalk + agentic-threat lens. **Closes the Responsible-AI arc.** **US-first**; **MINOR** — documentation only, no gate/script.
