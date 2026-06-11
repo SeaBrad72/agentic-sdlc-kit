@@ -43,6 +43,19 @@ Mapping the **OWASP Top 10 for Agentic Applications (Dec 2025)** against shipped
 5. **Greenfield + brownfield drop-in.** Docs/templates/conditional-checks only — **no code dependency, no runtime install**. Brownfield adopters get the crosswalk to map existing AI features.
 6. **Honesty invariant (arc-wide).** A green check proves the governance is **declared / classified / recorded**, never that the AI is **actually fair, compliant, or safe**. Risk correctness, fairness results, disclosure-shipped, and regulatory conformity stay **human-ratified (security/compliance owner) Manual rows**. "Consequential" / "high-risk use" is **not honestly auto-detectable** — the artifact is human-declared; the check verifies presence + that the classification was made, not that it is *correct*.
 
+## Good-citizen guardrails (opt-in best practices distilled from EU AI Act + US state law)
+
+The substantive technical requirements of the EU AI Act (Arts. 10/12/14/15/50/72) are ~all good engineering practice the kit already embodies; the EU's *friction* is the certification bureaucracy on top. So we **lean into the good practice and skip the bureaucracy**. These are **recommended defaults, not gates** — guidance in the templates, N/A-able, **never enforced by the fail-closed `responsible-ai-ready` check** (which only verifies card-present + classification-made + oversight-named). The four genuinely-new additions are one-time declarations, not recurring work:
+
+| Good-citizen line | US-first source | Where it lands |
+|---|---|---|
+| **Prohibited-use acknowledgment** (not designed for unlawful discrimination / self-harm encouragement / CSAM / deception) | TX TRAIGA · FTC UDAP | RAI-1 System Card (one-time checkbox) |
+| **Data minimization + consent for AI inputs** (esp. children's data) | COPPA · CA · EU Art. 10 | RAI-1 System Card data-flows section |
+| **Human review / appeal path** (when consequential-decision = yes) | CO SB 26-189 · CA ADMT · EU Art. 14 | RAI-1 System Card oversight section |
+| **AI-incident naming + feedback to evals** (harmful output / jailbreak / bias incident → red-team/eval) | CA SB 53 incident-report principle · FTC | RAI-2 (extend the existing postmortem/incident process) |
+
+Already-covered good practice (kept, not re-added): human oversight (Art. 14), user-facing AI disclosure + content labeling (Art. 50 / CA SB 942 / C2PA), fairness/disparate-impact test (EEOC / NYC LL144 / Art. 10), accuracy/robustness/adversarial testing (Art. 15 → eval gate + agentic-threat lens), lifecycle logging/traceability (Art. 12 → audit), post-deployment monitoring/drift (Art. 72 → observability + ML drift).
+
 ---
 
 ## Slice RAI-1 — AI System Card + risk classification · (vMINOR)
@@ -58,8 +71,9 @@ The core declarative artifact: a lightweight **AI System Card** (a US-anchored A
     - **Prohibited use?** (unlawful discrimination, self-harm encouragement, CSAM) → **hard stop** (TX TRAIGA; FTC deception/UDAP).
     - **Optional EU overlay** — EU AI Act tier (prohibited/high/limited/minimal) *only if the adopter has EU market exposure*; otherwise mark **N/A — no EU exposure**.
   - **Intended use / out-of-scope use** — and explicitly prohibited uses.
-  - **Data flows + consent** — what data reaches the model; PII / children's data; consent basis; what leaves the trust boundary (links to egress/containment).
-  - **Human oversight** — the override/halt mechanism; links to "agents propose, humans ratify" + ratification RBAC. (Good practice + supports the consequential-decision laws; not framed as an EU mandate.)
+  - **Prohibited-use acknowledgment** *(good-citizen, one-time)* — a checkbox attestation that the feature is **not designed for** unlawful discrimination, self-harm encouragement, CSAM, or deception (TX TRAIGA / FTC UDAP). Not gated; recommended default.
+  - **Data flows + consent** — what data reaches the model; PII / children's data; consent basis; what leaves the trust boundary (links to egress/containment). *Good-citizen line:* **data minimization** for AI inputs, esp. children's data (COPPA).
+  - **Human oversight** — the override/halt mechanism; links to "agents propose, humans ratify" + ratification RBAC. *Good-citizen line (when consequential-decision = yes):* a documented **human review / appeal path** (CO SB 26-189 / CA ADMT). (Good practice + supports the consequential-decision laws; not framed as an EU mandate.)
   - **Guardrails** — links the *existing* controls (prompt-injection defense, MCP policy, egress, containment, eval gate) rather than restating them.
   - **Known limitations + failure modes.**
   - **Sign-off** — security/compliance owner (auditable; mirrors A11Y-SIGNOFF / THREAT-MODEL).
@@ -96,8 +110,11 @@ US drivers: **California SB 942 / AB 2013** (AI transparency + provenance), stat
 - **`templates/AI-TRANSPARENCY-SIGNOFF-TEMPLATE.md`** (new, mirrors A11Y-SIGNOFF) — discloses: is AI interaction disclosed to users (esp. chatbots)? is AI-generated/synthetic content labeled (provenance / **C2PA content credentials** where applicable)? deepfake/synthetic-media labeling? **Especially material for children's-audience content.** Security/compliance-owner sign-off. Template-only (disclosure-shipped is a human-verified fact).
 - Wired into the §7 gate set (conditional on AI feature with a user-facing output surface) + the System Card's transparency link.
 
+### C. AI-incident feedback *(good-citizen, light)*
+US driver: CA SB 53 incident-report principle · FTC. Extend the existing incident/postmortem process (`templates/POSTMORTEM-TEMPLATE.md` + STANDARDS incident response) to **name AI-specific incidents** — harmful output, jailbreak/prompt-injection success, bias incident, model regression — with a **feedback loop to the eval/red-team set** (the prod-miss → eval-case loop the eval gate already encourages). A one-line addition to the postmortem template's category list + a STANDARDS pointer; no new artifact, no gate.
+
 ### Wiring
-- §7 gate row (AI transparency, conditional); `DEVELOPMENT-STANDARDS.md` AI-security pointer; templates list; README/audit rows. `verify.sh`/CI unaffected by the template-only transparency piece; the fairness piece rides the existing eval wiring.
+- §7 gate row (AI transparency, conditional); `DEVELOPMENT-STANDARDS.md` AI-security pointer; templates list; README/audit rows. `verify.sh`/CI unaffected by the template-only transparency piece; the fairness piece rides the existing eval wiring. The AI-incident piece is a POSTMORTEM-template + STANDARDS edit.
 
 ---
 
