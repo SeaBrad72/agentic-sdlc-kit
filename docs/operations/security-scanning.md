@@ -33,6 +33,15 @@ this (`N component(s) have undetermined licenses … see per-stack upgrade`). It
 **necessary, not sufficient** — it clears declared licenses against policy; it is not a legal
 clearance.
 
+**SPDX expressions & multi-entry licenses (the policy, stated).** The check evaluates **every**
+license entry on a component (not just the first) and splits SPDX expressions on `AND` / `OR` /
+parentheses into tokens. It flags the component if **any** token is denylisted — deliberately
+conservative: `Apache-2.0 AND GPL-3.0` flags (every `AND` operand binds), **and so does
+`MIT OR GPL-3.0`** even though a permissive option exists. A flagging-for-review gate errs toward
+surfacing, never hiding a copyleft obligation; if an `OR`-permissive alternative legitimately
+clears it, record that in review (or adjust `--policy`). Weak-copyleft `LGPL` is **not** denied by
+default (the anchor is `^(AGPL|GPL|…)`).
+
 ### Per-stack upgrade ladder (higher fidelity — contract-preserving)
 
 When you need stronger license detection, replace the default implementation with your stack's

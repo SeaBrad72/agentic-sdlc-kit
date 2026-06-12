@@ -33,14 +33,26 @@ deny_regex() {
 }
 
 # analyze <sbom> <deny-regex>: emits a summary JSON {violations:[{name,lic}], undetermined, total}.
+# Conservative for a flagging gate: collects EVERY license entry on a component (not just
+# licenses[0]) and splits SPDX expressions on parens / AND / OR into tokens; a component is a
+# VIOLATION if ANY token is denylisted (so `A AND GPL`, `MIT OR GPL`, multi-entry arrays, and
+# parenthesised expressions all flag — err toward surfacing, never hide a copyleft obligation).
 analyze() {
   jq --arg deny "$2" '
-    [ .components[]? | {
-        name: (.name // "?"),
-        lic:  ( (.licenses[0]?.license.id // .licenses[0]?.license.name // .licenses[0]?.expression) // "NOASSERTION" )
-      } ] as $c
-    | { violations: [ $c[] | select(.lic | test($deny)) ],
-        undetermined: ([ $c[] | select(.lic == "NOASSERTION") ] | length),
+    def flat($s): ($s | gsub("[()]"; " ") | split("[[:space:]]+"; "")
+                   | map(select(length > 0 and . != "AND" and . != "OR")));
+    [ .components[]?
+      | { name: (.name // "?"),
+          lics: [ .licenses[]? | (.license.id // .license.name // .expression) | select(. != null) ] }
+      | . + { toks: ([ .lics[] | flat(.) ] | add // []) }
+      | . + { status:
+          ( if (.lics | length) == 0 then "undetermined"
+            elif (.toks | length) > 0 and ([ .toks[] | select(. != "NOASSERTION") ] | length) == 0 then "undetermined"
+            elif ([ .toks[] | select(test($deny)) ] | length) > 0 then "violation"
+            else "ok" end ) }
+    ] as $c
+    | { violations: [ $c[] | select(.status == "violation") | { name, lic: (.toks | join(" ")) } ],
+        undetermined: ([ $c[] | select(.status == "undetermined") ] | length),
         total: ($c | length) }
   ' "$1"
 }
@@ -48,12 +60,16 @@ analyze() {
 run() {
   [ -n "$SBOM" ] || { echo "license-check: --sbom <file> required" >&2; exit 2; }
   [ -f "$SBOM" ] || { echo "license-check: SBOM not found: $SBOM" >&2; exit 2; }
+  # Fail closed on input that isn't a CycloneDX SBOM — a license gate that "passes" because it
+  # couldn't read its input is worse than useless. (Non-JSON or valid-JSON-without-.components.)
+  jq -e 'has("components")' "$SBOM" >/dev/null 2>&1 || { echo "license-check: not a CycloneDX SBOM (no .components) — $SBOM" >&2; exit 2; }
   _deny=$(deny_regex)
   _sum=$(analyze "$SBOM" "$_deny") || { echo "license-check: could not parse SBOM (not CycloneDX JSON?)" >&2; exit 2; }
   _v=$(printf '%s' "$_sum" | jq '.violations | length')
   _u=$(printf '%s' "$_sum" | jq '.undetermined')
   _t=$(printf '%s' "$_sum" | jq '.total')
   printf 'license-check: %s component(s) scanned · %s policy violation(s) · %s undetermined\n' "$_t" "$_v" "$_u"
+  [ "$_t" -eq 0 ] && printf '  WARN: 0 components in the SBOM — an empty scan is not a clearance (check gate-sbom ran).\n'
   if [ "$_v" -gt 0 ]; then
     printf '%s' "$_sum" | jq -r '.violations[] | "  VIOLATION: \(.name) — \(.lic) (denylisted)"'
   fi
@@ -73,10 +89,12 @@ selftest() {
   fx="$(dirname "$0")/fixtures/sbom/sample-cyclonedx.json"
   _deny="$DEFAULT_DENY"
   out=$(analyze "$fx" "$_deny")
-  [ "$(printf '%s' "$out" | jq '.violations | length')" = "1" ] || { echo "selftest FAIL: expected 1 violation (GPL)"; st_fail=1; }
-  [ "$(printf '%s' "$out" | jq -r '.violations[0].name')" = "beta" ] || { echo "selftest FAIL: beta should be the violation"; st_fail=1; }
+  _names=$(printf '%s' "$out" | jq -c '[.violations[].name] | sort')
+  # 3 violations: beta (plain GPL), epsilon (Apache AND GPL — conjunctive), zeta (multi-entry MIT+GPL)
+  [ "$(printf '%s' "$out" | jq '.violations | length')" = "3" ] || { echo "selftest FAIL: expected 3 violations (got $(printf '%s' "$out" | jq '.violations|length'))"; st_fail=1; }
+  [ "$_names" = '["beta","epsilon","zeta"]' ] || { echo "selftest FAIL: violations should be beta/epsilon/zeta, got $_names"; st_fail=1; }
   [ "$(printf '%s' "$out" | jq '.undetermined')" = "1" ] || { echo "selftest FAIL: expected 1 undetermined (gamma)"; st_fail=1; }
-  # LGPL (delta) must NOT be flagged — anchored regex excludes weak copyleft
+  # LGPL (delta) must NOT be flagged — anchored regex excludes weak copyleft (H1/H2 regression-lock)
   [ "$(printf '%s' "$out" | jq -r '[.violations[].name] | index("delta")')" = "null" ] || { echo "selftest FAIL: LGPL delta wrongly flagged"; st_fail=1; }
   # end-to-end exit code: default run over the fixture FAILs (GPL present)
   # Use a subshell with explicit globals to avoid POSIX prefix-assignment scoping issues

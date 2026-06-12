@@ -76,9 +76,9 @@ jobs:
 
       - name: SAST (Semgrep)
         id: gate-sast
-        uses: returntocorp/semgrep-action@v1
-        with:
-          config: auto
+        # `run:` (not a marketplace action) — nothing to SHA-pin, satisfies action-pinning.sh.
+        # `--error` makes findings fail the gate; tune `--config` to a pinned ruleset for prod.
+        run: pipx run semgrep --config auto --error
 
       - name: License policy (over the SBOM)
         id: gate-license
