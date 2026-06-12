@@ -19,7 +19,8 @@ set -eu
 is_agentic() {
   _d="$1"
   for f in "$_d/CLAUDE.md" "$_d/RUNBOOK.md"; do
-    [ -f "$f" ] && grep -Eiq '^[[:space:]]*[*-]*[[:space:]]*agentic:[[:space:]]*yes' "$f" && return 0
+    # tolerate list markers + bold (`- **Agentic:** yes`) around the marker.
+    [ -f "$f" ] && grep -Eiq '^[-*[:space:]]*agentic:[-*[:space:]]*yes' "$f" && return 0
   done
   return 1
 }
@@ -92,11 +93,20 @@ selftest() {
     echo "selftest PASS: missing Agent-ops record -> FAIL as expected"
   fi
 
+  d5="$base/bold"; mkdir -p "$d5"
+  printf '# CLAUDE\n\n- **Agentic:** yes\n' > "$d5/CLAUDE.md"
+  printf '# RUNBOOK\n\n## 8. Monitoring & alerting\n- Agent-ops: OTel-GenAI subset, emitter=CC-transcript, sink=traces/\n' > "$d5/RUNBOOK.md"
+  if check_dir "$d5" >/dev/null 2>&1; then
+    echo "selftest PASS: bold '- **Agentic:** yes' marker -> triggers (OK)"
+  else
+    echo "selftest FAIL: bold Agentic marker should trigger and pass"; st_fail=1
+  fi
+
   if [ "$st_fail" -ne 0 ]; then
     echo "agentops-ready --selftest: FAIL" >&2
     return 1
   fi
-  echo "agentops-ready --selftest: OK (na/ok/placeholder/missing all behaved; fixtures left in $base)"
+  echo "agentops-ready --selftest: OK (na/ok/placeholder/missing/bold all behaved; fixtures left in $base)"
   return 0
 }
 
