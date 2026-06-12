@@ -241,6 +241,8 @@ Automated quality gates are the contract's teeth: *if it isn't automated, it isn
 - **Accessibility** *(user-facing UI)* — WCAG 2.1 AA; recorded in `templates/A11Y-SIGNOFF-TEMPLATE.md` (axe / Lighthouse). `DEVELOPMENT-PROCESS.md` §7.
 - **Load / soak** *(deployable services)* — resilience + perf-budget verification; `conformance/resilience-readiness.md`.
 - **Eval** *(AI features)* — model/prompt output meets the eval bar and does not regress; `DEVELOPMENT-PROCESS.md` §7; readiness `conformance/eval-readiness.md`, plan `templates/EVAL-PLAN-TEMPLATE.md`.
+- **SAST** *(first-party code)* — static analysis (Semgrep/CodeQL) for injection/auth-bypass/SSRF; `DEVELOPMENT-PROCESS.md` §7; guidance `docs/operations/security-scanning.md`.
+- **License compliance** *(when an SBOM is produced)* — `scripts/license-check.sh` over the CycloneDX SBOM; N/A-with-reason on same basis (`docs/operations/security-scanning.md`).
 
 They are deliberately **not** universal required gates: forcing an a11y, load, or eval gate on a CLI, library, or batch job that has no UI, no service, and no model would be false universality. Verified by `conformance/conditional-gates.sh`.
 
