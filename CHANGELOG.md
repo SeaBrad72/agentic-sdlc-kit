@@ -3,6 +3,17 @@
 All notable changes to the Agentic SDLC Kit are recorded here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.54.0] - 2026-06-12
+
+Modern Practices arc, Slice MP-2 — the developer inner loop. Adds the fast local-feedback tier that was missing (the kit had a pre-push guard + CI, but no pre-commit fast loop). **MINOR** — guidance + profile tooling; no new gate.
+
+### Added
+- **`docs/operations/dev-inner-loop.md`** — the **three-tier feedback model**: **pre-commit** (format · lint · type-check · affected/fast test subset, seconds-fast, `--no-verify`-able) → **pre-push** (the agent guard) → **CI** (the authoritative §14 gate set). Keep them layered, not redundant — fast checks on changed files locally; the full/slow gates in CI. Per-stack hook + fast-test-subset tools.
+- **Profile tooling** — `profiles/python.md` (`pre-commit` + ruff/mypy + `pytest-testmon`), `profiles/typescript-node.md` (`husky` + `lint-staged` + `vitest related`). A Build-phase pointer in `DEVELOPMENT-PROCESS.md`.
+
+### Honesty / agentic
+- Pre-commit is a **recommended accelerator, not a gate** (gating it just trains bypass) — enforcement stays in CI + the guard. Tightens the agent's inner loop: faster feedback, fewer broken commits, less wasted CI.
+
 ## [2.53.0] - 2026-06-12
 
 Modern Practices arc, Slice MP-1 — test quality beyond coverage. Adds the two practices the audit found genuinely absent, both especially relevant when **agents write the tests**. **MINOR** — guidance + STANDARDS principle + per-stack profile tooling; no new gate (mutation is too slow to gate every PR).
