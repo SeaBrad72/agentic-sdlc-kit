@@ -61,16 +61,17 @@ extract_steps() {
                   ((.content|tostring|ascii_downcase) | test("denied")) and
                   ((.content|tostring|ascii_downcase) | test("guard|control-plane|deny")))}' "$1")
   # join: build a {tid: {err,denied}} map from results, map over uses in order.
+  _map=$(mktemp) || _map="/tmp/_at_map.$$"
   printf '%s\n' "$_results" | jq -s '
       (reduce .[] as $r ({}; .[$r.tid] = {err:$r.err, denied:$r.denied})) as $m
-      | $m' > /tmp/_at_map.$$ 2>/dev/null || printf '{}' > /tmp/_at_map.$$
-  printf '%s\n' "$_uses" | jq -s --slurpfile m /tmp/_at_map.$$ '
+      | $m' > "$_map" 2>/dev/null || printf '{}' > "$_map"
+  printf '%s\n' "$_uses" | jq -s --slurpfile m "$_map" '
       ($m[0] // {}) as $res
       | [ .[] | . as $u | ($res[$u.id] // {err:false,denied:false}) as $r
           | {name: $u.name,
              outcome: (if $r.denied then "denied" elif $r.err then "error" else "ok" end),
              retries: 0} ]'
-  rm -f /tmp/_at_map.$$ 2>/dev/null || true
+  rm -f "$_map" 2>/dev/null || true
 }
 
 compute_cost() {  # $1=in $2=out ; cost only when --price "IN,OUT" (per-Mtok) is given.
@@ -97,8 +98,10 @@ correlate() {  # best-effort gh/git; never fail the run
 # --- assemble the trace JSON (jq builds it; never hand-build JSON in sh) ---
 emit() {
   _t="$1"
-  set -- $(extract_tokens_timing "$_t")   # in out cache start end
-  _in=$1; _out=$2; _cache=$3; _start=$4; _end=$5
+  # Pad with empty trailing fields so $4/$5 stay bound under `set -u` even when the
+  # transcript has no timestamps (start/end collapse to empty — compacted transcripts).
+  set -- $(extract_tokens_timing "$_t") "" "" ""
+  _in=${1:-0}; _out=${2:-0}; _cache=${3:-0}; _start=${4:-}; _end=${5:-}
   _steps=$(extract_steps "$_t")
   _run=$(jq -r 'select(.sessionId) | .sessionId' "$_t" | head -1)
   [ -n "$_run" ] || _run=$(basename "$_t" .jsonl)
@@ -110,14 +113,15 @@ emit() {
 
   jq -n \
     --arg agent "$AGENT_ID" --arg run "$_run" --arg wi "$WORK_ITEM" \
-    --argjson parent "$([ "$PARENT" = null ] && printf 'null' || printf '"%s"' "$PARENT")" \
+    --arg parent "$PARENT" \
     --arg start "$_start" --arg end "$_end" \
     --argjson tin "$_in" --argjson tout "$_out" --argjson tcache "$_cache" \
     --arg cost "$_cost" \
     --arg pr "$_pr" --arg reviews "$_reviews" --arg outcome "$_outcome" \
     --argjson steps "$_steps" '
     {
-      "agent.id": $agent, "run.id": $run, "work_item.id": $wi, "parent.run.id": $parent,
+      "agent.id": $agent, "run.id": $run, "work_item.id": $wi,
+      "parent.run.id": (if $parent == "null" then null else $parent end),
       start: $start, end: $end,
       tokens: {in: $tin, out: $tout, cache_read: $tcache},
       cost: ($cost | (tonumber? // .)),
@@ -177,6 +181,9 @@ else
   mkdir -p "$OUTDIR"
   _outrun=$(jq -r 'select(.sessionId) | .sessionId' "$TRANSCRIPT" | head -1)
   [ -n "$_outrun" ] || _outrun=$(basename "$TRANSCRIPT" .jsonl)
+  # Slug the filename: sessionId is untrusted-ish — a '../' or '/' must not escape $OUTDIR.
+  # (The trace's run.id field still carries the true, unslugged sessionId.)
+  _outrun=$(printf '%s' "$_outrun" | tr -c 'A-Za-z0-9._-' '_')
   emit "$TRANSCRIPT" > "$OUTDIR/$_outrun.json"
   printf 'agent-trace: wrote %s/%s.json\n' "$OUTDIR" "$_outrun"
 fi
