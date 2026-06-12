@@ -18,6 +18,7 @@
 - Lint / type-check: `[commands]`
 - Build: `[build command]`
 - **Test data:** [approach] *(data-handling projects — synthetic/masked/never-raw-prod; see `docs/operations/test-data-management.md`)*
+- **Data handling:** [classification · retention · deletion path] *(personal-data projects — `docs/enterprise/data-governance.md`)*
 
 ## 3. Environment variables
 Documented in `.env.example` (committed, placeholders only). Required:

@@ -70,7 +70,7 @@ The **entry gate** — an item is NOT ready to enter Build until ALL mandatory i
 - **Success metric / hypothesis** — a measurable statement of what "worked" means (§5 Discovery).
 
 **Conditional flags** *(flag the obligation now so no downstream gate is a surprise)*
-- **Threat-model** *(if sensitive/regulated)* — flagged for the §7 security gate (`templates/THREAT-MODEL-TEMPLATE.md`).
+- **Threat-model / privacy review** *(if sensitive/regulated/personal data)* — flagged for the §7 security gate; threat model + a DPIA-lite when Confidential/Restricted (`templates/THREAT-MODEL-TEMPLATE.md`, `templates/PRIVACY-REVIEW-TEMPLATE.md`; verified by `conformance/privacy-ready.sh`).
 - **UX/a11y obligation** *(if a user-facing surface)* — flagged; recorded later in the a11y sign-off (the Accessibility item below).
 - **Eval criteria** *(if an AI feature)* — flagged for the §7 eval gate; the feature carries an AI System Card (`templates/AI-SYSTEM-CARD-TEMPLATE.md`).
 - **Compliance obligation** *(if a regulated domain)* — flagged for the §7 compliance gate.
