@@ -48,6 +48,7 @@ This file holds only what is **specific to this project**.
 - **Autonomy-tier defaults** (§12): [defaults, or deltas from the standard action→tier matrix]
   - e.g. `deploy to staging → L2 (autonomous behind smoke gate)`; everything else inherits defaults
 - **SLO / error-budget posture** (§9): [soft track-and-guide / hard-gating] — [target SLOs if defined]
+- **Data classification** (§privacy): [Public / Internal / Confidential / Restricted] — the highest tier this project handles. Confidential/Restricted ⇒ a privacy review (`docs/enterprise/data-governance.md`; verified by `conformance/privacy-ready.sh`).
 - **Review routing / ownership** (§11): [who/which agent reviews what; CODEOWNERS link]
 - **WIP limits:** [per-stage or global cap]
 - **Environments** (§ "Environments & promotion"): Dev → QA → UAT → Prod — [per-tier deploy trigger]; [if collapsing tiers, name which you use + one-line reason]. Production promotion is human-gated.
