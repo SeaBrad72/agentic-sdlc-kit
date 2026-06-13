@@ -123,6 +123,17 @@ jobs:
         run: sh scripts/agent-scorecard.sh --selftest
       - name: License-check selftest (SBOM license gate)
         run: sh scripts/license-check.sh --selftest
+      - name: Security-policy selftest (SECURITY.md disclosure discipline)
+        run: sh conformance/security-policy.sh --selftest
+      - name: Privacy-ready selftest (data-classification DPIA-lite three-state)
+        run: sh conformance/privacy-ready.sh --selftest
+      - name: Shellcheck available (fail loudly if the runner drops it, no silent SKIP)
+        run: shellcheck --version
+      - name: Kit shellcheck regression-lock — maintainer shell clean
+        run: sh conformance/shellcheck.sh
+      - name: Shellcheck checker selftest (clean passes, dirty fails)
+        run: sh conformance/shellcheck.sh --selftest
+
       - name: branch-protection three-state self-test (no silent pass)
         run: sh conformance/branch-protection.sh --selftest
       - name: conformance aggregate verify self-test (control vs doc)
