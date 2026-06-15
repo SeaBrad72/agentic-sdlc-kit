@@ -133,7 +133,6 @@ jobs:
         run: sh conformance/shellcheck.sh
       - name: Shellcheck checker selftest (clean passes, dirty fails)
         run: sh conformance/shellcheck.sh --selftest
-
       - name: branch-protection three-state self-test (no silent pass)
         run: sh conformance/branch-protection.sh --selftest
       - name: conformance aggregate verify self-test (control vs doc)
@@ -142,6 +141,11 @@ jobs:
         run: sh conformance/waivers-valid.sh --selftest
       - name: Coverage-ratchet self-test (no-regression-below-baseline)
         run: sh scripts/coverage-ratchet.sh --selftest
+      - name: CI-selftest coverage (every selftest-capable check is wired)
+        run: sh conformance/ci-selftest-coverage.sh
+      - name: Onboarding on-ramp completeness (present + wired)
+        run: sh conformance/onboarding-complete.sh
+
 
   bootstrap:
     runs-on: ubuntu-latest
