@@ -882,12 +882,12 @@ First product release — the kit becomes a versioned, drop-in template framewor
 - `DEVELOPMENT-PROCESS.md` §7 — the Review gate adds a conditional **15-Factor conformance** check; §8 — the L3 process retro now routes kit-level improvements upstream as a PR to the canonical kit.
 - `README.md` — version surfaced; "How the kit is built" (the contract/reference/conformance convention) added; license declared.
 
-[2.7.0]: https://github.com/SeaBrad72/agentic-sdlc-kit/releases/tag/v2.7.0
-[2.6.0]: https://github.com/SeaBrad72/agentic-sdlc-kit/releases/tag/v2.6.0
-[2.5.0]: https://github.com/SeaBrad72/agentic-sdlc-kit/releases/tag/v2.5.0
-[2.4.0]: https://github.com/SeaBrad72/agentic-sdlc-kit/releases/tag/v2.4.0
-[2.3.0]: https://github.com/SeaBrad72/agentic-sdlc-kit/releases/tag/v2.3.0
-[2.2.0]: https://github.com/SeaBrad72/agentic-sdlc-kit/releases/tag/v2.2.0
-[2.1.0]: https://github.com/SeaBrad72/agentic-sdlc-kit/releases/tag/v2.1.0
-[2.0.0]: https://github.com/SeaBrad72/agentic-sdlc-kit/releases/tag/v2.0.0
-[1.0.0]: https://github.com/SeaBrad72/agentic-sdlc-kit/releases/tag/v1.0.0
+[2.7.0]: https://github.com/SeaBrad72/sparkwright/releases/tag/v2.7.0
+[2.6.0]: https://github.com/SeaBrad72/sparkwright/releases/tag/v2.6.0
+[2.5.0]: https://github.com/SeaBrad72/sparkwright/releases/tag/v2.5.0
+[2.4.0]: https://github.com/SeaBrad72/sparkwright/releases/tag/v2.4.0
+[2.3.0]: https://github.com/SeaBrad72/sparkwright/releases/tag/v2.3.0
+[2.2.0]: https://github.com/SeaBrad72/sparkwright/releases/tag/v2.2.0
+[2.1.0]: https://github.com/SeaBrad72/sparkwright/releases/tag/v2.1.0
+[2.0.0]: https://github.com/SeaBrad72/sparkwright/releases/tag/v2.0.0
+[1.0.0]: https://github.com/SeaBrad72/sparkwright/releases/tag/v1.0.0
