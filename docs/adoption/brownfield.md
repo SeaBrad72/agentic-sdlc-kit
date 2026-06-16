@@ -45,7 +45,7 @@ If your repo already has a `.claude/`, **do not overwrite it.** Keep your hooks 
    "hooks": {
      "PreToolUse": [
        {
-         "matcher": "Bash|Write|Edit|NotebookEdit",
+         "matcher": "Bash|Write|Edit|NotebookEdit|mcp__.*",
          "hooks": [
            { "type": "command", "command": "sh \"$CLAUDE_PROJECT_DIR/.claude/hooks/guard.sh\"" }
          ]
@@ -59,7 +59,7 @@ If your repo already has a `.claude/`, **do not overwrite it.** Keep your hooks 
    ```jsonc
    // ↓ add this object as an element of your existing "PreToolUse": [ ... ] array
    {
-     "matcher": "Bash|Write|Edit|NotebookEdit",
+     "matcher": "Bash|Write|Edit|NotebookEdit|mcp__.*",
      "hooks": [
        { "type": "command", "command": "sh \"$CLAUDE_PROJECT_DIR/.claude/hooks/guard.sh\"" }
      ]

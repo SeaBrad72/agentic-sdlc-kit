@@ -57,16 +57,22 @@ allow "override to read"   "mcp__reports__export_csv"      "" "mcp__reports__exp
 # STRUCTURAL check: extract PreToolUse matchers with jq (so a mcp__ matcher mis-placed under
 # PostToolUse can't fail-open the check), then require a wildcard form (mcp__.* / mcp__* / bare
 # mcp__ at an alternation boundary) so a non-routing matcher like "mcp__nothing" doesn't satisfy it.
-# jq-absent is honest UNVERIFIED, never a false PASS.
+# jq-absent is honest UNVERIFIED (exit 2), never a false PASS.
 SETTINGS="${KIT_GUARD_SETTINGS:-.claude/settings.json}"
+unverified=0
 if [ ! -f "$SETTINGS" ]; then
   echo "FAIL (gate dark): $SETTINGS missing — cannot confirm a PreToolUse mcp__ matcher is wired"; fail=1
 elif ! command -v jq >/dev/null 2>&1; then
-  echo "UNVERIFIED wired: jq absent — cannot structurally confirm the PreToolUse mcp__ matcher ($SETTINGS); install jq"
+  # jq-absent must NOT exit 0 (a PASS code), or automation reading the exit status sees green
+  # while the wiring was never structurally confirmed — the honesty must live in the exit code,
+  # not only in stdout. Exit 2 (UNVERIFIED), matching verify.sh's three-state contract.
+  echo "UNVERIFIED wired: jq absent — cannot structurally confirm the PreToolUse mcp__ matcher ($SETTINGS); install jq"; unverified=1
 elif jq -r '.hooks.PreToolUse[]?.matcher // empty' "$SETTINGS" 2>/dev/null | grep -Eq 'mcp__(\.\*|\.\+|\*|\||$)'; then
   echo "PASS wired: a PreToolUse matcher routes mcp__* ($SETTINGS)"
 else
   echo "FAIL (gate dark): no PreToolUse matcher routes mcp__* — classification would pass while the hook is dark ($SETTINGS)"; fail=1
 fi
 
-[ "$fail" -eq 0 ] && { echo "OK: MCP capability gate classifies correctly and is wired"; exit 0; } || { echo "FAIL: mcp-policy"; exit 1; }
+if [ "$fail" -ne 0 ]; then echo "FAIL: mcp-policy"; exit 1; fi
+if [ "$unverified" -ne 0 ]; then echo "UNVERIFIED: mcp-policy (classification correct; wiring unconfirmed — jq absent)"; exit 2; fi
+echo "OK: MCP capability gate classifies correctly and is wired"; exit 0
