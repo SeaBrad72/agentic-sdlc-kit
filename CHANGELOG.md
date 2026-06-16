@@ -3,6 +3,22 @@
 All notable changes to Sparkwright are recorded here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.62.0] - 2026-06-16
+
+**Deliver the scaffold** — the second pre-launch go/no-go found the kit overclaimed turnkey readiness in its headline surfaces; this release makes those claims true. **MINOR** — additive (the new eval gate is conditional, not universally required); closes all seven verified Highs (H1–H7) from that review.
+
+### Added
+- **Per-stack starter scaffolds** (`profiles/<stack>/scaffold/`) for all 7 service stacks — manifest + lint/type config + a `/healthz` surface + its test, authored to each `ci.yml` gate contract. `scripts/incept.sh` copies the scaffold into an empty repo (brownfield-safe), so Inception's "green pipeline on the empty project" gate is reachable in one command. typescript-node is verified green on clone; go is clone-green by construction; the rest are authored-to-contract with a documented one-time lockfile/wrapper step (see each `scaffold/README.md`).
+- **Reference eval harness** (`profiles/ml/evals/run.py` + `golden.jsonl` + `rubric.md`) — a deterministic, offline scorer runnable as `python -m evals.run --threshold 0.8`, green on clone with no API key (swap in a pinned LLM judge for production). `python` and `typescript-node` gain a **conditional `gate-eval`** that runs only when an `evals/` dir is present.
+- **`.env.example`** is now created by `incept` and asserted by `conformance/inception-done.sh`; `incept` also guarantees `.env` is gitignored.
+- **Stack-driven environments** — each service profile gains an "Environments this stack needs" section; `docs/STACK-SELECTION.md` gains a stack × backing-services matrix; `incept` now copies the profile's `compose.yaml`.
+
+### Changed
+- **`guard-wired.sh`** now structurally validates that the PreToolUse hook matcher admits the mutating tools (Bash/Write/Edit/NotebookEdit/`mcp__*`) — a misconfigured matcher no longer reports the guard as wired; jq-absent is UNVERIFIED (exit 2), never a silent pass. Adds `--selftest`.
+- **`mcp-policy.sh`** jq-absent now exits 2 (UNVERIFIED) instead of 0 (PASS).
+- **`go` + `rust`** ship a stateless (app-only) `compose.yaml` — no longer Postgres-by-default (their archetype is networked-service/CLI).
+- Reworded the eval / scaffold / environment claims across README and the profiles to match what now ships (honesty invariant).
+
 ## [2.61.0] - 2026-06-15
 
 **Discovery loop (FRAME + SHAPE)** — an **optional, opt-in** upstream front-end that turns a raw signal into a *Ready* backlog the Sparkwright engine consumes. **MINOR** — new docs + templates + one structural control; **no change to the existing process** (stages 3–6 are documented as the existing engine).

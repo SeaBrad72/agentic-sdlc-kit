@@ -2,13 +2,13 @@
 
 *The agentic SDLC kit — guardrails that let anyone build production-grade software, from intent to operating system.*
 
-`v2.61.0` · Apache-2.0 · [CHANGELOG](CHANGELOG.md) · [how the kit is maintained](MAINTAINING.md)
+`v2.62.0` · Apache-2.0 · [CHANGELOG](CHANGELOG.md) · [how the kit is maintained](MAINTAINING.md)
 
-A complete, **stack-agnostic** software development lifecycle designed for teams working with AI agents — from idea through released, operating software. Drop it into a new project, choose your stack, and go.
+A complete, **stack-agnostic** software development lifecycle designed for teams working with AI agents — from idea through released, operating software. Drop it into a new project, choose your stack, and run `incept` — it scaffolds a runnable starter wired to a CI pipeline plus the environments your stack needs, so you build from a working pipeline, not an empty repo.
 
 It is opinionated about *how to build well with agents* and deliberately neutral about *what you build it with*.
 
-> **Sparkwright is the execution engine** — it takes you from a *Ready* backlog to operating, monitored software, with the guardrails built in. If you already have product + design figured out, drop it in and build. (A discovery front-end — turning raw signals into Ready work — is an optional upstream layer — see **[docs/discovery/discovery-loop.md](docs/discovery/discovery-loop.md)**.)
+> **Sparkwright is the execution engine** — it takes you from a *Ready* backlog to operating, monitored software, with the guardrails built in. If you already have product + design figured out, drop it in and build: `incept` gives you a CI-wired starter to build on (each profile's `scaffold/` carries the per-stack specifics). (A discovery front-end — turning raw signals into Ready work — is an optional upstream layer — see **[docs/discovery/discovery-loop.md](docs/discovery/discovery-loop.md)**.)
 
 Choosing a stack? See [docs/STACK-SELECTION.md](docs/STACK-SELECTION.md).
 
@@ -41,7 +41,8 @@ Any team — humans, agents, or both — starting a new project who wants produc
 1. Copy this kit into your new project repo.
 2. Open **`START-HERE.md`** and work through Inception (Phase 0).
 3. At stack selection: pick a ready profile **or** generate one from `profiles/_TEMPLATE.md` for your stack — recorded as **ADR-000**.
-4. Pass the **Inception Done** gate → enter the loop at **Discover**.
+4. Run **`scripts/incept.sh`** — it scaffolds a runnable starter (a `/healthz` service + its test wired to the stack's CI), writes `.env.example`, and copies the stack's `compose.yaml`, so the "green pipeline on the empty project" gate is reachable in one command. *(typescript-node is verified green on clone; some stacks need a one-time lockfile/wrapper step — see each profile's `scaffold/README.md`.)*
+5. Pass the **Inception Done** gate → enter the loop at **Discover**.
 
 ## Where `.claude/` lives (scoping)
 
