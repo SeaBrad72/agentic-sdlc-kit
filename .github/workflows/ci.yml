@@ -145,6 +145,8 @@ jobs:
         run: sh conformance/ci-selftest-coverage.sh
       - name: Onboarding on-ramp completeness (present + wired)
         run: sh conformance/onboarding-complete.sh
+      - name: Discovery layer completeness (present + wired)
+        run: sh conformance/discovery-complete.sh
 
 
   bootstrap:
