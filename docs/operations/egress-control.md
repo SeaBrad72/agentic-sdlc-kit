@@ -1,6 +1,6 @@
 # Network egress control (default-deny) — reference
 
-How to make the kit's stated platform control #1 real: **default-deny outbound network, allow only DNS + package registries + your required APIs.** This is the only reliable defense against the interpreter / DNS / build-tool exfiltration tail (`../superpowers/reviews/2026-06-10-A8-mcp-egress-attack-surface.md` Part 2) — an un-allowlisted destination simply does not connect, regardless of whether the socket came from `curl`, `python -c`, `/dev/tcp`, or a DNS lookup.
+How to make the kit's stated platform control #1 real: **default-deny outbound network, allow only DNS + package registries + your required APIs.** This is the only reliable defense against the interpreter / DNS / build-tool exfiltration tail — an un-allowlisted destination simply does not connect, regardless of whether the socket came from `curl`, `python -c`, `/dev/tcp`, or a DNS lookup.
 
 `conformance/egress-policy.sh` verifies this control is **declared and attested**; it does **not** inspect traffic. See `conformance/egress-readiness.md`.
 

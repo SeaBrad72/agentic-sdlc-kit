@@ -10,7 +10,7 @@ A portable, *executable* governance & assurance layer for agentic software devel
 
 ## 2. Why now
 
-Agents increasingly take the first pass at the SDLC. The field's own data is the warning: AI adoption layered onto weak governance was associated with a **+30% change-failure rate** and **+23.5% incidents per PR** ([competitive benchmark, A5 record](../superpowers/reviews/2026-06-10-competitive-benchmark.md)). Agents amplify whatever discipline — or lack of it — they are dropped into. This kit is the guardrails-first answer: agents move fast *inside* enforced boundaries, so throughput becomes safe to lean on rather than a risk multiplier.
+Agents increasingly take the first pass at the SDLC. The field's own data is the warning: AI adoption layered onto weak governance was associated with a **+30% change-failure rate** and **+23.5% incidents per PR** (directional industry benchmark data). Agents amplify whatever discipline — or lack of it — they are dropped into. This kit is the guardrails-first answer: agents move fast *inside* enforced boundaries, so throughput becomes safe to lean on rather than a risk multiplier.
 
 ## 3. What leadership gets
 
@@ -20,7 +20,7 @@ Agents increasingly take the first pass at the SDLC. The field's own data is the
 
 ## 4. How it's different
 
-From the [A5 benchmark](../superpowers/reviews/2026-06-10-competitive-benchmark.md), three properties together are rare:
+From the same directional industry benchmark data, three properties together are rare:
 
 - **Agent-native *and* enforcement-native** — executable, CI-verified checks an agent or a human runs the same way. Not portal templates, not PDF norms.
 - **Honesty as a feature** — *"green ≠ verified,"* a three-state conformance model, and a guard positioned as a speed bump, not a boundary. The kit tells you where its own controls stop.
