@@ -39,6 +39,10 @@ jobs:
         run: sh scripts/kit-guard --selftest
       - name: pre-push hook self-test (force-push / push-to-main)
         run: sh hooks/pre-push --selftest
+      - name: jq available (fail loudly if the runner drops it, no silent UNVERIFIED)
+        run: jq --version
+      - name: Guard-wired matcher validation self-test (matcher admits mutating tools incl mcp__ wildcard)
+        run: sh conformance/guard-wired.sh --selftest
       - name: Profile-completeness conformance
         run: sh conformance/profile-completeness.sh
       - name: Stack-selection completeness (decision aid present + per-profile sections)
