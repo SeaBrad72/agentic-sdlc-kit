@@ -229,7 +229,7 @@ Task Context Contract (TCC) — declared per-step context envelope. Applies the 
 Arc exit gate + secret.read remediation (A9 + Slice 11e — **Containment arc CLOSED**). The exit-gate red-team (A9) confirmed W3 closed-in-kit and W2 honestly-bounded, and caught one blocker: the MCP gate allowed `secret.read` tools (A8 family 6) despite A8 designating them deny-by-default. 11e closes it. **MINOR** — additive gate coverage + the A9 findings artifact.
 
 ### Added
-- **A9 arc-exit red-team** (`docs/superpowers/reviews/2026-06-11-A9-arc-exit-redteam.md`) — three adversarial red-teams (MCP gate / egress+containment honesty / cross-arc ledger); verdict: arc closes honestly once `secret.read` is gated. W3 → closed-in-kit; W2 → honestly-bounded/platform-owned.
+- **A9 arc-exit red-team** — three adversarial red-teams (MCP gate / egress+containment honesty / cross-arc ledger); verdict: arc closes honestly once `secret.read` is gated. W3 → closed-in-kit; W2 → honestly-bounded/platform-owned.
 - **`secret.read` gating** (`guard_check_mcp`, Slice 11e) — secret-material reads are now deny-by-default by **name**: an action naming a secret (`secret/credential/password/api_key/private_key/access_token…`) **or** a known secret-store server (`vault/1password/secretsmanager/keyvault/doppler…`) on a read → deny, even when a read verb leads. Restores A8 family 6. Corpus cases added; allowlist/override escape hatches preserved.
 
 ### Honesty
@@ -416,7 +416,7 @@ Exec brief + org rollout + ROI model (Slice 9e, Tier 1 of the "Honest Assurance 
 - **`docs/enterprise/EXEC-BRIEF.md`** — ≤2-page VP/CTO entry point: what / why / what-you-get, A5-grounded differentiation, honest boundaries, compliance-at-a-glance, pointers.
 - **`docs/enterprise/ORG-ROLLOUT.md`** — Pilot→Expand→Fleet adoption, the canonical **Stage 1–4 "tighten at scale"** maturity model, and the fleet version-upgrade process.
 - **`docs/enterprise/ROI-MODEL.md`** — parameterized ROI worksheet (adopter inputs + three value levers) and one labeled worked example; honest "planning model, not a result" framing.
-- **`docs/superpowers/reviews/2026-06-10-competitive-benchmark.md`** — the A5 record behind the brief's differentiation (with sources).
+- **Competitive benchmark** — the A5 record behind the brief's differentiation (with sources).
 
 ### Changed
 - Leadership cross-links from `README.md` / `START-HERE.md` / `docs/enterprise/README.md`.
@@ -731,7 +731,7 @@ Stack-neutral contract + stack-aware reference — **no edit to the 10 existing 
 
 ## [2.9.0] - 2026-06-06
 
-Slice 6a — Enterprise addendum, pillar 1: the compliance crosswalk. First of four sub-slices (umbrella spec: `docs/superpowers/specs/2026-06-06-slice6-enterprise-umbrella-design.md`).
+Slice 6a — Enterprise addendum, pillar 1: the compliance crosswalk. First of four sub-slices.
 
 ### Added
 - `docs/enterprise/README.md` — addendum index + an explicit **responsibility boundary** (Kit-enforced / Kit-assisted / Org-owned), naming what the kit does not cover (HR, physical, vendor risk, BCP, the privacy program).

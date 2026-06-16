@@ -2,7 +2,7 @@
 
 **This is a *planning model parameterized by your inputs* — not a measured result, a benchmark, or a guarantee. Consistent with the kit's honesty standard: it shows the logic and labels every assumption; it does not assert savings.**
 
-For the leadership framing this supports, see [EXEC-BRIEF.md](EXEC-BRIEF.md). The elevated-baseline figures below are sourced from the [competitive benchmark, A5 record](../superpowers/reviews/2026-06-10-competitive-benchmark.md).
+For the leadership framing this supports, see [EXEC-BRIEF.md](EXEC-BRIEF.md). The elevated-baseline figures below are sourced from directional industry benchmark data.
 
 ---
 
@@ -34,7 +34,7 @@ Three levers, each with its formula. Two reduce downside; one nets out velocity 
 risk_reduction = incidents_avoided × C_incident
 ```
 
-The avoided downside is a **reduction of an elevated baseline**, not a raw gain over your status quo. The field's own data is the reference point: AI adoption layered onto weak governance was associated with a **+30% change-failure rate** and **+23.5% incidents per PR** ([A5 record](../superpowers/reviews/2026-06-10-competitive-benchmark.md)). Agents amplify whatever discipline they are dropped into.
+The avoided downside is a **reduction of an elevated baseline**, not a raw gain over your status quo. The field's own data is the reference point: AI adoption layered onto weak governance was associated with a **+30% change-failure rate** and **+23.5% incidents per PR** (directional industry benchmark data). Agents amplify whatever discipline they are dropped into.
 
 So `incidents_avoided` is the difference between an *elevated* AI-on-weak-governance incident rate and the rate under enforced guardrails — i.e. you are modelling how much of that elevation you avoid, not a reduction below your pre-AI baseline. Express it as:
 

@@ -15,3 +15,12 @@ Thumbs.db
 
 # Local tool cache (firecrawl web-search results) — never commit
 .firecrawl/
+
+# Internal build scaffolding — kept locally, NOT shipped in the public repo
+# (specs/plans/reviews/roadmaps contain personal paths + pre-anonymization context)
+docs/superpowers/
+docs/ROADMAP-SLICE9.md
+docs/ROADMAP-SLICE11.md
+
+# Reference diagram (working input, not a shipped asset)
+Product:Design + pre-story discovery loops.png

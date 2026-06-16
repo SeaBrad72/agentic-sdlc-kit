@@ -1,6 +1,6 @@
 # Agent containment (sandbox FS · scoped tokens · separate prod creds) — reference
 
-How to make platform-safety-boundary controls #2/#3/#4 real. Where the egress allowlist (`egress-control.md`) closes the exfiltration *channel*, these close **what is reachable to exfiltrate in the first place** — directly defanging the MCP `secret.read` class and the interpreter exfil tail at the source (`../superpowers/reviews/2026-06-10-A8-mcp-egress-attack-surface.md`).
+How to make platform-safety-boundary controls #2/#3/#4 real. Where the egress allowlist (`egress-control.md`) closes the exfiltration *channel*, these close **what is reachable to exfiltrate in the first place** — directly defanging the MCP `secret.read` class and the interpreter exfil tail at the source.
 
 `conformance/containment-ready.sh` verifies this posture is **declared + attested**; it does **not** verify enforcement. See `conformance/containment-readiness.md`.
 
