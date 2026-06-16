@@ -17,11 +17,20 @@ need RUNBOOK.md
 need .claude
 need .github/workflows/ci.yml
 
-# the guard must be WIRED, not just present (slice 7e; docs/adoption/brownfield.md)
-if [ -f conformance/guard-wired.sh ] && sh conformance/guard-wired.sh . >/dev/null 2>&1; then
-  echo "PASS: runtime guard wired (PreToolUse → guard.sh)"
+# the guard must be WIRED, not just present (slice 7e; docs/adoption/brownfield.md).
+# guard-wired is three-state: 0 wired · 1 dark · 2 UNVERIFIED (jq absent). UNVERIFIED is
+# fail-closed here — the guard hook itself needs jq, so jq-absent means it can't run anyway.
+if [ -f conformance/guard-wired.sh ]; then
+  if sh conformance/guard-wired.sh . >/dev/null 2>&1; then gw=0; else gw=$?; fi
+  if [ "$gw" -eq 0 ]; then
+    echo "PASS: runtime guard wired (PreToolUse → guard.sh, matcher admits mutating tools)"
+  elif [ "$gw" -eq 2 ]; then
+    echo "FAIL: runtime guard wiring UNVERIFIED — install jq (the guard hook needs it too), then: sh conformance/guard-wired.sh"; fail=1
+  else
+    echo "FAIL: runtime guard not wired — run: sh conformance/guard-wired.sh"; fail=1
+  fi
 else
-  echo "FAIL: runtime guard not wired — run: sh conformance/guard-wired.sh"; fail=1
+  echo "FAIL: conformance/guard-wired.sh missing"; fail=1
 fi
 
 if ls docs/architecture/ADR-000*.md >/dev/null 2>&1; then
