@@ -1,6 +1,6 @@
 # Sparkwright
 
-*The agentic SDLC kit — guardrails that let anyone build production-grade software, from intent to operating system.*
+*The agentic SDLC kit — guardrails that let anyone build production-grade software, from intent to operating software.*
 
 `v2.62.0` · Apache-2.0 · [CHANGELOG](CHANGELOG.md) · [how the kit is maintained](MAINTAINING.md)
 
