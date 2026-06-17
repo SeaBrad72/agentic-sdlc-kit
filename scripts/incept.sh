@@ -98,7 +98,11 @@ VER=$(cat VERSION 2>/dev/null || echo "unknown")
 ENAME=$(esc "$NAME"); EOWNER=$(esc "$OWNER")
 
 # --- 1. free the root memory slot ---
-if git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+# Use `git mv` only when CLAUDE.md is actually TRACKED. In the literal quickstart (copy the
+# kit into a fresh `git init` repo, run incept before committing), CLAUDE.md is untracked and
+# `git mv` aborts with exit 128 — fall back to a plain `mv` (nothing is committed, so no
+# history is lost). Covers tracked / untracked-in-worktree / non-git alike.
+if git rev-parse --is-inside-work-tree >/dev/null 2>&1 && git ls-files --error-unmatch CLAUDE.md >/dev/null 2>&1; then
   git mv CLAUDE.md ENGINEERING-PRINCIPLES.md
 else
   mv CLAUDE.md ENGINEERING-PRINCIPLES.md
@@ -205,18 +209,32 @@ if [ -d "profiles/${STACK}/evals" ] && [ ! -d evals ]; then
 fi
 
 # --- 5a2. copy the profile's starter scaffold so the drop-in CI is green on the empty project ---
-# Brownfield-safe: each file is copied ONLY where absent (never clobbers existing app source),
-# so 'green pipeline on the empty project' (the Inception gate) is reachable in one command.
+# Brownfield-safe: each file is copied ONLY where absent (never clobbers existing app source).
 # See profiles/${STACK}/scaffold/README.md for any one-time lockfile/wrapper step.
 if [ -d "profiles/${STACK}/scaffold" ]; then
   ( cd "profiles/${STACK}/scaffold" && find . -type f ) | while IFS= read -r rel; do
     rel=${rel#./}
+    # .gitignore is MERGED below (the project already has a root .gitignore), not copied here.
+    if [ "$rel" = ".gitignore" ]; then continue; fi
     if [ ! -e "$rel" ]; then
       mkdir -p "$(dirname "$rel")"
       cp "profiles/${STACK}/scaffold/$rel" "$rel"
     fi
   done
-  echo "copied starter scaffold from profiles/${STACK}/scaffold/ where files were absent (brownfield-safe) — see its README for the first-green-pipeline steps"
+  # Merge the scaffold's ignore rules into the project .gitignore so the first `git add -A`
+  # does not stage build artifacts (node_modules/target/bin/...). Idempotent.
+  sgi="profiles/${STACK}/scaffold/.gitignore"
+  if [ -f "$sgi" ]; then
+    [ -f .gitignore ] || : > .gitignore
+    # `|| [ -n "$pat" ]` processes a final line with no trailing newline (robust to any scaffold).
+    while IFS= read -r pat || [ -n "$pat" ]; do
+      case "$pat" in ''|\#*) continue ;; esac
+      grep -qxF "$pat" .gitignore 2>/dev/null || printf '%s\n' "$pat" >> .gitignore
+    done < "$sgi"
+  fi
+  echo "copied starter scaffold from profiles/${STACK}/scaffold/ (brownfield-safe) + merged its .gitignore rules — see its README; some stacks need a one-time lockfile/wrapper step before CI is green"
+else
+  echo "warning: no starter scaffold for '${STACK}' — incept copied its CI but no app source, so CI will be RED until you add code. Non-service stacks (ml / data-engineering / terraform) ship a CI contract you populate, not a /healthz starter (see profiles/${STACK}.md §2)."
 fi
 
 # --- 5a3. copy the profile's local-dev compose (brownfield-safe) ---
