@@ -1,6 +1,6 @@
 # Runtime Guards — Portability Reference
 
-How the kit's destructive-action deny-matrix protects **more than the Claude Code runtime**. One matrix (`/.claude/hooks/guard-core.sh`), three surfaces. The executable half of `DEVELOPMENT-PROCESS.md` §13 for non-Claude runtimes and humans.
+How the kit's destructive-action deny-matrix protects **more than the Claude Code runtime**. One matrix (`/.claude/hooks/guard-core.sh`), four surfaces. The executable half of `DEVELOPMENT-PROCESS.md` §13 for non-Claude runtimes and humans.
 
 > **Principle — one matrix, many surfaces; still a speed bump.** The deny-matrix is the single source of truth; each surface reuses it. None of them is a security boundary — `--no-verify`, a runtime that never calls `kit-guard`, or an interpreter still bypasses it. The real boundary is platform-owned (`../enterprise/platform-safety-boundary.md`).
 
@@ -13,12 +13,13 @@ How the kit's destructive-action deny-matrix protects **more than the Claude Cod
 
 `conformance/guard-core-sourced.sh` asserts every consumer sources this file (no forked matrix).
 
-## The three surfaces
+## The four surfaces
 | Surface | File | Covers | Cooperation |
 |---------|------|--------|-------------|
 | Claude Code | `.claude/hooks/guard.sh` (PreToolUse) | command + path + MCP-tool (`mcp__.*`) | automatic in Claude Code |
 | Any git client | `hooks/pre-push` → `.git/hooks/pre-push` | git-history (force-push, push-to-main) | none — every runtime + humans |
 | Any other runtime | `scripts/kit-guard` CLI | full command + path matrix | runtime pipes commands through it |
+| CI (any harness) | `conformance/agent-boundary.sh` + `gate-agent-boundary` job | control-plane-diff ratification | automatic on every PR — the harness-independent floor |
 
 ### Wiring a non-Claude runtime
 Pipe each proposed shell command through the CLI before running it:
