@@ -37,6 +37,8 @@ jobs:
         run: sh conformance/harness-adapter.sh --selftest
       - name: Harness-adapter real-run (kit dogfoods its own claude-code adapter)
         run: sh conformance/harness-adapter.sh adapters/claude-code
+      - name: Harness-adapter real-run — generic floor-only adapter
+        run: sh conformance/harness-adapter.sh adapters/generic
       - name: Preflight self-test (prerequisite detector)
         run: sh scripts/preflight.sh --selftest
       - name: Guard single-source-of-truth (all consumers source the core)
@@ -171,7 +173,7 @@ jobs:
         run: |
           tmp=$(mktemp -d)
           git archive HEAD | tar -x -C "$tmp"
-          ( cd "$tmp" && sh scripts/incept.sh --noninteractive --name DemoApp --intent-owner "CI" --stack typescript-node --backlog md )
+          ( cd "$tmp" && sh scripts/incept.sh --noninteractive --name DemoApp --intent-owner "CI" --stack typescript-node --backlog md --harness claude-code,generic )
           sh conformance/inception-done.sh "$tmp"
 
   docs-links:

@@ -60,6 +60,30 @@ else
   echo "PASS: project CLAUDE.md key header fields filled"
 fi
 
+# the Target harness(es) field must be stamped AND every selected adapter must conform to the
+# boundary contract — the Inception-Done enforcement of the harness floor (brownfield-critical:
+# an adopter's merged repo can't pass Inception until its declared adapter(s) actually conform).
+hline=$(grep -E '^\- \*\*Target harness\(es\)\*\*' CLAUDE.md 2>/dev/null || true)
+if [ -z "$hline" ]; then
+  echo "FAIL: project CLAUDE.md missing the Target harness(es) field"; fail=1
+else
+  # value after the '(§harness-neutrality): ' marker, first whitespace token (the comma-list)
+  hval=$(printf '%s' "$hline" | sed 's/^.*(§harness-neutrality): *//' | cut -d' ' -f1)
+  case "$hval" in
+    *'['*|'') echo "FAIL: Target harness(es) not stamped (placeholder remains)"; fail=1 ;;
+    *)
+      for _h in $(printf '%s' "$hval" | tr ',' ' '); do
+        if ! [ -d "adapters/$_h" ]; then
+          echo "FAIL: harness adapter '$_h' directory not found — expected: adapters/$_h"; fail=1
+        elif sh conformance/harness-adapter.sh "adapters/$_h" >/dev/null 2>&1; then
+          echo "PASS: harness adapter '$_h' conforms to the boundary contract"
+        else
+          echo "FAIL: harness adapter '$_h' does not conform — run: sh conformance/harness-adapter.sh adapters/$_h"; fail=1
+        fi
+      done ;;
+  esac
+fi
+
 if [ "$fail" -ne 0 ]; then echo "FAIL: Inception-Done gate not satisfied in '$DIR'"; exit 1; fi
 echo "OK: Inception-Done gate satisfied in '$DIR'"
 exit 0

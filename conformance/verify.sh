@@ -53,6 +53,7 @@ echo "-------------------------------------------"
 check control agent-autonomy   sh conformance/agent-autonomy.sh
 check control agent-boundary   sh conformance/agent-boundary.sh --selftest
 check control harness-adapter  sh conformance/harness-adapter.sh adapters/claude-code
+check control harness-generic  sh conformance/harness-adapter.sh adapters/generic
 check control ci-gates         sh conformance/ci-gates.sh profiles/typescript-node/ci.yml
 check control image-supply     sh conformance/container-supply-chain.sh
 check control shellcheck       sh conformance/shellcheck.sh
