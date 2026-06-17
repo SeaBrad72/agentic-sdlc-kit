@@ -82,6 +82,14 @@ sh conformance/harness-adapter.sh --selftest
 
 ---
 
+## The `generic` adapter — floor-only proof
+
+`adapters/generic/` is the floor-only adapter for any harness that reads `AGENTS.md` but provides no inline pre-exec guard — Codex, Cursor, Copilot, and similar runtimes. It declares every dimension at `floor` and `mcp-gate: n-a`. This proves that a hookless harness fully clears the boundary contract bar: enforcement holds through the universal governance layer (the git hook + CI backstop) without any harness-native interception.
+
+`incept --harness <list>` (default `claude-code`, multi-select) selects which adapter(s) a project targets and runs `conformance/harness-adapter.sh` for each at Inception. The result is recorded in the project's conformance evidence.
+
+---
+
 ## Honest note
 
 The floor is the equal-enforcement guarantee — it holds on every harness without cooperation from the runtime. Native is additive: it tightens enforcement when the harness supports inline interception (pre-exec hooks, subagents). A harness that supports native should declare it and prove it; one that doesn't stays at floor and is still fully covered by the universal layer.

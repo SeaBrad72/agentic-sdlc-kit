@@ -8,6 +8,15 @@ One subdirectory per harness. Each holds:
 
 An adapter is a thin, harness-native binding that *references* the repo's universal governance layer. It declares which dimensions the harness covers natively, which stay at the floor, and where conformance checks live. It does **not** copy or fork any policy or process.
 
+## Adapters
+
+| Adapter | Description |
+|---------|-------------|
+| `adapters/claude-code/` | Reference adapter — Claude Code with native hooks, MCP policy, and subagents. |
+| `adapters/generic/` | Floor-only adapter for any AGENTS.md-reading harness with no inline guard (Codex, Cursor, Copilot, …). |
+
+`incept --harness <list>` (default `claude-code`) selects which adapter(s) a project targets and runs the conformance check for each.
+
 ## Reference adapter
 
 `adapters/claude-code/` is the reference adapter. It references the live `.claude/` governance layer in this repo — the files there are **not** duplicated here.
@@ -15,7 +24,3 @@ An adapter is a thin, harness-native binding that *references* the repo's univer
 ## Contract
 
 The adapter boundary contract — the 5-dimension table, manifest schema, and conformance rules — is in `docs/operations/harness-adapters.md`.
-
-## Roadmap
-
-The `generic` adapter (floor-only, any runtime) and `incept --harness` scaffolding arrive in N3.
