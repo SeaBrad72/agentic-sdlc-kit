@@ -5,7 +5,8 @@
 #
 #   sh scripts/incept.sh [--name N] [--intent-owner O] [--stack S] \
 #                        [--backlog md|github|jira|ado|linear|gitlab] \
-#                        [--ci github|gitlab] [--operator-fluency novice|adjacent|practitioner] [--noninteractive]
+#                        [--ci github|gitlab] [--harness claude-code[,generic,...]] \
+#                        [--operator-fluency novice|adjacent|practitioner] [--noninteractive]
 #
 # It frees the root Claude-Code memory slot (CLAUDE.md = kit principles) by renaming the
 # principles doc to ENGINEERING-PRINCIPLES.md and rewriting the principles-sense references,
@@ -17,6 +18,7 @@ STACK="${INCEPT_STACK:-typescript-node}"; BACKLOG="${INCEPT_BACKLOG:-md}"; INTER
 # A stack chosen via INCEPT_STACK is deliberate too — only an un-set stack is a silent default.
 [ -n "${INCEPT_STACK:-}" ] && STACK_EXPLICIT=1 || STACK_EXPLICIT=0
 CI="${INCEPT_CI:-github}"
+HARNESS="${INCEPT_HARNESS:-claude-code}"        # default keeps today's experience identical
 FLUENCY="${INCEPT_OPERATOR_FLUENCY:-}"          # empty = undeclared (nudge); else stamped
 OPERATOR_FLUENCIES="novice adjacent practitioner"
 # Canonical named backlog backends (one source of truth — conformance/backlog-adapters.sh
@@ -25,6 +27,9 @@ BACKLOG_BACKENDS="md github jira ado linear gitlab"
 # CI platforms with a shipped reference pipeline. The contract is the gate-ids (the platform
 # is open — see docs/operations/ci-platforms.md); these are the two with a worked reference.
 CI_PLATFORMS="github gitlab"
+# Valid harness adapters = the adapters/ registry (one source of truth; each has an adapter.json).
+HARNESS_ADAPTERS=$(for _d in adapters/*/; do [ -f "${_d}adapter.json" ] && printf '%s ' "$(basename "$_d")"; done)
+[ -n "$HARNESS_ADAPTERS" ] || { echo "incept: no adapters/ registry found (adapters/<harness>/adapter.json). Aborting." >&2; exit 1; }
 
 # reqval: a value-taking flag must have a value (else dash's `shift 2` would fail
 # under set -e/-u and abort with a confusing error instead of a clean exit 2).
@@ -36,9 +41,10 @@ while [ $# -gt 0 ]; do
     --stack) reqval $# --stack; STACK="$2"; STACK_EXPLICIT=1; shift 2 ;;
     --backlog) reqval $# --backlog; BACKLOG="$2"; shift 2 ;;
     --ci) reqval $# --ci; CI="$2"; shift 2 ;;
+    --harness) reqval $# --harness; HARNESS="$2"; shift 2 ;;
     --operator-fluency) reqval $# --operator-fluency; FLUENCY="$2"; shift 2 ;;
     --noninteractive) INTERACTIVE=0; shift ;;
-    -h|--help) echo "usage: incept.sh [--name N] [--intent-owner O] [--stack S] [--backlog md|github|jira|ado|linear|gitlab] [--ci github|gitlab] [--operator-fluency novice|adjacent|practitioner] [--noninteractive]"; exit 0 ;;
+    -h|--help) echo "usage: incept.sh [--name N] [--intent-owner O] [--stack S] [--backlog md|github|jira|ado|linear|gitlab] [--ci github|gitlab] [--harness claude-code[,generic,...]] [--operator-fluency novice|adjacent|practitioner] [--noninteractive]"; exit 0 ;;
     *) echo "unknown arg: $1" >&2; exit 2 ;;
   esac
 done
@@ -78,11 +84,16 @@ if [ "$INTERACTIVE" -eq 1 ]; then
   printf 'Stack [%s] (compare: docs/STACK-SELECTION.md): ' "$STACK"; read -r _s || true; [ -n "${_s:-}" ] && { STACK="$_s"; STACK_EXPLICIT=1; }
   printf 'Backlog backend (md/github/jira/ado/linear/gitlab) [%s]: ' "$BACKLOG"; read -r _b || true; [ -n "${_b:-}" ] && BACKLOG="$_b"
   printf 'CI platform (github/gitlab) [%s]: ' "$CI"; read -r _c || true; [ -n "${_c:-}" ] && CI="$_c"
+  printf 'Harness(es), comma-separated, of: %s [%s]: ' "$HARNESS_ADAPTERS" "$HARNESS"; read -r _h || true; [ -n "${_h:-}" ] && HARNESS="$_h"
 fi
 [ -n "$NAME" ]  || { echo "error: --name required" >&2; exit 2; }
 [ -n "$OWNER" ] || { echo "error: --intent-owner required" >&2; exit 2; }
 case " $BACKLOG_BACKENDS " in *" $BACKLOG "*) : ;; *) echo "error: unknown --backlog '$BACKLOG' (one of: $BACKLOG_BACKENDS)" >&2; exit 2 ;; esac
 case " $CI_PLATFORMS " in *" $CI "*) : ;; *) echo "error: unknown --ci '$CI' (one of: $CI_PLATFORMS)" >&2; exit 2 ;; esac
+HARNESS_LIST=$(printf '%s' "$HARNESS" | tr ',' ' ')
+for _h in $HARNESS_LIST; do
+  case " $HARNESS_ADAPTERS " in *" $_h "*) : ;; *) echo "error: unknown --harness '$_h' (one of: $HARNESS_ADAPTERS)" >&2; exit 2 ;; esac
+done
 # GitLab CI ships only for stacks with a reference pipeline (typescript-node today). Refuse EARLY
 # (before any file changes) rather than silently writing no CI file and dead-ending at the
 # Inception-Done gate. GitHub ships a pipeline for every service stack.
@@ -146,6 +157,8 @@ if [ -n "$FLUENCY" ]; then
   FCAP=$(printf '%s' "$FLUENCY" | cut -c1 | tr '[:lower:]' '[:upper:]')$(printf '%s' "$FLUENCY" | cut -c2-)
   sedi "s#\*\*Operator fluency\*\* (§onboarding): \[Novice / Adjacent / Practitioner\]#**Operator fluency** (§onboarding): ${FCAP}#" CLAUDE.md
 fi
+# stamp the target harness(es)
+sedi "s#\*\*Target harness(es)\*\* (§harness-neutrality): \[claude-code\]#**Target harness(es)** (§harness-neutrality): $(esc "$HARNESS")#" CLAUDE.md
 
 # --- 4. RUNBOOK / BACKLOG / ADR-000 ---
 [ -f RUNBOOK.md ] || { cp templates/RUNBOOK-TEMPLATE.md RUNBOOK.md; sedi "s/\[Project Name\]/${ENAME}/g" RUNBOOK.md; }
@@ -289,6 +302,17 @@ if git rev-parse --is-inside-work-tree >/dev/null 2>&1 && [ -f hooks/pre-push ];
     echo "installed runtime guard: $HOOK_DST (blocks force-push/push-to-main; bypass: git push --no-verify)"
   fi
 fi
+
+# --- 5c. verify each selected harness adapter against the boundary contract (real project; non-fatal) ---
+for _h in $HARNESS_LIST; do
+  if sh conformance/harness-adapter.sh "adapters/${_h}" >/dev/null 2>&1; then
+    echo "harness adapter '${_h}': conforms to the boundary contract (floor + native proofs)."
+  else
+    echo "WARNING: harness adapter '${_h}' does NOT yet conform — close the gaps before you build:" >&2
+    echo "         run 'sh conformance/harness-adapter.sh adapters/${_h}' for the specifics." >&2
+    echo "         (The Inception-Done gate will block until it conforms.)" >&2
+  fi
+done
 
 # --- 6. next steps (the judgment incept does NOT automate) ---
 # Branch-protection guidance is platform-specific: branch-protection.sh / BRANCH-PROTECTION.md
