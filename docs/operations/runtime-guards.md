@@ -5,7 +5,7 @@ How the kit's destructive-action deny-matrix protects **more than the Claude Cod
 > **Principle — one matrix, many surfaces; still a speed bump.** The deny-matrix is the single source of truth; each surface reuses it. None of them is a security boundary — `--no-verify`, a runtime that never calls `kit-guard`, or an interpreter still bypasses it. The real boundary is platform-owned (`../enterprise/platform-safety-boundary.md`).
 
 ## The one matrix
-`/.claude/hooks/guard-core.sh` exposes three pure functions — each prints a `13: …` reason and returns 1 on deny, 0 on allow:
+`/.claude/hooks/guard-core.sh` exposes four pure functions — each prints a `13: …` reason and returns 1 on deny, 0 on allow:
 - `guard_check_command "<cmd>"` — the destructive-command matrix (rm, dd, SQL/DDL, migration resets, cloud/cluster destruction, prod-context, exfil, control-plane).
 - `guard_check_path "<file>"` — secret-material + control-plane write protection.
 - `guard_check_push <remote-ref> <local-sha> <remote-sha>` — force-push / push-to-main, from real refs.
