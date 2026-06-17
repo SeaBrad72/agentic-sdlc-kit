@@ -28,7 +28,7 @@ BACKLOG_BACKENDS="md github jira ado linear gitlab"
 # is open — see docs/operations/ci-platforms.md); these are the two with a worked reference.
 CI_PLATFORMS="github gitlab"
 # Valid harness adapters = the adapters/ registry (one source of truth; each has an adapter.json).
-HARNESS_ADAPTERS=$(for _d in adapters/*/; do [ -f "${_d}adapter.json" ] && printf '%s ' "$(basename "$_d")"; done)
+HARNESS_ADAPTERS=$(for _d in adapters/*/; do [ -f "${_d}adapter.json" ] && printf '%s ' "$(basename "$_d")" || true; done)
 [ -n "$HARNESS_ADAPTERS" ] || { echo "incept: no adapters/ registry found (adapters/<harness>/adapter.json). Aborting." >&2; exit 1; }
 
 # reqval: a value-taking flag must have a value (else dash's `shift 2` would fail
