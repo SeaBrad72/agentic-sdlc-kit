@@ -47,6 +47,8 @@ where the kit applies it.** (Skip any you already know.)
 Then see the whole thing in motion: **[WALKTHROUGH.md](WALKTHROUGH.md)** — one feature from idea to
 operating software. When ready, go to **[START-HERE.md](START-HERE.md)**.
 
-> **You can't break things by reading the wrong lane.** The kit's guard and CI gates protect every
-> project regardless of what you read — they stop dangerous actions. This page makes you *educated*;
-> the guardrails keep you *safe*.
+> **You can't break things by reading the wrong lane.** The kit's runtime guard is a **best-effort
+> speed bump, not a security boundary** (it raises friction on many irreversible actions but does not
+> stop a determined bypass — see [`docs/operations/runtime-guards.md`](docs/operations/runtime-guards.md));
+> the real safety net is the platform controls your org owns. CI gates run on every project regardless
+> of what you read. This page makes you *educated*; the guardrails *reduce* risk — they don't remove it.

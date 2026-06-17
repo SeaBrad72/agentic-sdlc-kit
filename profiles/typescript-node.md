@@ -48,7 +48,7 @@ start:         node dist/server.js   # or: next start
 
 ### Environments this stack needs
 **Default archetype: DB-backed service.** The shipped `compose.yaml` provides the app + a Postgres database for dev/prod parity.
-`scripts/incept.sh` copies `compose.yaml` into your project; add services only as your feature needs them.
+The profile ships `compose.yaml` + `Dockerfile` as **COPY-&-ADAPT references** (incept does not auto-copy them); adapt them when you containerize, adding services only as your feature needs them. The image-build CI gates skip until a `Dockerfile` is present.
 
 | Need | Default | Add when |
 |------|---------|----------|
@@ -62,7 +62,7 @@ Promote **Dev → QA → UAT → Prod** with gated promotion; **production is hu
 
 ## 4. CI/CD pipeline
 Implements the 7 required gates of `DEVELOPMENT-STANDARDS.md` §14. Drop-in reference files live in **`profiles/typescript-node/`**:
-- **`ci.yml`** → copy to `.github/workflows/ci.yml`. GitHub Actions on push/PR to `main`: `npm ci` → lint → type-check → test+coverage(≥80) → build → secret-scan (gitleaks) → dependency scan (`npm audit --audit-level=high`) → SBOM (CycloneDX) → build provenance (`actions/attest-build-provenance`). All green required to merge.
+- **`ci.yml`** → copy to `.github/workflows/ci.yml`. GitHub Actions on push/PR to `main`: `npm ci` → lint → type-check → test+coverage(≥80) → build → secret-scan (gitleaks) → dependency scan (`npm audit --omit=dev --audit-level=high`) → SBOM (CycloneDX) → build provenance (`actions/attest-build-provenance`). All green required to merge.
 - **`CODEOWNERS`** → copy to `.github/CODEOWNERS`; routes review so builder ≠ sole reviewer.
 - **`BRANCH-PROTECTION.md`** → how to protect `main` (required check, required review).
 - **Container image supply-chain (this profile ships a service):** the reference `profiles/typescript-node/ci.yml` adds `gate-image-sbom` (Syft/CycloneDX, on PR) and `gate-image-provenance` (digest-bound, push-only) on top of the 8 universal gate-ids. Verified by `conformance/container-supply-chain.sh`.

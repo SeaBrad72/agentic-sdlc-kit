@@ -26,6 +26,16 @@ when you change dependencies.
 | `src/server.ts`     | node:http server exposing `/healthz` (main-guarded; coverage-excluded).|
 | `test/health.test.ts`| vitest test on `health()`.                                         |
 
+## See it run
+
+```sh
+npm ci
+npm run dev            # starts the server on :3000 (tsx)
+# in another terminal:
+curl localhost:3000/healthz     # -> {"status":"ok"}
+```
+Or the built artifact: `npm run build && npm start`.
+
 ## Commands (match `profiles/typescript-node/ci.yml`)
 
 ```sh
@@ -41,6 +51,8 @@ npm run build        # gate-build  (tsc)
 > **Authored to the `profiles/typescript-node/ci.yml` contract and verified green with the real
 > npm pipeline** (install → lint → type-check → test+coverage → build) before shipping.
 
-The scaffold makes the **language gates** green. The full `ci.yml` also runs container-image gates
-(`docker build`, image SBOM/provenance) and scans — those need a `Dockerfile` (see
-`profiles/typescript-node/Dockerfile`) and are not part of this empty-repo language scaffold.
+On first push the scaffold also passes the other unconditional gates — **secret-scan** (gitleaks),
+**dep-scan** (`npm audit --omit=dev`), **SBOM** (CycloneDX), **SAST** (semgrep), and **license** —
+not just the five language gates. **Only** the container-image gates (`docker build`, image
+SBOM/provenance) wait: they're conditional on a `Dockerfile` (the profile's `Dockerfile` is a
+COPY-&-ADAPT reference) and skip until you adapt one in.

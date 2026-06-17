@@ -83,6 +83,16 @@ fi
 [ -n "$OWNER" ] || { echo "error: --intent-owner required" >&2; exit 2; }
 case " $BACKLOG_BACKENDS " in *" $BACKLOG "*) : ;; *) echo "error: unknown --backlog '$BACKLOG' (one of: $BACKLOG_BACKENDS)" >&2; exit 2 ;; esac
 case " $CI_PLATFORMS " in *" $CI "*) : ;; *) echo "error: unknown --ci '$CI' (one of: $CI_PLATFORMS)" >&2; exit 2 ;; esac
+# GitLab CI ships only for stacks with a reference pipeline (typescript-node today). Refuse EARLY
+# (before any file changes) rather than silently writing no CI file and dead-ending at the
+# Inception-Done gate. GitHub ships a pipeline for every service stack.
+if [ "$CI" = "gitlab" ] && [ ! -f "profiles/${STACK}/ci.gitlab-ci.yml" ]; then
+  _gl=$(ls profiles/*/ci.gitlab-ci.yml 2>/dev/null | sed 's#profiles/##; s#/ci.gitlab-ci.yml##' | tr '\n' ' ')
+  echo "error: --ci gitlab is not yet available for stack '${STACK}' (no profiles/${STACK}/ci.gitlab-ci.yml)." >&2
+  echo "       Use --ci github (ships for every service stack), or add profiles/${STACK}/ci.gitlab-ci.yml." >&2
+  echo "       GitLab references today: ${_gl:-none}." >&2
+  exit 2
+fi
 if [ -n "$FLUENCY" ]; then
   case " $OPERATOR_FLUENCIES " in *" $FLUENCY "*) : ;; *) echo "error: unknown --operator-fluency '$FLUENCY' (one of: $OPERATOR_FLUENCIES)" >&2; exit 2 ;; esac
 fi
@@ -98,7 +108,11 @@ VER=$(cat VERSION 2>/dev/null || echo "unknown")
 ENAME=$(esc "$NAME"); EOWNER=$(esc "$OWNER")
 
 # --- 1. free the root memory slot ---
-if git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+# Use `git mv` only when CLAUDE.md is actually TRACKED. In the literal quickstart (copy the
+# kit into a fresh `git init` repo, run incept before committing), CLAUDE.md is untracked and
+# `git mv` aborts with exit 128 — fall back to a plain `mv` (nothing is committed, so no
+# history is lost). Covers tracked / untracked-in-worktree / non-git alike.
+if git rev-parse --is-inside-work-tree >/dev/null 2>&1 && git ls-files --error-unmatch CLAUDE.md >/dev/null 2>&1; then
   git mv CLAUDE.md ENGINEERING-PRINCIPLES.md
 else
   mv CLAUDE.md ENGINEERING-PRINCIPLES.md
@@ -115,6 +129,7 @@ sedi -e 's/and `CLAUDE.md` (authoritative principles + Definition of Done)/and `
      DEVELOPMENT-PROCESS.md
 sedi 's/| \*\*`CLAUDE.md`\*\* | Principles + Definition of Done. Authoritative. |/| **`ENGINEERING-PRINCIPLES.md`** | Principles + Definition of Done. Authoritative. |/' README.md
 sedi 's/`CLAUDE.md` (principles + Definition of Done)/`ENGINEERING-PRINCIPLES.md` (principles + Definition of Done)/' START-HERE.md
+sedi 's/the principles (`CLAUDE.md`)/the principles (`ENGINEERING-PRINCIPLES.md`)/' ONBOARDING.md
 sedi 's#`DEVELOPMENT-STANDARDS.md` / `DEVELOPMENT-PROCESS.md` / `CLAUDE.md`#`DEVELOPMENT-STANDARDS.md` / `DEVELOPMENT-PROCESS.md` / `ENGINEERING-PRINCIPLES.md`#' MAINTAINING.md
 sedi 's/\*\*Principles + Definition of Done:\*\* `CLAUDE.md`/**Principles + Definition of Done:** `ENGINEERING-PRINCIPLES.md`/' templates/PROJECT-CLAUDE-TEMPLATE.md
 
@@ -205,27 +220,52 @@ if [ -d "profiles/${STACK}/evals" ] && [ ! -d evals ]; then
 fi
 
 # --- 5a2. copy the profile's starter scaffold so the drop-in CI is green on the empty project ---
-# Brownfield-safe: each file is copied ONLY where absent (never clobbers existing app source),
-# so 'green pipeline on the empty project' (the Inception gate) is reachable in one command.
+# Brownfield-safe: each file is copied ONLY where absent (never clobbers existing app source).
 # See profiles/${STACK}/scaffold/README.md for any one-time lockfile/wrapper step.
 if [ -d "profiles/${STACK}/scaffold" ]; then
   ( cd "profiles/${STACK}/scaffold" && find . -type f ) | while IFS= read -r rel; do
     rel=${rel#./}
+    # .gitignore is MERGED below (the project already has a root .gitignore), not copied here.
+    if [ "$rel" = ".gitignore" ]; then continue; fi
     if [ ! -e "$rel" ]; then
       mkdir -p "$(dirname "$rel")"
       cp "profiles/${STACK}/scaffold/$rel" "$rel"
     fi
   done
-  echo "copied starter scaffold from profiles/${STACK}/scaffold/ where files were absent (brownfield-safe) — see its README for the first-green-pipeline steps"
+  # Merge the scaffold's ignore rules into the project .gitignore so the first `git add -A`
+  # does not stage build artifacts (node_modules/target/bin/...). Idempotent.
+  sgi="profiles/${STACK}/scaffold/.gitignore"
+  if [ -f "$sgi" ]; then
+    [ -f .gitignore ] || : > .gitignore
+    # `|| [ -n "$pat" ]` processes a final line with no trailing newline (robust to any scaffold).
+    while IFS= read -r pat || [ -n "$pat" ]; do
+      case "$pat" in ''|\#*) continue ;; esac
+      grep -qxF "$pat" .gitignore 2>/dev/null || printf '%s\n' "$pat" >> .gitignore
+    done < "$sgi"
+  fi
+  echo "copied starter scaffold from profiles/${STACK}/scaffold/ (brownfield-safe) + merged its .gitignore rules"
+  # Stack-specific one-time step to make the first CI push green (exact command, not a generic hint).
+  case "$STACK" in
+    python)      echo "  first-green step: uv lock && git add uv.lock && git commit -m 'lock deps'" ;;
+    java-spring) echo "  first-green step: mvn wrapper:wrapper && git add mvnw .mvn && git commit -m 'add maven wrapper'" ;;
+    kotlin)      echo "  first-green step: gradle wrapper && git add gradlew gradle && git commit -m 'add gradle wrapper'" ;;
+    dotnet)      echo "  first-green step: dotnet restore (writes packages.lock.json) && git add '**/packages.lock.json' && git commit -m 'lock deps'" ;;
+    go|rust)     echo "  no lockfile step — this scaffold is dependency-free and clone-green." ;;
+  esac
+  echo "  run it: see profiles/${STACK}/scaffold/README.md → 'See it run' (start the app, curl /healthz)"
+else
+  echo "warning: no starter scaffold for '${STACK}' — incept copied its CI but no app source, so CI will be RED until you add code. Non-service stacks (ml / data-engineering / terraform) ship a CI contract you populate, not a /healthz starter (see profiles/${STACK}.md §2)."
 fi
 
-# --- 5a3. copy the profile's local-dev compose (brownfield-safe) ---
-# The profile's compose.yaml reflects the stack's DEFAULT archetype (e.g. go/rust ship a
-# stateless app-only compose; web stacks ship app + Postgres). Review it against the
-# "Environments this stack needs" section in profiles/${STACK}.md / docs/STACK-SELECTION.md.
-if [ -f "profiles/${STACK}/compose.yaml" ] && [ ! -f compose.yaml ]; then
-  cp "profiles/${STACK}/compose.yaml" compose.yaml
-  echo "copied compose.yaml from profiles/${STACK}/ (local dev mirroring prod) — review the services it declares against your 'Environments this stack needs'"
+# --- 5a3. point at the profile's COPY-&-ADAPT container references (do NOT auto-copy) ---
+# The profile's Dockerfile + compose.yaml are explicitly "COPY & ADAPT" references written for a
+# real app (e.g. a cmd/server entrypoint, a DB-backed service) — NOT drop-in artifacts for the
+# minimal /healthz starter. Auto-copying them would make `docker build` / `docker compose up` fail
+# until adapted, so incept leaves them in the profile and the image-supply-chain CI gates are
+# conditional on a Dockerfile existing (they skip until you add one). See profiles/${STACK}/ +
+# the "Environments this stack needs" section in profiles/${STACK}.md / docs/STACK-SELECTION.md.
+if [ -f "profiles/${STACK}/Dockerfile" ] || [ -f "profiles/${STACK}/compose.yaml" ]; then
+  echo "note: containerize when ready — adapt profiles/${STACK}/Dockerfile + compose.yaml to your app, then the image-build CI gates activate (they skip until a Dockerfile is present)."
 fi
 
 # --- 5b. install the runtime-guard git pre-push hook (default-on, brownfield-safe) ---

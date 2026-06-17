@@ -30,6 +30,13 @@ for prof in profiles/*.md; do
       echo "FAIL $base: companion ci.yml missing required gates"; fail=1
     fi
   fi
+
+  # A profile that ships a compose.yaml is a deployable SERVICE stack — it must also ship a
+  # starter scaffold/, so `incept` can deliver a runnable, CI-green starter for it. Non-service
+  # stacks (ml/data-engineering/terraform — no compose.yaml) are exempt by design. (go/no-go B2.)
+  if [ -f "profiles/${name}/compose.yaml" ] && [ ! -d "profiles/${name}/scaffold" ]; then
+    echo "FAIL $base: ships compose.yaml (service stack) but no scaffold/ — incept can't deliver a runnable starter"; fail=1
+  fi
 done
 
 if [ "$fail" -ne 0 ]; then echo "FAIL: profile-completeness"; exit 1; fi

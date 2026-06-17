@@ -131,6 +131,10 @@ jobs:
         run: sh conformance/security-policy.sh --selftest
       - name: Privacy-ready selftest (data-classification DPIA-lite three-state)
         run: sh conformance/privacy-ready.sh --selftest
+      - name: Security-policy real-path (kit dogfoods its SECURITY.md gate)
+        run: sh conformance/security-policy.sh .
+      - name: Privacy-ready real-path (kit data-classification verdict)
+        run: sh conformance/privacy-ready.sh .
       - name: Shellcheck available (fail loudly if the runner drops it, no silent SKIP)
         run: shellcheck --version
       - name: Kit shellcheck regression-lock — maintainer shell clean
