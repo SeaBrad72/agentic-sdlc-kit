@@ -3,6 +3,21 @@
 All notable changes to Sparkwright are recorded here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.65.0] - 2026-06-17
+
+**Harness-neutrality — N3: the `generic` adapter + `incept --harness`.** Third slice of the LLM/harness-neutral milestone (→ `3.0.0`). The kit becomes pickup-able with a non-Claude harness out of the gate, provably enforced for greenfield **and** brownfield. **MINOR** — additive; the no-flag `incept` experience is unchanged.
+
+### Added
+- **The `generic` adapter** (`adapters/generic/adapter.json`) — an all-`floor` manifest (`mcp-gate: n-a`) that proves a harness with **no inline guard** (Codex, Cursor, Copilot reading `AGENTS.md`) clears the boundary contract entirely via the Kit-enforced floor (the git hook + CI backstop), with inline interception honestly absent.
+- **`incept.sh --harness <list>`** — multi-select, comma-separated, **defaults to `claude-code`** (a no-flag run behaves exactly as before). Validates each name against the `adapters/` registry, stamps a **"Target harness(es)"** field into the project `CLAUDE.md`, and — after its transforms, on the real project — runs `conformance/harness-adapter.sh` per selected harness as a **loud, non-fatal** report (a brownfield adopter sees exactly which floor gaps remain).
+- **Inception-Done enforcement** — `conformance/inception-done.sh` now reads the stamped harness field and **fails the gate** if any selected adapter doesn't conform to the boundary contract. This is the brownfield safety net: a merged repo can't pass Inception until its declared adapter(s) actually conform (greenfield passes; a non-conforming adapter blocks).
+
+### Changed
+- The kit dogfoods it: a `generic` real-run is added to the kit's `ci.yml` + `verify.sh`, and the CI bootstrap job now incepts with `--harness claude-code,generic` (exercising stamp → enforcement end-to-end).
+
+### Honesty / engineering notes
+- **Report at the action, enforce at the checkpoint:** incept reports gaps non-fatally so an adopter can finish setup and then close them; the Inception-Done gate is what blocks unsafe. Verified: incept does not rewrite `AGENTS.md` and removes no floor files, so a correctly-incepted project conforms post-transform — the enforcement is honest, not hollow. The BYO adapter `_TEMPLATE` and the live cross-harness demo are N4.
+
 ## [2.64.0] - 2026-06-17
 
 **Harness-neutrality — N2: the adapter boundary contract.** Second slice of the LLM/harness-neutral milestone (→ `3.0.0`). **MINOR** — additive: a contract doc, the `claude-code` reference adapter, and a composing conformance check; no change to existing gates, nothing breaks.
