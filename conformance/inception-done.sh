@@ -73,7 +73,9 @@ else
     *'['*|'') echo "FAIL: Target harness(es) not stamped (placeholder remains)"; fail=1 ;;
     *)
       for _h in $(printf '%s' "$hval" | tr ',' ' '); do
-        if [ -d "adapters/$_h" ] && sh conformance/harness-adapter.sh "adapters/$_h" >/dev/null 2>&1; then
+        if ! [ -d "adapters/$_h" ]; then
+          echo "FAIL: harness adapter '$_h' directory not found — expected: adapters/$_h"; fail=1
+        elif sh conformance/harness-adapter.sh "adapters/$_h" >/dev/null 2>&1; then
           echo "PASS: harness adapter '$_h' conforms to the boundary contract"
         else
           echo "FAIL: harness adapter '$_h' does not conform — run: sh conformance/harness-adapter.sh adapters/$_h"; fail=1
