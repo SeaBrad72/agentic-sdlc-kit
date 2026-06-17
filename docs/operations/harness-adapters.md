@@ -83,4 +83,4 @@ sh conformance/harness-adapter.sh --selftest
 
 The floor is the equal-enforcement guarantee — it holds on every harness without cooperation from the runtime. Native is additive: it tightens enforcement when the harness supports inline interception (pre-exec hooks, subagents). A harness that supports native should declare it and prove it; one that doesn't stays at floor and is still fully covered by the universal layer.
 
-Inline command interception varies by harness capability — see `docs/operations/runtime-guards.md` for the full matrix of what each surface covers and where the ceiling is.
+Inline command interception varies by harness capability — see [runtime-guards.md](runtime-guards.md) for the full matrix of what each surface covers and where the ceiling is.

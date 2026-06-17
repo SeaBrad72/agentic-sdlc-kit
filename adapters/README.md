@@ -1,7 +1,7 @@
 # adapters/
 
 One subdirectory per harness. Each holds:
-- `adapter.json` — the declarative manifest (see schema below)
+- `adapter.json` — the declarative manifest (schema in [`docs/operations/harness-adapters.md`](../docs/operations/harness-adapters.md))
 - `README.md` — harness-specific notes
 
 ## What an adapter is
