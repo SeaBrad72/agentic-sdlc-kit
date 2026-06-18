@@ -258,6 +258,34 @@ assert_deny "WS1 leading .. write"   '{"tool_name":"Write","tool_input":{"file_p
 assert_deny "WS1 multi .. write"     '{"tool_name":"Write","tool_input":{"file_path":"x/y/z/../../../guard.sh","content":"x"}}'
 assert_deny "WS1 trailing slash"     '{"tool_name":"Write","tool_input":{"file_path":".claude/settings.json/","content":"x"}}'
 
+
+# --- H3a: secret-in-context — reading secret material into context is the read half of exfil (DENY) ---
+assert_deny  "cat .env"             '{"tool_name":"Bash","tool_input":{"command":"cat .env"}}'
+assert_deny  "grep key .env"        '{"tool_name":"Bash","tool_input":{"command":"grep API_KEY .env"}}'
+assert_deny  "head .env.production" '{"tool_name":"Bash","tool_input":{"command":"head -5 .env.production"}}'
+assert_deny  "strings id_rsa"       '{"tool_name":"Bash","tool_input":{"command":"strings ~/.ssh/id_rsa"}}'
+assert_deny  "cat .pem"             '{"tool_name":"Bash","tool_input":{"command":"cat server.pem"}}'
+assert_deny  "cat secrets/ file"    '{"tool_name":"Bash","tool_input":{"command":"cat secrets/db.txt"}}'
+assert_deny  "Read .env"            '{"tool_name":"Read","tool_input":{"file_path":".env"}}'
+assert_deny  "Read .env.production" '{"tool_name":"Read","tool_input":{"file_path":"config/.env.production"}}'
+assert_deny  "Read id_rsa"          '{"tool_name":"Read","tool_input":{"file_path":"/home/u/.ssh/id_rsa"}}'
+assert_deny  "Read private key"     '{"tool_name":"Read","tool_input":{"file_path":"certs/private.key"}}'
+# H3a security-review additions: source/. load secrets into env; glob + common .env.<suffix> files
+assert_deny  "source .env"          '{"tool_name":"Bash","tool_input":{"command":"source .env"}}'
+assert_deny  "dot-source .env"      '{"tool_name":"Bash","tool_input":{"command":". .env"}}'
+assert_deny  "cat .env glob"        '{"tool_name":"Bash","tool_input":{"command":"cat .env*"}}'
+assert_deny  "cat .env.staging"     '{"tool_name":"Bash","tool_input":{"command":"cat .env.staging"}}'
+assert_deny  "Read .env.staging"    '{"tool_name":"Read","tool_input":{"file_path":".env.staging"}}'
+assert_deny  "multi-arg no bypass"  '{"tool_name":"Bash","tool_input":{"command":"cat .env.example .env"}}'
+# H3a allows: safe template, source, metadata-only ls, AND control-plane reads (the read-deny << write-deny asymmetry)
+assert_allow "cat .env.sample tmpl" '{"tool_name":"Bash","tool_input":{"command":"cat .env.sample"}}'
+assert_allow "Read .env.template"   '{"tool_name":"Read","tool_input":{"file_path":".env.template"}}'
+assert_allow "cat .env.example"     '{"tool_name":"Bash","tool_input":{"command":"cat .env.example"}}'
+assert_allow "cat source"           '{"tool_name":"Bash","tool_input":{"command":"cat src/app.ts"}}'
+assert_allow "ls -la .env metadata" '{"tool_name":"Bash","tool_input":{"command":"ls -la .env"}}'
+assert_allow "Read .env.example"    '{"tool_name":"Read","tool_input":{"file_path":".env.example"}}'
+assert_allow "Read source"          '{"tool_name":"Read","tool_input":{"file_path":"src/app.ts"}}'
+assert_allow "Read control-plane"   '{"tool_name":"Read","tool_input":{"file_path":".claude/hooks/guard-core.sh"}}'
 if [ "$fail" -ne 0 ]; then echo "FAIL: agent-autonomy conformance failed"; exit 1; fi
 echo "OK: agent-autonomy guard denies irreversible actions and allows safe ones"
 exit 0

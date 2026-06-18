@@ -5,11 +5,14 @@ How the kit's destructive-action deny-matrix protects **more than the Claude Cod
 > **Principle — one matrix, many surfaces; still a speed bump.** The deny-matrix is the single source of truth; each surface reuses it. None of them is a security boundary — `--no-verify`, a runtime that never calls `kit-guard`, or an interpreter still bypasses it. The real boundary is platform-owned (`../enterprise/platform-safety-boundary.md`).
 
 ## The one matrix
-`/.claude/hooks/guard-core.sh` exposes four pure functions — each prints a `13: …` reason and returns 1 on deny, 0 on allow:
-- `guard_check_command "<cmd>"` — the destructive-command matrix (rm, dd, SQL/DDL, migration resets, cloud/cluster destruction, prod-context, exfil, control-plane).
-- `guard_check_path "<file>"` — secret-material + control-plane write protection.
+`/.claude/hooks/guard-core.sh` exposes five pure functions — each prints a `13: …` reason and returns 1 on deny, 0 on allow:
+- `guard_check_command "<cmd>"` — the destructive-command matrix (rm, dd, SQL/DDL, migration resets, cloud/cluster destruction, prod-context, exfil, control-plane) **plus the secret-in-context read deny (H3a): a content-read verb (`cat`/`grep`/`diff`/`source`/…) targeting secret material (`.env*`/`.pem`/`.key`/`id_rsa`/`secrets/`) is human-gated** — reading a secret into the agent's context is the read half of exfil.
+- `guard_check_path "<file>"` — secret-material + control-plane **write** protection.
+- `guard_check_read "<file>"` — the **Read-tool** secret deny (H3a). Symmetric with the secret-write deny but **narrower: it does NOT deny control-plane reads** (reading the guard/CI to understand it is legitimate); `.env.example`/`.sample`/`.template`/`.dist` are allowed. Wired via the `Read` matcher in `settings.json`.
 - `guard_check_push <remote-ref> <local-sha> <remote-sha>` — force-push / push-to-main, from real refs.
 - `guard_check_mcp "<tool>" "<allowlist>" "<overrides>"` — the MCP capability gate (Slice 11a): classifies an `mcp__<server>__<action>` tool by its action verb and denies un-allowlisted destructive/egress capabilities (fail-closed). Pure — the adapter loads `.claude/mcp-policy.json` and passes it in.
+
+> **Secret-in-context ceiling (H3a, honest).** The two read denies stop the agent's **default** exfil-read paths (shell `cat .env`, the Read tool) but are a speed bump, not containment: an **interpreter** (`python -c "open('.env')"`), an uncommon content-emitter not in the verb list, or an exotic `.env.<custom-suffix>` on the *shell* path can still read a secret; `jq`-absent leaves the Read tool allowed; non-Claude harnesses get the shell deny via `kit-guard cmd` (no Read tool). The real boundary is the platform egress allowlist + sandboxed FS (`../enterprise/platform-safety-boundary.md`).
 
 `conformance/guard-core-sourced.sh` asserts every consumer sources this file (no forked matrix).
 
