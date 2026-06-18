@@ -1,0 +1,22 @@
+name: drift-watch
+# Scheduled go/no-go-lite (D1b). Re-validates the kit against the live runner toolchain and re-runs
+# the SEMANTIC claims-registry on a timer, so drift surfaces even with no commits (toolchain rot,
+# quiet-period staleness). The payload is deterministic/offline, so a red run is a TRUE drift signal
+# — D4-consistent: a real failure earns red + the cron-failure email (unlike an awaiting-action gate).
+on:
+  schedule:
+    - cron: '0 6 * * 1'          # Mondays 06:00 UTC
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  drift-watch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10  # v6.0.3
+      - name: Aggregate conformance (controls must hold; UNVERIFIED fails under --require)
+        run: sh conformance/verify.sh --require
+      - name: Claims registry — headline claims still hold + no silent drop
+        run: sh conformance/claims-registry.sh
+      - name: Relative Markdown link integrity
+        run: sh conformance/check-links.sh

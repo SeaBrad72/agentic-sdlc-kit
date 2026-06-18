@@ -7,3 +7,4 @@ guard-single-source	one deny-matrix, no forked copy (every consumer sources guar
 action-pinning	all third-party GitHub Actions are SHA-pinned	sh conformance/action-pinning.sh
 security-policy	a real SECURITY.md coordinated-disclosure policy ships	sh conformance/security-policy.sh
 gate-counts	"seven required" + "five conditional" gate words == the enumerated gates (§14)	sh conformance/claim-gate-counts.sh
+drift-watch	a scheduled drift-watch re-runs the aggregate + claims + links	sh conformance/drift-watch-wired.sh

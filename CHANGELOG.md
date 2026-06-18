@@ -3,6 +3,24 @@
 All notable changes to Sparkwright are recorded here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.11.0] - 2026-06-18
+
+**MINOR** — D1b: **scheduled drift-watch (go/no-go-lite)** — completes D1. A weekly canary re-validates the kit against the live runner toolchain and re-runs the semantic claims-registry on a timer, so drift surfaces even with **no commits** (toolchain rot, quiet-period staleness). **Control-plane slice; additive; no control weakened.**
+
+### Added
+- **`.github/workflows/drift-watch.yml`** — scheduled workflow: `cron: '0 6 * * 1'` (Mon 06:00 UTC) + `workflow_dispatch`, `contents: read` (least privilege), SHA-pinned checkout. Deterministic/offline payload: `conformance/verify.sh --require` (UNVERIFIED fails) + `conformance/claims-registry.sh` + `conformance/check-links.sh`. **Fail-the-run** surfacing — drift is a real failure, so red + GitHub's cron-failure email is the correct channel (D4-consistent: unlike "ratification required", which is an awaiting-action gate). Deterministic payload means no flaky false-alarm to erode the channel.
+- **`conformance/drift-watch-wired.sh`** (CI-wired) — the drift-watcher must not itself drift: asserts the workflow exists, is scheduled (+ dispatchable), and runs the full payload; `--selftest` catches a gutted workflow.
+
+### Changed
+- **`conformance/claims.tsv` + `conformance/claims-registry.sh`** — the drift-watch is **registered as a claim** (+ a `REQUIRED_IDS` entry, no silent drop), modelling D1a's intended growth: a new control → a new registered, verified claim.
+- **`.github/workflows/ci.yml`** — runs `drift-watch-wired.sh --selftest`. ROADMAP D1b done / **D1 complete**; VERSION 3.11.0, badge, CHANGELOG.
+
+### Review
+Independent review: **APPROVE.** A real drift turns the scheduled run red (no `continue-on-error`/`|| true`; `--require` fails UNVERIFIED); least-privilege + pinned; the grep-based wired-check can't be false-PASSed by the comment in its own target; self-registration loop closes. One non-blocking finding folded as a **tracked follow-up**: `action-pinning.sh` scans only the profile reference, not the kit's own `.github/workflows/` — broaden it so ci.yml + drift-watch.yml pins are mechanically enforced (its own small reviewed slice, not bolted on post-review).
+
+### Honest ceiling
+A weekly re-run of the **deterministic** suite + semantic registry; networked/semantic-heavy checks (external-link liveness, staleness) are deferred — the workflow is their future home. The grep-based wired-check is structural-not-semantic (backstopped by the real scheduled run).
+
 ## [3.10.0] - 2026-06-18
 
 **MINOR** — D1a: **claims-registry meta-check — continuous semantic-drift detection.** Structural drift was already caught continuously (badge/links/coverage); *semantic* drift — a headline factual claim that no longer matches reality — was caught only by the periodic human go/no-go. This generalises `badge-version.sh` (one claim: badge == VERSION) to a registry of N headline claims, each paired with a verifier, failing CI on drift **or** on a silently-dropped claim. **Control-plane slice; additive; no control weakened.** (D1b — a scheduled drift-watch that runs this on a timer — is a fast-follow.)
