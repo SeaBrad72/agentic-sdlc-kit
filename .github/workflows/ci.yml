@@ -171,6 +171,7 @@ jobs:
         run: |
           sh conformance/claim-gate-counts.sh --selftest
           sh conformance/claims-registry.sh --selftest
+          sh conformance/drift-watch-wired.sh --selftest
           sh conformance/claims-registry.sh
 
 
