@@ -206,9 +206,12 @@ jobs:
           AUTHOR: ${{ github.event.pull_request.user.login }}
         run: |
           rat=0
+          # Ratification = a non-author APPROVAL (an agent cannot approve its own PR; GitHub forbids
+          # self-approval). The self-appliable `ratified-control-plane` label was REMOVED (H1.3) as
+          # agent-forgeable; solo maintainers ratify via a logged enforce_admins:false admin-merge.
           approvers=$(gh pr view "$PR" --json reviews \
             -q '.reviews | group_by(.author.login) | map(last) | .[] | select(.state=="APPROVED") | .author.login')
-          if printf '%s\n' "$approvers" | grep -vx "$AUTHOR" | grep -q .; then rat=1; fi
+          if printf '%s\n' "$approvers" | grep -vxF -- "$AUTHOR" | grep -q .; then rat=1; fi
           echo "ratified=$rat" >> "$GITHUB_OUTPUT"
       - name: Agent-boundary gate — ratification required (not a build failure)
         run: sh conformance/agent-boundary.sh --changed /tmp/changed.txt --ratified "${{ steps.ratify.outputs.ratified }}" --require

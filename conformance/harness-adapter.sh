@@ -63,6 +63,7 @@ native_proof_ok() {
       return 1
     fi
     [ -f "$chk" ] || return 1
+    if [ -L "$chk" ]; then return 1; fi   # -f follows symlinks; reject a symlinked check
     sh "$chk" >/dev/null 2>&1 || return 1
   fi
   for f in $files; do [ -e "$f" ] || return 1; done

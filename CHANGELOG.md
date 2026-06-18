@@ -17,7 +17,7 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versioning: [S
 
 ### Honest ceilings
 - The inline guard remains a speed bump: a control-plane edit made through a language interpreter (`python -c`, a script) is **not** caught by its command-string heuristic — the `agent-boundary` CI gate is the post-hoc backstop that catches the resulting diff before merge. Command-string false-positive tuning is deferred to **P2/WS1**; GitLab gate parity to **H4**.
-- The `proof.check` allowlist validates the *path string* but `[ -f ]` follows symlinks, so a **committed symlink** under `conformance/` (e.g. `conformance/x.sh → ../payload`) could point elsewhere. This is a composed-defense residual, not an open hole: creating that symlink is itself a `conformance/` change and so is ratification-gated by H1.1. A follow-up may add a `[ ! -L ]` reject and a conformance check asserting every kit `scripts/*.sh` is enrolled in the control-plane set (a named-set grows by hand today).
+- The `proof.check` allowlist also rejects a **symlinked** check (`[ ! -L ]`), closing the residual where `[ -f ]` would follow a committed symlink under `conformance/` to a payload elsewhere (itself ratification-gated by H1.1 — this is belt-and-suspenders). One named-set residual remains: a newly-added kit `scripts/*.sh` is not control-plane until hand-enrolled in `is_control_plane_path` — a conformance check asserting full enrollment is a possible follow-up.
 
 ## [3.1.0] - 2026-06-17
 
