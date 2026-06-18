@@ -70,16 +70,30 @@ Make the kit **LLM/harness-neutral** — anyone can pick it up with any agent ha
 
 ---
 
-## Post-3.0.0 go/no-go fix-forward backlog
+## Post-3.0.0 backlog (consolidated + prioritized)
 
-An 11-dimension adversarial go/no-go on 3.0.0 returned **GO-WITH-CONDITIONS** (0 blockers, 0 of 26 material findings refuted). The four pre-announce conditions (3 Highs + the PORT DX) **shipped in `3.0.1`**. The remaining **Medium/Low** findings are fix-forward — none breaks the verified `typescript-node` path or a headline claim:
+Sources: the 11-dimension adversarial go/no-go on 3.0.0 (**GO-WITH-CONDITIONS**, 0 blockers, 0 of 26 material findings refuted — the 4 pre-announce conditions shipped in `3.0.1`), the post-3.0.0 weight/usefulness review, and the forward-functionality directions. Priority tiers are the default sequence, not a commitment; re-prioritize at a retro. None of the below breaks the verified `typescript-node` path or a headline claim.
 
-- **Profile doc/scaffold parity** — python scaffold missing `fail_under=80`; GitLab ts-node CI missing the conditional `gate-eval`.
+### P1 — Integrity & honest enforcement (close what the go/no-go exposed)
+- **N5 — `controlPlanePaths` union wiring** *(the one real capability gap).* Wire the `agent-boundary` gate to read the union of every adapter-declared `controlPlanePaths`, turning the declarative inventory into real per-harness enforcement. `3.0.1` corrected the doc to say this is future; this builds it. (contract→reference→conformance vertical.)
+- **Profile doc/scaffold parity** — python scaffold missing `fail_under=80` (doc claims it); GitLab ts-node CI missing the conditional `gate-eval` the GitHub ref has.
+- **Conformance hardening** — `branch-protection.sh` doesn't flag CODEOWNERS `@your-org` placeholders + `require_code_owner_reviews=false`; tighten the README's guard-coverage claim (or extend the regexes) for the documented bypass classes (`echo/true>file`, `curl --data @file`, `git am/apply`).
+
+### P2 — Usability & adoption friction (make it light, not just powerful)
+- **Guard false-positive tuning** *(biggest UX win, small change).* The guard blocks **read-only** commands whose *string* merely mentions a control-plane token (`.github`, `CODEOWNERS`, `cp`, `sed`) — it should match an *executed* control-plane mutation, not any mention. A real corpus of false positives exists from the 3.0.0 build/go-no-go sessions; use it as the regression fixture.
+- **Solo / lightweight governance lane.** `builder ≠ reviewer` is mechanically unsatisfiable solo (you can't approve your own PR → `--admin` every merge). Add a solo lane: a ratified self-review checklist + the gates substitute for a second human, without faking the separation. The onboarding fluency lanes hint at this; make it real for governance.
+- **Modular enterprise layers.** The kit ships ~124 docs incl. SOC2/ISO/DORA/DR/resilience/AI-governance by default — right for an enterprise team, heavy at a vibe-coder's front door. Make the enterprise/compliance/continuity/AI-governance layers **opt-in modules** added on demand, so the default drop-in is small.
 - **Persona routing** — `ONBOARDING.md` doesn't route non-engineer personas (QA/designer/PO); Security Owner missing from the §13 role table; `incept` interactive mode never prompts operator-fluency.
-- **Conformance hardening** — `branch-protection.sh` doesn't flag CODEOWNERS placeholders + `require_code_owner_reviews=false`; a few guard-bypass classes the README over-promises against (extend regexes or narrow the claim).
-- **Operability / meta-docs** — RUNBOOK template lacks an incident-response section; meta-doc staleness across MAINTAINING/ROADMAP/CLAUDE/conformance-README.
-- **`controlPlanePaths` union wiring** — the natural **N5**: wire the `agent-boundary` gate to read the union of adapter-declared control-plane paths (3.0.1 corrected the doc to say this is future).
-- **Polish (Low)** — designer handoff guidance (axe/Lighthouse); a ts-node AI-security pointer + eval scaffold; documentation-only CI-label renames.
+
+### P3 — Growth & verification (authored → verified; broaden reach)
+- **Verified second harness (Codex) + first-class adapters.** Drive a real non-Claude agent through a slice to flip the split bar's process half from *authored-to-contract* to *maintainer-verified*; ship first-class `codex`/`cursor`/`gemini` adapters beyond `generic`. (Also the natural by-product of real dogfooding.)
+- **`sparkwright doctor` — an adopter posture command.** One command that runs the full conformance + readiness sweep on the *adopter's own* project and emits a posture verdict — a lightweight, repeatable go/no-go for every project, not just the kit. All the checks already exist; this composes them.
+- **Close the "operate" loop with tooling.** Make "production teaches the next iteration" real: incident → auto-postmortem stub → backlog item; DORA + `agent-scorecard` → automatic autonomy-tier adjustment.
+- **Broaden the front door** — more archetype scaffolds (frontend SPA, serverless, mobile, monorepo) + deeper discovery (AI-assisted opportunity shaping).
+
+### P4 — Polish (Low)
+- **Operability / meta-docs** — RUNBOOK template lacks an incident-response section (link STANDARDS §15); meta-doc staleness sweep across MAINTAINING / ROADMAP / CLAUDE / conformance-README (bump dates, reconcile counts).
+- **Misc** — designer handoff guidance (axe/Lighthouse); a ts-node AI-security pointer + eval scaffold; rename documentation-only CI step labels that imply more enforcement than they run.
 
 ---
 
