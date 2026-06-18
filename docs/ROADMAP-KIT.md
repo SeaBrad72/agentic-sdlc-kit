@@ -98,9 +98,10 @@ Structural drift is caught continuously (badge/links/coverage-meta); SEMANTIC dr
   - *Tracked follow-up (from D1b review):* `conformance/action-pinning.sh` scans only the profile reference, not the kit's own `.github/workflows/` — broaden it to glob `.github/workflows/*.yml` so ci.yml + drift-watch.yml pins are mechanically enforced (its own small reviewed slice).
 
 ### H3 — Agentic-risk hardening (Tier 3)
-- **Secret-in-context** — the guard blocks *writing* secrets but not the agent *reading* a `.env`/key into its context (→ model provider, logs, PR). Add redaction guidance + a nudge against `cat .env`-style reads.
-- **Cost/token circuit-breaker** — no budget guardrail today (the 3.0.0 go/no-go alone was ~2.36M tokens). Add a per-run budget contract + a stop.
-- **Long-session drift self-check** — a periodic mid-session re-check against the active plan/standards.
+- **H3a — Secret-in-context** ✅ *shipped 3.12.0* — the guard now denies the agent *reading* secret material into its context (the read half of exfil → model/logs/PR), symmetric with the existing secret-*write* deny. Two paths: `guard_check_command` denies shell content-reads (`cat`/`grep`/`diff`/`source`/… of `.env*`/`.pem`/`.key`/`id_rsa`/`secrets/`), and a new `guard_check_read` + the `Read` matcher deny the **Read tool** on secrets — but NOT control-plane reads (the read-deny ⊊ write-deny asymmetry). Deny-by-default + `KIT_GUARD_SELFEDIT` escape. Two security reviews of the scratch (fork-bomb-grade rigor): caught `source .env`/`. .env`/`.env*` glob/`.env.staging` slips → fixed + regression-locked in `agent-autonomy.sh` (216 cases). Honest ceilings: interpreter channel, exotic shell suffix, jq-absent. Design: `docs/superpowers/specs/2026-06-18-h3a-secret-in-context-design.md`.
+  - *Tracked follow-up:* the secret-**write** deny (`guard_check_path`) still enumerates only `.env.local/production/development`; broaden it to match H3a's wider `.env.<suffix>` set for read/write parity (small, its own slice).
+- **H3b — Cost/token circuit-breaker (NEXT)** — no budget guardrail today (the 3.0.0 go/no-go alone was ~2.36M tokens). **Honest scope:** a PreToolUse guard cannot see token counts, so this is a per-run **budget-contract** template + guidance (a process control, like WS2's high-risk self-review), not a mechanical stop. Add a per-run budget contract + a documented stop discipline.
+- **H3c — Long-session drift self-check** — a periodic mid-session re-check against the active plan/standards (a practice/helper, not mechanical).
 
 ### H4 — Coverage gaps (Tier 4)
 - **GitLab governance parity** — branch-protection, ratification, and DORA enforcement are GitHub-only; GitLab adopters get materially less. Build the GitLab equivalents or scope the claim honestly.

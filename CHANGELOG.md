@@ -3,6 +3,25 @@
 All notable changes to Sparkwright are recorded here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.12.0] - 2026-06-18
+
+**MINOR** — H3a of the Tier-3 agentic-risk hardening: **secret-in-context read guard.** The guard already blocked *writing* secret material; it now denies the agent **reading** secret material into its context — the read half of exfil (A8 family 6), where a `.env`/key reaches the model provider, logs, or a PR. **Security + control-plane slice; deny-by-default with a `KIT_GUARD_SELFEDIT` escape; no existing control weakened.**
+
+### Added
+- **`guard_check_command` secret-read block** (`.claude/hooks/guard-core.sh`) — a content-read verb (`cat`/`less`/`head`/`tail`/`grep`/`strings`/`diff`/`awk`/`sed`/`source`/`.`/… — **not** `ls`, which is metadata) targeting secret material (`.env*` incl. common `.env.<suffix>`, `.pem`, `.key`, `id_rsa`, `secrets/`) is human-gated. Harness-independent (fires via `kit-guard cmd`).
+- **`guard_check_read`** (new pure function) + the **`Read`** matcher in `.claude/settings.json` + a `Read)` case in `guard.sh` — denies the **Read tool** (the agent's *default* file-read path) on secrets, but **NOT control-plane reads** (reading the guard/CI to understand it stays allowed — the read-deny ⊊ write-deny asymmetry). `.env.example`/`.sample`/`.template`/`.dist` allowed.
+- **`conformance/agent-autonomy.sh`** — the secret-read red-team corpus (shell + Read-tool deny cases, template/source/control-plane allow cases); 216 cases, CI-locked.
+
+### Changed
+- **`docs/operations/runtime-guards.md`** — documents the now-five guard functions, the secret-in-context control, and its honest ceiling.
+
+### Security review (the WS1 lesson: review the scratch before transfer)
+**Two** independent security reviews of the scratch. The first found three *common, non-interpreter* shell secret-reads slipping the net (`source .env`/`. .env`, the `cat .env*` glob, and `.env.staging`/`.env.test`) — fixed (added `source`/`.` verbs, the `*` glob boundary, enumerated common secret suffixes; **no** command-wide template exclusion, so a `cat .env.example .env` multi-arg form can't suppress the deny) and regression-locked. Re-review: **PASS, safe to transfer.**
+
+### Honest ceilings
+The two read denies stop the **default** exfil-read paths (shell + Read tool), not every path: an **interpreter** (`python -c "open('.env')"`), an uncommon content-emitter, or an exotic `.env.<custom-suffix>` on the *shell* path can still read a secret; `jq`-absent leaves the Read tool allowed; non-Claude harnesses get the shell deny only (no Read tool). Real containment is platform-owned (egress allowlist + sandboxed FS).
+- **Tracked follow-up:** broaden the secret-**write** deny (`guard_check_path`) to H3a's wider `.env.<suffix>` set for read/write parity.
+
 ## [3.11.0] - 2026-06-18
 
 **MINOR** — D1b: **scheduled drift-watch (go/no-go-lite)** — completes D1. A weekly canary re-validates the kit against the live runner toolchain and re-runs the semantic claims-registry on a timer, so drift surfaces even with **no commits** (toolchain rot, quiet-period staleness). **Control-plane slice; additive; no control weakened.**

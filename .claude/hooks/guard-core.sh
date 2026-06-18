@@ -35,6 +35,27 @@ is_control_plane_path() {
   return 1
 }
 
+# guard_check_read "<file>": deny reading SECRET material into the agent's context (the read half of
+# exfil, A8 family 6) — the secret then reaches the model provider / logs / a PR. Symmetric with the
+# secret-WRITE deny in guard_check_path but NARROWER: it does NOT deny control-plane reads (reading the
+# guard/CI to understand it is legitimate). Template env files (.env.example/.sample/.template/.dist)
+# are allowed; a single file_path means `*.env.*` is safe here (no multi-arg form to abuse). Honest
+# ceilings: an interpreter (python -c open()) bypasses the shell path, and jq-absent leaves Read allowed.
+guard_check_read() {
+  fp=$1
+  base=$(basename "$fp" 2>/dev/null || printf '%s' "$fp")
+  case "$base" in
+    .env.example|.env.sample|.env.template|.env.dist) return 0 ;;
+  esac
+  if ! selfedit_allowed; then
+    case "$fp" in
+      *.env|*/.env|*.env.*|*.pem|*.key|*id_rsa*|*/secrets/*|*/secret/*|secrets/*|secret/*)
+        printf '13: reading secret material (%s) into context is the read half of exfil (-> model/logs/PR) - human-gated. Use .env.example / a secrets manager / redact; KIT_GUARD_SELFEDIT=1 for deliberate human maintenance.' "$base"; return 1 ;;
+    esac
+  fi
+  return 0
+}
+
 # guard_check_command "<cmd>": print reason + return 1 if denied, else return 0.
 guard_check_command() {
   cmd=$1
@@ -68,6 +89,21 @@ guard_check_command() {
         printf '%s' '13: mutating the guard / its config / CI gates via shell is denied (control-plane integrity). Set KIT_GUARD_SELFEDIT=1 for deliberate human maintenance.'; return 1
       fi
     fi
+  fi
+  # H3a: secret-in-context (shell) — a content-read verb (cat/grep/strings/diff/awk/...; also
+  # source/. which load a .env into the environment) targeting secret material pulls it into the
+  # agent's context: the read half of exfil. Human-gate it, symmetric with the secret-WRITE deny in
+  # guard_check_path. ls (metadata) is excluded; template env files (.env.example/.sample/.template/
+  # .dist) are NOT in the secret-suffix list so they stay allowed (no command-wide exclusion, which
+  # a `cat .env.example .env` multi-arg form could abuse). Honest ceiling: an interpreter
+  # (python -c open()) or an uncommon content-emitter not in the verb list bypasses — the robust
+  # path is the Read-tool deny (guard_check_read) + platform containment. Asymmetry by design: the
+  # shell path enumerates common .env.<suffix> files, while the Read tool's `*.env.*` glob catches
+  # any suffix (e.g. `.env.foo` / `.env.local.bak` slip the shell path but the Read equivalent denies).
+  if ! selfedit_allowed \
+     && printf '%s' "$cmd" | grep -Eq '(^|[;&|]|[[:space:]])[[:space:]]*(cat|less|more|head|tail|grep|egrep|fgrep|rg|strings|xxd|od|hexdump|base64|nl|tac|diff|cmp|comm|awk|sed|sort|uniq|cut|paste|fold|jq|yq|rev|source|\.)[[:space:]]' \
+     && printf '%s' "$cmd" | grep -Eq '\.env(\.(local|production|development|staging|test|prod|dev|stage|qa|preview|ci|bak|old))?([[:space:];|&*]|$)|\.(pem|key)([[:space:];|&*]|$)|id_rsa|(^|[[:space:]/;|&])secrets?/'; then
+    printf '%s' '13: reading secret material into context (the read half of exfil -> model/logs/PR) is human-gated. Use .env.example / a secrets manager / redact; KIT_GUARD_SELFEDIT=1 for deliberate human maintenance.'; return 1
   fi
   # --- destructive matrix: moved VERBATIM from guard.sh:96-242 ---
   # recursive rm in any flag arrangement (-rf, -fr, -r -f, --recursive), bounded so
