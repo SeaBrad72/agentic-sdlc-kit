@@ -70,6 +70,7 @@ advisory nudges this). So the solo→team upgrade is **one `enforce_admins` flip
 recorded compensating-control evidence** — not a re-architecture.
 
 ## See also
+- [`drift-self-check.md`](./drift-self-check.md) — the agent's in-loop re-check; **run it before requesting review** so the reviewer inherits less drift (the cheapest catch is the earliest one).
 - [`../../templates/REVIEW-RECORD-TEMPLATE.md`](../../templates/REVIEW-RECORD-TEMPLATE.md) — the recorded artifact.
 - [`../../DEVELOPMENT-PROCESS.md`](../../DEVELOPMENT-PROCESS.md) §12 (coordination / builder ≠ sole merger) · §13 (ratification roles).
 - [`../../conformance/audit-evidence-checklist.md`](../../conformance/audit-evidence-checklist.md) — the SoD/code-review evidence row.

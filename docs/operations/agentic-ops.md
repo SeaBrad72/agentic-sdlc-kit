@@ -77,3 +77,7 @@ the kit ships only sensitivity defaults and **never pools or phones home** any a
 - **MP-3a (this):** the trace contract + conformance trio + declaration wiring.
 - **MP-3a.2 (done):** `scripts/agent-trace.sh` — the working Claude Code dev-time emitter (transcript→trace); turns the kit's own session transcripts into the corpus that calibrates MP-3b.
 - **MP-3b (done):** `scripts/agent-scorecard.sh` — the behavior scorecard tool; reads a trace dir, computes risk metrics per agent, classifies regressed/steady/earned, and emits the asymmetric tier directive.
+
+## See also
+
+- [`drift-self-check.md`](./drift-self-check.md) — the **agent-side complement** to this observation layer: agentic-ops *observes* the run (trace + scorecard, after the fact); the drift self-check is the agent **correcting itself within** the run, at a checkpoint, before any gate sees the drift.
