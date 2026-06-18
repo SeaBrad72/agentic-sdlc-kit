@@ -147,6 +147,18 @@ README.md" 0 "ordinary diff, unratified -> PASS"
   sh "$0" --changed "$miss/clean.txt" --ratified 0 >/dev/null && r=0 || r=$?
   if [ "$r" = "0" ]; then echo "selftest PASS: cli clean diff -> exit 0"; else echo "selftest FAIL: cli clean want 0 got $r"; st=1; fi
 
+  # N5 integration: drive the FULL run() path (real adapter_union from this repo's adapters/) over a
+  # path that ONLY the union protects (AGENTS.md, declared by the generic adapter, not in guard-core).
+  printf 'AGENTS.md\n' > "$miss/agents.txt"
+  if command -v jq >/dev/null 2>&1 && [ -d "$ADAPTERS_DIR" ]; then
+    sh "$0" --changed "$miss/agents.txt" --ratified 0 >/dev/null && r=0 || r=$?
+    if [ "$r" = "1" ]; then echo "selftest PASS: cli AGENTS.md via real adapter union, unratified -> exit 1"; else echo "selftest FAIL: cli AGENTS.md union want 1 got $r"; st=1; fi
+    sh "$0" --changed "$miss/agents.txt" --ratified 1 >/dev/null && r=0 || r=$?
+    if [ "$r" = "0" ]; then echo "selftest PASS: cli AGENTS.md via real adapter union, ratified -> exit 0"; else echo "selftest FAIL: cli AGENTS.md union ratified want 0 got $r"; st=1; fi
+  else
+    echo "selftest SKIP: real adapter-union integration (jq or adapters/ absent)"
+  fi
+
   [ "$st" = "0" ] && echo "agent-boundary --selftest: OK"
   return "$st"
 }
