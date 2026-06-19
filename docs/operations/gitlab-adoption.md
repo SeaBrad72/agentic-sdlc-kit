@@ -84,10 +84,11 @@ GitLab supports a `CODEOWNERS` file at the repo root (same syntax as GitHub). Sc
 requirement to the control-plane paths:
 
 ```
+# illustrative subset — see guard-core.sh::is_control_plane_path for the full canonical set
 # CODEOWNERS — control-plane ratification (mirrors guard-core.sh::is_control_plane_path)
 # Any MR touching these paths requires a maintainer approval before merge.
 
-/.claude/hooks/        @your-org/maintainers
+/.claude/hooks/        @your-org/maintainers  # whole dir — intentionally broader than the two guard files; safe to protect more
 /.claude/settings.json @your-org/maintainers
 /.claude/mcp-policy.json @your-org/maintainers
 /conformance/          @your-org/maintainers
