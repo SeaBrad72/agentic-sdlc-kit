@@ -86,35 +86,46 @@ cmd_new() {
 
   mkdir -p "$_out"
 
-  # awk-based substitution: safer than sed when replacement values may contain
-  # the sed delimiter (/) — e.g. a title like "DB/cache failover" or a
-  # commander of "alice / SRE lead".  awk gsub() uses a regex pattern and a
-  # literal replacement string with no special meaning for /.
+  # FIX 2: values are passed via ENVIRON[] (export then read ENVIRON["key"] in awk BEGIN)
+  # rather than via awk -v flags. awk -v interpreted C-style escape sequences before the
+  # program ran: a literal backslash in --title was dropped, and \t/\n became tab/newline,
+  # which could split the single-line header row. ENVIRON[] values are plain data —
+  # no escape interpretation at any stage.
+  #
+  # Substitution uses replace_all() (index + substr concatenation) instead of gsub().
+  # gsub() treats & and \ specially in the replacement string; replace_all() treats the
+  # replacement as opaque data and concatenates it directly, so & / \ / / all pass
+  # through to the output unchanged without any per-character escaping.
+  export pm_title="$_title"
+  export pm_id="$_id"
+  export pm_severity="$_severity"
+  export pm_commander="$_commander"
+  export pm_dateval="$_date"
+
   awk \
-    -v title="$_title" \
-    -v id="$_id" \
-    -v severity="$_severity" \
-    -v commander="$_commander" \
-    -v dateval="$_date" \
     'BEGIN {
-       # escape \ and & in replacement strings so they are literal when used as
-       # gsub() replacements. In awk gsub(pat,repl), & means "matched text" and
-       # \& means literal &; therefore both \ and & must be doubled here.
-       # gsub(/[\\&]/, "\\\\&", v) rewrites each \ -> \\ and each & -> \& so
-       # the value is safe to use as the repl argument in any subsequent gsub().
-       gsub(/[\\&]/, "\\\\&", title)
-       gsub(/[\\&]/, "\\\\&", id)
-       gsub(/[\\&]/, "\\\\&", severity)
-       gsub(/[\\&]/, "\\\\&", commander)
-       gsub(/[\\&]/, "\\\\&", dateval)
+       title     = ENVIRON["pm_title"]
+       id        = ENVIRON["pm_id"]
+       severity  = ENVIRON["pm_severity"]
+       commander = ENVIRON["pm_commander"]
+       dateval   = ENVIRON["pm_dateval"]
+     }
+     function replace_all(str, pat, rep,    result, pos, patlen) {
+       result = ""
+       patlen = length(pat)
+       while ((pos = index(str, pat)) > 0) {
+         result = result substr(str, 1, pos - 1) rep
+         str = substr(str, pos + patlen)
+       }
+       return result str
      }
      {
-       gsub(/\[Incident Title\]/, title)
-       gsub(/\[id\]/, id)
-       gsub(/\[P0 \/ P1 \/ P2 \/ P3\]/, severity)
-       gsub(/\[name \/ role\]/, commander)
-       gsub(/\[date\]/, dateval)
-       gsub(/\[open \/ closed\]/, "open")
+       $0 = replace_all($0, "[Incident Title]", title)
+       $0 = replace_all($0, "[id]", id)
+       $0 = replace_all($0, "[P0 / P1 / P2 / P3]", severity)
+       $0 = replace_all($0, "[name / role]", commander)
+       $0 = replace_all($0, "[date]", dateval)
+       $0 = replace_all($0, "[open / closed]", "open")
        print
      }' \
     "$_template" > "$_dest"
@@ -133,6 +144,18 @@ cmd_to_backlog() {
   # Derive incident ID from the basename (strip .md extension)
   _id="$(basename "$_pmfile" .md)"
 
+  # FIX 1: _id and _pmfile are passed into awk via ENVIRON[] (export then read
+  # ENVIRON["pm_id"] / ENVIRON["pm_file"] in awk BEGIN). Previously they were
+  # interpolated into a sed command that used | as its delimiter:
+  #   sed -e "s|INCIDENT_ID|${_id}|g" -e "s|PMFILE|${_pmfile}|g"
+  # A | in _pmfile produced "sed: bad flag in substitute command" (hard crash);
+  # an & in _pmfile was expanded by sed as "matched text" (silent corruption).
+  # ENVIRON[] values are plain data — no escape interpretation, no delimiter clash.
+  # The awk emits the row by string concatenation, so no special character in
+  # _id or _pmfile can affect program text.
+  export pm_id="$_id"
+  export pm_file="$_pmfile"
+
   # Use awk to:
   #   1. Detect "## 7. Action items" → start collecting
   #   2. Stop at the next "## " heading
@@ -140,7 +163,11 @@ cmd_to_backlog() {
   #      and placeholder rows (first cell trimmed matches ^\[.*\]$)
   #   4. Emit one backlog Ready row per real action
   _rows="$(awk '
-    BEGIN { in_section = 0 }
+    BEGIN {
+      in_section  = 0
+      incident_id = ENVIRON["pm_id"]
+      pmfile      = ENVIRON["pm_file"]
+    }
 
     # Enter the action-items section
     /^## 7[.] Action items/ { in_section = 1; next }
@@ -181,12 +208,12 @@ cmd_to_backlog() {
       # Skip blank action cells
       if (action == "") { next }
 
-      # Emit backlog Ready row
-      print "| " action " | incident INCIDENT_ID follow-up — " type " | " action " completed | S | [set] | tech-debt | " owner " | PMFILE |"
+      # Emit backlog Ready row — incident_id and pmfile come from ENVIRON[] and
+      # are concatenated by awk as plain string data, never interpreted as sed/awk
+      # program text. No special character in either value can crash or corrupt.
+      print "| " action " | incident " incident_id " follow-up — " type " | " action " completed | S | [set] | tech-debt | " owner " | " pmfile " |"
     }
-  ' "$_pmfile" | sed \
-      -e "s|INCIDENT_ID|${_id}|g" \
-      -e "s|PMFILE|${_pmfile}|g")"
+  ' "$_pmfile")"
 
   if [ -z "$_rows" ]; then
     printf 'no action items found in %s\n' "$_pmfile"
@@ -299,7 +326,7 @@ PMEOF2
     echo "postmortem --selftest: FAIL (T5: missing file did not exit non-zero)" >&2; _fail=1
   }
 
-  # ---- T6: & in title is preserved literally in the stub (Fix 1 pin) ----------
+  # ---- T6: & in title is preserved literally in the stub (existing pin) -------
   _outdir_amp="${_tmpdir}/postmortems-amp"
   sh "$0" new --id INC-AMP --severity P1 --title "A & B" \
       --commander "alice / SRE" --date 2026-01-01 --out "$_outdir_amp" >/dev/null 2>&1 || {
@@ -315,6 +342,55 @@ PMEOF2
   # / in commander should also survive intact
   grep -q 'alice / SRE' "$_stub_amp" 2>/dev/null || {
     echo "postmortem --selftest: FAIL (T6: 'alice / SRE' not found in stub)" >&2; _fail=1
+  }
+
+  # ---- T7 (NEW — Fix 1 pin): to-backlog with | and & in the FILE PATH --------
+  # Verify that a postmortem file whose path contains | and & does not crash sed
+  # and that the Links column in the emitted row contains the path intact.
+  _special_dir="${_tmpdir}/inc|dir&test"
+  mkdir -p "$_special_dir"
+  _pm_special="${_special_dir}/INC-SPECIAL.md"
+  cat > "$_pm_special" <<'PMEOF3'
+# Special — Postmortem
+
+## 7. Action items
+
+| Action | Owner | Due | Backlog link | Type |
+|--------|-------|-----|--------------|------|
+| Fix the pipe issue | carol | 2026-02-01 | #99 | prevent |
+PMEOF3
+
+  _special_rc=0
+  _special_out="$(sh "$0" to-backlog "$_pm_special" 2>&1)" || _special_rc=$?
+  [ "$_special_rc" = "0" ] || {
+    echo "postmortem --selftest: FAIL (T7: to-backlog crashed on | and & in path, rc=$_special_rc)" >&2
+    _fail=1
+  }
+  # The Links column must contain the path intact (including | and &)
+  printf '%s\n' "$_special_out" | grep -qF "$_pm_special" || {
+    echo "postmortem --selftest: FAIL (T7: Links column does not contain intact path with | and &)" >&2
+    _fail=1
+  }
+
+  # ---- T8 (NEW — Fix 2 pin): new with backslash + & in --title ---------------
+  # A literal backslash and & in the title must survive in the stub on a single
+  # header line (no missing backslash, no line split from \n interpretation).
+  _outdir_bs="${_tmpdir}/postmortems-bs"
+  sh "$0" new --id INC-BS --severity P2 --title 'A & B \ C' \
+      --date 2026-01-01 --out "$_outdir_bs" >/dev/null 2>&1 || {
+    echo "postmortem --selftest: FAIL (T8: new with backslash in title exited non-zero)" >&2; _fail=1
+  }
+  _stub_bs="${_outdir_bs}/INC-BS.md"
+  # The header line in the template is: # [Incident Title] — Postmortem
+  # After substitution it should be:   # A & B \ C — Postmortem  (all on one line)
+  grep -qF 'A & B \ C' "$_stub_bs" 2>/dev/null || {
+    echo "postmortem --selftest: FAIL (T8: 'A & B \\ C' not found literally in stub)" >&2; _fail=1
+  }
+  # Must be on a SINGLE line (the header), not split by a newline from \n interpretation
+  _header_line="$(grep -F 'A & B \ C' "$_stub_bs" 2>/dev/null | head -1)"
+  # The header line should end with "— Postmortem" (confirming it was not split)
+  printf '%s\n' "$_header_line" | grep -q 'Postmortem' || {
+    echo "postmortem --selftest: FAIL (T8: header line was split or truncated — backslash-n became newline)" >&2; _fail=1
   }
 
   [ "$_fail" -eq 0 ] && { echo "postmortem --selftest: OK"; exit 0; } || exit 1
