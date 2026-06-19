@@ -3,6 +3,16 @@
 All notable changes to Sparkwright are recorded here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.20.0] — 2026-06-19
+
+### Added
+- **`sparkwright tier-advice`** — a read-only autonomy-tier **decision view** (P3 operate-loop Slice 2).
+  Composes `agent-scorecard.sh`'s already-emitted directives into a human-facing list of pending
+  tier recommendations + the asymmetric human-ratified apply path (auto-downgrade = fail-safe, no
+  ratification; raise = route to the Security owner, §13), with DORA shown as labeled delivery-health
+  context (never a tier input). Emits, never actuates. Wired into the `sparkwright` dispatcher and
+  the guard control-plane named-set; locked by `conformance/tier-advice-wired.sh` (claims registry → 14).
+
 ## [3.19.0] - 2026-06-19
 
 **MINOR** — operate-loop Slice 1: `sparkwright postmortem` stub generator + action-item parser + `docs/operations/operate-loop.md` reference. Control-plane slice; additive; no control weakened.

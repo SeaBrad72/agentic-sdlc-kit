@@ -81,3 +81,7 @@ the kit ships only sensitivity defaults and **never pools or phones home** any a
 ## See also
 
 - [`drift-self-check.md`](./drift-self-check.md) — the **agent-side complement** to this observation layer: agentic-ops *observes* the run (trace + scorecard, after the fact); the drift self-check is the agent **correcting itself within** the run, at a checkpoint, before any gate sees the drift.
+- **`sparkwright tier-advice`** — renders the **decision view** over this
+  layer's emitted directives: which agents have a pending autonomy-tier recommendation and the
+  human-ratified apply path for each (auto-downgrade is fail-safe; a raise routes to the Security
+  owner, §13). It composes the scorecard + DORA (delivery-health context only); it emits, never actuates.
