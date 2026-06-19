@@ -3,6 +3,20 @@
 All notable changes to Sparkwright are recorded here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.14.0] - 2026-06-18
+
+**MINOR** — H3c of the Tier-3 agentic-risk hardening (**H3 complete**): **long-session drift self-check.** The agent's in-loop re-check *during* a long build — before any gate sees the drift — institutionalizing the verify-before-build pass that repeatedly caught this kit's own roadmap/docs over-promising. **Scope = Hybrid:** ships the **practice** now (docs-only); the **tooling** half folds into P3's `sparkwright doctor`. **Docs-only slice; agent-editable; no control-plane, no conformance gate, no control weakened.**
+
+### Added
+- **`docs/operations/drift-self-check.md`** — the reference: five drift axes (intent/scope · plan · standards · **claim-vs-reality** · context-loss), checkpoint-triggered (before review · before release · at each long-session boundary). States why it sits where it does (D1 catches *structural* drift between commits; review-lane catches it *at the gate*; this catches it *during* the build — the agent-side complement to `agentic-ops.md`'s observation), and why it deliberately ships **no conformance gate** (gating "did you self-check?" = unverifiable self-attestation = ceremony).
+
+### Changed
+- **`docs/operations/agentic-ops.md`** · **`docs/operations/review-lane.md`** — "See also" pointers: the self-check as the agent-side complement to observation, and "run it before requesting review."
+- **`docs/ROADMAP-KIT.md`** — H3c ✅ (practice, docs-only) → **H3 complete**; the mechanizable half (re-run conformance · re-check claims-registry · git ground-truth) recorded as absorbed by P3's `sparkwright doctor`.
+
+### Honest ceiling
+A PreToolUse guard sees command strings, not intent — it **cannot detect semantic drift**. So H3c is a **practice/checklist, not a mechanism** (the most advisory item in H3); the honest enforcement is the practice plus the real downstream gates (independent review, CI, scheduled drift-watch). Same honesty class as review-lane's high-risk self-review: a solo human *can* skip it. Design: `docs/superpowers/specs/2026-06-18-h3c-drift-self-check-design.md`.
+
 ## [3.13.0] - 2026-06-18
 
 **MINOR** — H3b of the Tier-3 agentic-risk hardening: **cost/token governance.** A PreToolUse guard cannot see token counts, so this is the honest two-layer model (mirroring containment): the kit ships the **contract** and references the **platform cap** as the real enforcement. **Control-plane slice; additive; no control weakened.**
