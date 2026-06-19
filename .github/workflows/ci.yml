@@ -85,6 +85,10 @@ jobs:
         run: sh conformance/supply-chain-verify.sh
       - name: Supply-chain-verify self-test
         run: sh conformance/supply-chain-verify.sh --selftest
+      - name: GitLab adoption guide completeness (branch-protection + ratification + DORA; H4a)
+        run: sh conformance/gitlab-adoption-complete.sh
+      - name: GitLab-adoption-complete self-test
+        run: sh conformance/gitlab-adoption-complete.sh --selftest
       - name: MCP capability gate classification
         run: sh conformance/mcp-policy.sh
       - name: Tracker-contract self-test (Jira §6 verifier logic)
