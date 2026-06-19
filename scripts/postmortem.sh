@@ -50,12 +50,21 @@ cmd_new() {
 
   while [ $# -gt 0 ]; do
     case "$1" in
-      --id)        _id="$2";        shift 2 ;;
-      --severity)  _severity="$2";  shift 2 ;;
-      --title)     _title="$2";     shift 2 ;;
-      --commander) _commander="$2"; shift 2 ;;
-      --date)      _date="$2";      shift 2 ;;
-      --out)       _out="$2";       shift 2 ;;
+      --id|--severity|--title|--commander|--date|--out)
+        # Guard: a value-taking flag must be followed by a value
+        if [ $# -lt 2 ] || [ -z "${2:-}" ]; then
+          printf 'error: %s requires a value\n' "$1" >&2; usage
+        fi
+        case "$1" in
+          --id)        _id="$2"        ;;
+          --severity)  _severity="$2"  ;;
+          --title)     _title="$2"     ;;
+          --commander) _commander="$2" ;;
+          --date)      _date="$2"      ;;
+          --out)       _out="$2"       ;;
+        esac
+        shift 2
+        ;;
       *) printf 'error: unknown option: %s\n' "$1" >&2; usage ;;
     esac
   done
@@ -88,12 +97,16 @@ cmd_new() {
     -v commander="$_commander" \
     -v dateval="$_date" \
     'BEGIN {
-       # escape & and \ in replacement strings (the only special chars in awk gsub)
-       gsub(/\\/, "\\\\", title);     gsub(/&/, "\\&", title)
-       gsub(/\\/, "\\\\", id);        gsub(/&/, "\\&", id)
-       gsub(/\\/, "\\\\", severity);  gsub(/&/, "\\&", severity)
-       gsub(/\\/, "\\\\", commander); gsub(/&/, "\\&", commander)
-       gsub(/\\/, "\\\\", dateval);   gsub(/&/, "\\&", dateval)
+       # escape \ and & in replacement strings so they are literal when used as
+       # gsub() replacements. In awk gsub(pat,repl), & means "matched text" and
+       # \& means literal &; therefore both \ and & must be doubled here.
+       # gsub(/[\\&]/, "\\\\&", v) rewrites each \ -> \\ and each & -> \& so
+       # the value is safe to use as the repl argument in any subsequent gsub().
+       gsub(/[\\&]/, "\\\\&", title)
+       gsub(/[\\&]/, "\\\\&", id)
+       gsub(/[\\&]/, "\\\\&", severity)
+       gsub(/[\\&]/, "\\\\&", commander)
+       gsub(/[\\&]/, "\\\\&", dateval)
      }
      {
        gsub(/\[Incident Title\]/, title)
@@ -146,6 +159,9 @@ cmd_to_backlog() {
     {
       # Split on |; field [2] = Action, [3] = Owner, [6] = Type
       # (fields: "" | Action | Owner | Due | Backlog link | Type | "")
+      # KNOWN LIMITATION: a literal | inside an action cell will be treated as a
+      # column separator and truncate the action text. This is accepted; workaround
+      # is to avoid | in action cell text (use "or", "and", or a similar alternative).
       n = split($0, f, "|")
 
       action = f[2]; gsub(/^[[:space:]]+|[[:space:]]+$/, "", action)
@@ -281,6 +297,24 @@ PMEOF2
   sh "$0" to-backlog /nonexistent/path.md >/dev/null 2>&1 || _missing_rc=$?
   [ "$_missing_rc" != "0" ] || {
     echo "postmortem --selftest: FAIL (T5: missing file did not exit non-zero)" >&2; _fail=1
+  }
+
+  # ---- T6: & in title is preserved literally in the stub (Fix 1 pin) ----------
+  _outdir_amp="${_tmpdir}/postmortems-amp"
+  sh "$0" new --id INC-AMP --severity P1 --title "A & B" \
+      --commander "alice / SRE" --date 2026-01-01 --out "$_outdir_amp" >/dev/null 2>&1 || {
+    echo "postmortem --selftest: FAIL (T6: new with & in title exited non-zero)" >&2; _fail=1
+  }
+  _stub_amp="${_outdir_amp}/INC-AMP.md"
+  grep -q 'A & B' "$_stub_amp" 2>/dev/null || {
+    echo "postmortem --selftest: FAIL (T6: literal 'A & B' not found in stub)" >&2; _fail=1
+  }
+  grep -q '\[Incident Title\]' "$_stub_amp" 2>/dev/null && {
+    echo "postmortem --selftest: FAIL (T6: placeholder [Incident Title] still present in stub)" >&2; _fail=1
+  }
+  # / in commander should also survive intact
+  grep -q 'alice / SRE' "$_stub_amp" 2>/dev/null || {
+    echo "postmortem --selftest: FAIL (T6: 'alice / SRE' not found in stub)" >&2; _fail=1
   }
 
   [ "$_fail" -eq 0 ] && { echo "postmortem --selftest: OK"; exit 0; } || exit 1
