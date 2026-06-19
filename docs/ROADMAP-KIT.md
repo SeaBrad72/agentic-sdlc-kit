@@ -113,7 +113,7 @@ Structural drift is caught continuously (badge/links/coverage-meta); SEMANTIC dr
 - **Verified second harness (Codex) + first-class adapters** — flip the split bar's process half to *maintainer-verified*; ship `codex`/`cursor`/`gemini` adapters beyond `generic`.
 - ✅ **`sparkwright doctor`** *(shipped 3.18.0)* — adopter-facing POSTURE command that composes `conformance/verify.sh` (GATING) + `conformance/claims-registry.sh` (GATING) + an inline git ground-truth dimension (ADVISORY/WARN-only) into one sweep; `--full` adds `dora.sh` + `agent-scorecard.sh` as an INFORMATIONAL metrics section (never affects exit code). **Absorbs the mechanizable half of H3c's drift self-check** (axes D claim-integrity + E git ground-truth are now automated; the semantic axes stay agent/human). Protected in the guard's control-plane named-set. Registered `doctor` claim → **12 claims total**. `conformance/doctor-wired.sh` regression-locks the selftest in CI.
 - ✅ **Close the operate loop — Slice 1 (incident → postmortem → backlog)** *(shipped 3.19.0)* — `sparkwright postmortem new` generates a postmortem stub from incident metadata (scaffolds `templates/POSTMORTEM-TEMPLATE.md`); `sparkwright postmortem to-backlog` parses action items into backlog stubs (human-ratified; no incident auto-detection / no live-tracker auto-creation — the kit's never-actuate principle). `docs/operations/operate-loop.md`. `conformance/operate-loop-wired.sh` regression-locks the selftest in CI; registered `operate-loop` claim → **13 claims total**.
-- **Close the operate loop — Slice 2 (DORA + scorecard → tier RECOMMENDATION)** — compose `dora.sh` + `agent-scorecard.sh` into a tier RECOMMENDATION that a human ratifies and applies; emit a human-readable directive (never auto-actuate the tier change).
+- ✅ **Close the operate loop — Slice 2 (DORA + scorecard → tier RECOMMENDATION)** *(shipped 3.20.0)* — `sparkwright tier-advice` renders the **decision view** (read-only) over `agent-scorecard.sh`'s already-emitted directives: which agents have a pending autonomy-tier recommendation + the human-ratified apply path (auto-downgrade = fail-safe; raise → Security owner §13). DORA appears as labeled delivery-health context (never a tier input). Emits, never actuates; no classification logic added, no tier change auto-actuated. Wired into the `sparkwright` dispatcher and guard control-plane named-set; locked by `conformance/tier-advice-wired.sh` (claims registry → 14).
 - **Broaden the front door** — more archetype scaffolds + deeper discovery.
 
 ### P4 — Polish (Low)
@@ -123,4 +123,4 @@ Structural drift is caught continuously (badge/links/coverage-meta); SEMANTIC dr
 
 ---
 
-**Last Updated:** 2026-06-19 (3.19.0)
+**Last Updated:** 2026-06-19 (3.20.0)
