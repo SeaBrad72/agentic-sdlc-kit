@@ -18,9 +18,14 @@ set -eu
 cd "$(dirname "$0")/.."
 
 if [ "${1:-}" = "--selftest" ]; then
-  # Verify the render contract: output contains the required sections and labels.
-  out=$(sh "$0" 2>&1) || true
+  # Verify the render contract using LIGHTWEIGHT STUBS — no real conformance/
+  # claims scripts are invoked. 'true' always exits 0 (PASS); 'false' always
+  # exits 1 (FAIL). Both are POSIX built-ins, so the selftest is fast and
+  # deterministic regardless of repo state.
   sfail=0
+
+  # — render contract (6 required sections/labels) ——————————————————————————
+  out=$(DOCTOR_VERIFY_CMD=true DOCTOR_CLAIMS_CMD=true sh "$0" 2>&1) || true
   printf '%s\n' "$out" | grep -q "POSTURE"             || { echo "doctor --selftest: FAIL (no POSTURE section)"; sfail=1; }
   printf '%s\n' "$out" | grep -q "conformance"         || { echo "doctor --selftest: FAIL (no conformance dimension)"; sfail=1; }
   printf '%s\n' "$out" | grep -q "claims"              || { echo "doctor --selftest: FAIL (no claims dimension)"; sfail=1; }
@@ -28,18 +33,32 @@ if [ "${1:-}" = "--selftest" ]; then
   printf '%s\n' "$out" | grep -q "Overall:"            || { echo "doctor --selftest: FAIL (no Overall verdict)"; sfail=1; }
   printf '%s\n' "$out" | grep -q "drift-self-check.md" || { echo "doctor --selftest: FAIL (no drift-self-check.md footer)"; sfail=1; }
 
-  # T2a: --full output contains METRICS heading and non-gating label
-  full_out=$(sh "$0" --full 2>&1) || true
-  printf '%s\n' "$full_out" | grep -q "METRICS"                  || { echo "doctor --selftest: FAIL (--full: no METRICS section)"; sfail=1; }
-  printf '%s\n' "$full_out" | grep -q "does not affect exit"     || { echo "doctor --selftest: FAIL (--full: no 'does not affect exit' label)"; sfail=1; }
+  # — exit logic: all-pass stubs → exit 0 ——————————————————————————————————
+  DOCTOR_VERIFY_CMD=true DOCTOR_CLAIMS_CMD=true sh "$0" >/dev/null 2>&1
+  _pass_rc=$?
+  [ "$_pass_rc" = "0" ] || {
+    echo "doctor --selftest: FAIL (all-pass stubs produced exit $_pass_rc, expected 0)"
+    sfail=1
+  }
 
-  # T2b: forced-failing metrics commands must NOT change the exit code
-  # Capture posture-only exit (no --full)
+  # — exit logic: verify FAIL stub → gate triggers → exit 1 ————————————————
+  _fail_rc=0
+  DOCTOR_VERIFY_CMD=false DOCTOR_CLAIMS_CMD=true sh "$0" >/dev/null 2>&1 || _fail_rc=$?
+  [ "$_fail_rc" = "1" ] || {
+    echo "doctor --selftest: FAIL (verify-fail stub produced exit $_fail_rc, expected 1)"
+    sfail=1
+  }
+
+  # — T2a: --full output contains METRICS heading and non-gating label ———————
+  full_out=$(DOCTOR_VERIFY_CMD=true DOCTOR_CLAIMS_CMD=true sh "$0" --full 2>&1) || true
+  printf '%s\n' "$full_out" | grep -q "METRICS"              || { echo "doctor --selftest: FAIL (--full: no METRICS section)"; sfail=1; }
+  printf '%s\n' "$full_out" | grep -q "does not affect exit" || { echo "doctor --selftest: FAIL (--full: no 'does not affect exit' label)"; sfail=1; }
+
+  # — T2b: forced-failing metrics must NOT change the exit code —————————————
   posture_rc=0
-  sh "$0" >/dev/null 2>&1 || posture_rc=$?
-  # Capture --full exit when metrics commands are forced to fail
+  DOCTOR_VERIFY_CMD=true DOCTOR_CLAIMS_CMD=true sh "$0" >/dev/null 2>&1 || posture_rc=$?
   forced_rc=0
-  DOCTOR_DORA_CMD=false DOCTOR_SCORECARD_CMD=false sh "$0" --full >/dev/null 2>&1 || forced_rc=$?
+  DOCTOR_VERIFY_CMD=true DOCTOR_CLAIMS_CMD=true DOCTOR_DORA_CMD=false DOCTOR_SCORECARD_CMD=false sh "$0" --full >/dev/null 2>&1 || forced_rc=$?
   [ "$forced_rc" = "$posture_rc" ] || {
     echo "doctor --selftest: FAIL (non-gating invariant broken: forced-failing metrics changed exit from $posture_rc to $forced_rc)"
     sfail=1
@@ -58,9 +77,11 @@ for _arg in "$@"; do
   esac
 done
 
-# Variable-indirected metrics commands — override in tests to inject failures
-# without touching the real scripts.  The [ -f ] guard is applied only on the
-# default path; an overridden command is invoked directly.
+# Variable-indirected gating + metrics commands — override in tests/selftest to
+# inject pass/fail without touching the real scripts.  The [ -f ] guard is
+# applied only on the default path; an overridden command is invoked directly.
+DOCTOR_VERIFY_CMD="${DOCTOR_VERIFY_CMD:-}"
+DOCTOR_CLAIMS_CMD="${DOCTOR_CLAIMS_CMD:-}"
 DOCTOR_DORA_CMD="${DOCTOR_DORA_CMD:-}"
 DOCTOR_SCORECARD_CMD="${DOCTOR_SCORECARD_CMD:-}"
 
@@ -84,7 +105,20 @@ echo "POSTURE"
 echo "-------"
 
 # 1. conformance [GATING]
-if [ -f "conformance/verify.sh" ]; then
+if [ -n "$DOCTOR_VERIFY_CMD" ]; then
+  # overridden (selftest/test path) — invoke stub directly, no [ -f ] guard
+  if _vout=$($DOCTOR_VERIFY_CMD 2>&1); then _vrc=0; else _vrc=$?; fi
+  case "$_vrc" in
+    0) _vstatus="PASS" ;;
+    2) _vstatus="UNVERIFIED" ;;
+    *) _vstatus="FAIL" ;;
+  esac
+  printf '  %-14s %s\n' "conformance" "$_vstatus"
+  case "$_vstatus" in
+    FAIL)       gate_fail=1 ;;
+    UNVERIFIED) [ "$REQUIRE" = "1" ] && gate_fail=1 || true ;;
+  esac
+elif [ -f "conformance/verify.sh" ]; then
   _args=""
   [ "$REQUIRE" = "1" ] && _args="--require"
   # shellcheck disable=SC2086
@@ -106,7 +140,16 @@ else
 fi
 
 # 2. claims [GATING]
-if [ -f "conformance/claims-registry.sh" ]; then
+if [ -n "$DOCTOR_CLAIMS_CMD" ]; then
+  # overridden (selftest/test path) — invoke stub directly, no [ -f ] guard
+  if _cout=$($DOCTOR_CLAIMS_CMD 2>&1); then _crc=0; else _crc=$?; fi
+  case "$_crc" in
+    0) _cstatus="PASS" ;;
+    *) _cstatus="FAIL" ;;
+  esac
+  printf '  %-14s %s\n' "claims" "$_cstatus"
+  [ "$_cstatus" = "FAIL" ] && gate_fail=1 || true
+elif [ -f "conformance/claims-registry.sh" ]; then
   if _cout=$(sh conformance/claims-registry.sh 2>&1); then _crc=0; else _crc=$?; fi
   case "$_crc" in
     0) _cstatus="PASS" ;;
