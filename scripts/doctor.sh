@@ -27,12 +27,42 @@ if [ "${1:-}" = "--selftest" ]; then
   printf '%s\n' "$out" | grep -qE 'git[[:space:]]+(OK|WARN)' || { echo "doctor --selftest: FAIL (no git dimension row)"; sfail=1; }
   printf '%s\n' "$out" | grep -q "Overall:"            || { echo "doctor --selftest: FAIL (no Overall verdict)"; sfail=1; }
   printf '%s\n' "$out" | grep -q "drift-self-check.md" || { echo "doctor --selftest: FAIL (no drift-self-check.md footer)"; sfail=1; }
+
+  # T2a: --full output contains METRICS heading and non-gating label
+  full_out=$(sh "$0" --full 2>&1) || true
+  printf '%s\n' "$full_out" | grep -q "METRICS"                  || { echo "doctor --selftest: FAIL (--full: no METRICS section)"; sfail=1; }
+  printf '%s\n' "$full_out" | grep -q "does not affect exit"     || { echo "doctor --selftest: FAIL (--full: no 'does not affect exit' label)"; sfail=1; }
+
+  # T2b: forced-failing metrics commands must NOT change the exit code
+  # Capture posture-only exit (no --full)
+  posture_rc=0
+  sh "$0" >/dev/null 2>&1 || posture_rc=$?
+  # Capture --full exit when metrics commands are forced to fail
+  forced_rc=0
+  DOCTOR_DORA_CMD=false DOCTOR_SCORECARD_CMD=false sh "$0" --full >/dev/null 2>&1 || forced_rc=$?
+  [ "$forced_rc" = "$posture_rc" ] || {
+    echo "doctor --selftest: FAIL (non-gating invariant broken: forced-failing metrics changed exit from $posture_rc to $forced_rc)"
+    sfail=1
+  }
+
   [ "$sfail" -eq 0 ] && { echo "doctor --selftest: OK"; exit 0; } || exit 1
 fi
 
 REQUIRE=0
+FULL=0
 [ -n "${CI:-}" ] && REQUIRE=1
-[ "${1:-}" = "--require" ] && REQUIRE=1
+for _arg in "$@"; do
+  case "$_arg" in
+    --require) REQUIRE=1 ;;
+    --full)    FULL=1    ;;
+  esac
+done
+
+# Variable-indirected metrics commands — override in tests to inject failures
+# without touching the real scripts.  The [ -f ] guard is applied only on the
+# default path; an overridden command is invoked directly.
+DOCTOR_DORA_CMD="${DOCTOR_DORA_CMD:-}"
+DOCTOR_SCORECARD_CMD="${DOCTOR_SCORECARD_CMD:-}"
 
 gate_fail=0
 warns=0
@@ -144,5 +174,36 @@ echo ""
 echo "Note: doctor automates the mechanizable drift axes (D claim-integrity, E git ground-truth"
 echo "from docs/operations/drift-self-check.md) but does NOT detect semantic drift (intent,"
 echo "scope, or overclaim) — that remains an agent/human judgment check."
+
+# — METRICS (informational — does not affect exit) ————————————————————————————
+if [ "$FULL" = "1" ]; then
+  echo ""
+  echo "METRICS (informational — does not affect exit)"
+  echo "-----------------------------------------------"
+
+  # dora
+  if [ -n "$DOCTOR_DORA_CMD" ]; then
+    # overridden (test path) — run directly, discard rc
+    _dora_out=$($DOCTOR_DORA_CMD 2>&1) || true
+    printf '%s\n' "$_dora_out"
+  elif [ -f "scripts/dora.sh" ]; then
+    _dora_out=$(sh scripts/dora.sh 2>&1) || true
+    printf '%s\n' "$_dora_out"
+  else
+    echo "  dora:           N/A (not present)"
+  fi
+
+  # agent-scorecard
+  if [ -n "$DOCTOR_SCORECARD_CMD" ]; then
+    # overridden (test path) — run directly, discard rc
+    _sc_out=$($DOCTOR_SCORECARD_CMD 2>&1) || true
+    printf '%s\n' "$_sc_out"
+  elif [ -f "scripts/agent-scorecard.sh" ]; then
+    _sc_out=$(sh scripts/agent-scorecard.sh 2>&1) || true
+    printf '%s\n' "$_sc_out"
+  else
+    echo "  agent-scorecard: N/A (not present)"
+  fi
+fi
 
 [ "$gate_fail" = "1" ] && exit 1 || exit 0
