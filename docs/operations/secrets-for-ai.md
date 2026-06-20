@@ -24,22 +24,27 @@ story is [`secrets-at-scale.md`](../enterprise/secrets-at-scale.md).
   Rotate at a quiescent point and update both ends together.
 
 - **Don't select the key in-editor.** An IDE that auto-attaches or auto-selects
-  `.env` pulls the secret into the agent's context — which the guard correctly
-  denies (the secret-in-context read-deny; see
-  [`runtime-guards.md`](runtime-guards.md)). Keep the key out of editor
-  selections and context attachments.
+  `.env` can pull the secret into the agent's context through a channel the guard
+  may never see — an editor attachment is not a `Read`-tool call. The guard denies
+  the agent's *own* reads of secret material (`cat .env`, the `Read` tool), but it
+  is a speed bump, not containment (see [`runtime-guards.md`](runtime-guards.md)).
+  Keep the key out of editor selections and context attachments regardless.
 
 - **`.env` is the local floor only.** Anything beyond local dev — shared,
   staging, production, or regulated data — belongs in a managed store. See
   [`secrets-at-scale.md`](../enterprise/secrets-at-scale.md).
 
-## The agent can't run its own live eval
+## Running the live eval is a human/CI step
 
 For an AI feature, the eval is the test suite (`DEVELOPMENT-STANDARDS.md`
-[§AI Evaluations](../../DEVELOPMENT-STANDARDS.md)). But the guard blocks the agent
-from loading a live key into its context — so **running the eval against the real
-provider is a human or CI step, not an agent step.** This is containment working
-as designed, not a limitation to route around:
+[§AI Evaluations](../../DEVELOPMENT-STANDARDS.md#ai-evaluations-eval-driven-development)).
+By policy, running the eval against the **real provider** is a human or CI step,
+not an agent step — and the guard's secret-read deny backs this up by blocking the
+agent from reading a live key *file* (`.env`, key files) into context. This is a
+**speed bump, not a hard boundary**: if the key is already exported as an env var,
+or reached via the interpreter channel, the agent is not mechanically stopped — so
+the human/CI handoff is the actual control, with the guard removing the easy
+mistakes (see [`runtime-guards.md`](runtime-guards.md)). The split:
 
 - The **agent** authors the eval set, the dataset, the rubric, and the harness,
   and wires the §7 Eval gate into CI.
