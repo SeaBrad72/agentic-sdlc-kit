@@ -3,6 +3,35 @@
 All notable changes to Sparkwright are recorded here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.26.0] — 2026-06-20
+
+Pre-release dogfood **CI cluster G6 · G7 · G9** — control-plane fixes to the reference pipelines.
+(Backlog: `docs/ROADMAP-KIT.md` → "Pre-release dogfood findings".)
+
+### Fixed
+- **G7 — SLSA provenance jobs no longer red a user-owned private repo's `main`.** GitHub's
+  attestations API is unavailable on user-owned **private** repos (the most common solo-adopter config),
+  so the ungated `provenance` / `image-provenance` jobs failed on first merge with no in-repo explanation.
+  Each provenance job-`if:` across **all 10 profiles** is now gated on
+  `github.event.repository.private == false || …owner.type == 'Organization'` — full strength on public
+  or org-owned repos (attestations work there, including private org repos), skipped on user-owned private.
+  A `NOTE` in the typescript-node reference explains the precondition. Locked by the new
+  `conformance/provenance-precondition.sh` (asserts **each** provenance job-`if:` carries the guard —
+  per-condition, so a half-gated profile can't slip through; claims registry → 18).
+- **G9 — semgrep SAST gate pinned off `--config auto`.** `auto` resolves a different registry ruleset
+  per environment (a flaky required gate that flagged the kit's own guard locally but not in CI); the
+  ts-node profile now pins `--config p/default` (`--error` preserved, so findings still fail the gate).
+
+### Added
+- **G6 — opt-in Postgres for DB-backed integration tests** in the typescript-node `ci.yml`: a commented,
+  inert `services: postgres` block (the default archetype is a DB-backed service, but the reference CI
+  shipped no database). Uncomment to give integration tests a real DB; documents that `prisma generate`
+  must precede type-check/build and `migrate deploy` precede the tests.
+
+**Honest ceiling (G7):** the gate uses verified GitHub context fields, but a workflow `if:`'s runtime
+skip-behavior can't be unit-tested without a real event — `provenance-precondition.sh` is a *structural*
+lock; full runtime validation rides on the living-reference adopter run (and the G2 golden-path CI).
+
 ## [3.25.0] — 2026-06-20
 
 Pre-release dogfood fixes **G4 · G5 · G10 · G12** — a batch of `profiles/` (agent-editable) reference

@@ -133,7 +133,7 @@ jobs:
 
   provenance:
     needs: ci
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && (github.event.repository.private == false || github.event.repository.owner.type == 'Organization')
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -152,7 +152,7 @@ jobs:
 
   image-provenance:
     needs: ci
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.ci.outputs.has_dockerfile == 'true'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.ci.outputs.has_dockerfile == 'true' && (github.event.repository.private == false || github.event.repository.owner.type == 'Organization')
     runs-on: ubuntu-latest
     permissions:
       contents: read

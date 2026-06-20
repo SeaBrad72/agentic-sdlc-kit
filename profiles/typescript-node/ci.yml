@@ -30,6 +30,21 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+    # --- OPT-IN: Postgres for DB-backed integration tests (this profile's default archetype) ---
+    # The ts-node default archetype is a DB-backed service; uncomment to give integration tests a real
+    # database in CI (the profile's §6 testing guidance asserts DB state). NOTE: `npx prisma generate`
+    # MUST run before type-check/build (tsc needs the client) and `prisma migrate deploy` before tests.
+    # services:
+    #   postgres:
+    #     image: postgres:16
+    #     env:
+    #       POSTGRES_PASSWORD: postgres
+    #       POSTGRES_DB: app
+    #     ports: ['5432:5432']
+    #     options: >-
+    #       --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
+    #   # then add to the `ci` job:  env: { DATABASE_URL: 'postgres://postgres:postgres@localhost:5432/app' }
+    #   # and a step before type-check:  - run: npx prisma generate && npx prisma migrate deploy
     steps:
       - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10  # v6.0.3
         with:
@@ -100,7 +115,7 @@ jobs:
         id: gate-sast
         # `run:` (not a marketplace action) — nothing to SHA-pin, satisfies action-pinning.sh.
         # `--error` makes findings fail the gate; tune `--config` to a pinned ruleset for prod.
-        run: pipx run semgrep --config auto --error
+        run: pipx run semgrep --config p/default --error   # pinned ruleset (NOT --config auto: auto resolves a different registry ruleset per environment = a flaky required gate). For FULL determinism also pin semgrep==<version> and/or vendor a ruleset file + add a .semgrepignore.
 
       - name: License policy (over the SBOM)
         id: gate-license
@@ -148,9 +163,12 @@ jobs:
           path: dist/**           # the real build output (npm run build)
           if-no-files-found: error
 
+  # NOTE (provenance precondition): the SLSA attestations API is unavailable on user-owned PRIVATE repos,
+  # so these jobs are gated to run only on public or org-owned repos — otherwise `main` would go red on
+  # first merge with no in-repo explanation. Make the repo public or move it to a GitHub org to enable.
   provenance:
     needs: ci
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && (github.event.repository.private == false || github.event.repository.owner.type == 'Organization')
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -169,7 +187,7 @@ jobs:
 
   image-provenance:
     needs: ci
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.ci.outputs.has_dockerfile == 'true'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.ci.outputs.has_dockerfile == 'true' && (github.event.repository.private == false || github.event.repository.owner.type == 'Organization')
     runs-on: ubuntu-latest
     permissions:
       contents: read
