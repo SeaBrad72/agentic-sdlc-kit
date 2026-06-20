@@ -210,6 +210,10 @@ jobs:
         run: sh conformance/actionlint-valid.sh
       - name: Actionlint-valid self-test
         run: sh conformance/actionlint-valid.sh --selftest
+      - name: Provenance jobs gated on repo visibility (G7)
+        run: sh conformance/provenance-precondition.sh
+      - name: Provenance-precondition self-test
+        run: sh conformance/provenance-precondition.sh --selftest
 
 
   bootstrap:
