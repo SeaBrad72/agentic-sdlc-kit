@@ -2,15 +2,15 @@
 # adopter-export-wired.sh — regression-lock for the S3 adopter-clean obtain mechanism.
 # Asserts: the export mechanism exists, the .gitattributes export-ignore set is present, the set is
 # LINK-SAFE (no export-ignored path is a `](path)` markdown-link target from a kept doc), and the
-# export actually prunes the maintainer-only set + unused profiles while keeping the adopter tree.
+# export is CI-green: fixtures ship, STACK-SELECTION is stubbed on `--profile`, no broken links.
 #   sh conformance/adopter-export-wired.sh [--selftest]
-# Exit: 0 = wired + link-safe + prunes · 1 = regression · 2 = setup. POSIX sh; dash-clean.
+# Exit: 0 = wired + link-safe + CI-green · 1 = regression · 2 = setup. POSIX sh; dash-clean.
 set -eu
 cd "$(dirname "$0")/.."
 ROOT="${EXPORT_ROOT:-.}"
 
 # the export-ignore set this lock enforces (must match .gitattributes)
-IGN="docs/ROADMAP-KIT.md .github/workflows/drift-watch.yml .github/workflows/golden-path.yml scripts/fixtures/ docs/superpowers/ .superpowers/"
+IGN="docs/ROADMAP-KIT.md .github/workflows/drift-watch.yml .github/workflows/golden-path.yml docs/superpowers/ .superpowers/"
 
 run() {
   rc=0
@@ -31,13 +31,38 @@ run() {
       echo "FAIL: export-ignored '$p' is a markdown-link target (would break check-links on the adopter tree)"; rc=1
     fi
   done
-  # (c) the export prunes + keeps correctly (drive the real script)
+  # (c) the export prunes + keeps correctly AND is CI-green (drive the real script)
   _t=$(mktemp -d); _d="$_t/exp"
   if ( cd "$ROOT" && sh scripts/adopter-export.sh "$_d" --profile typescript-node >/dev/null 2>&1 ); then
     [ -e "$_d/docs/ROADMAP-KIT.md" ] && { echo "FAIL: export kept ROADMAP-KIT.md"; rc=1; }
     [ -e "$_d/profiles/go" ]        && { echo "FAIL: export kept pruned profile go"; rc=1; }
     [ -e "$_d/MAINTAINING.md" ]     || { echo "FAIL: export dropped kept MAINTAINING.md"; rc=1; }
     [ -e "$_d/conformance" ]        || { echo "FAIL: export dropped kept conformance/"; rc=1; }
+    # BEHAVIOURAL (the S3a fix): fixtures ship, STACK-SELECTION is stubbed, no link in the export dangles.
+    [ -e "$_d/scripts/fixtures/scorecard" ] || { echo "FAIL: export dropped scripts/fixtures/scorecard (breaks tier-advice/agent-scorecard --selftest in adopter CI)"; rc=1; }
+    if [ -f "$_d/docs/STACK-SELECTION.md" ] && ! grep -Fq '](../profiles/go.md)' "$_d/docs/STACK-SELECTION.md"; then :; \
+      else echo "FAIL: STACK-SELECTION not stubbed (links a pruned profile)"; rc=1; fi
+    # no broken relative markdown link in the export tree. The export contains only tracked files
+    # (git archive), so an on-disk [ -e ] resolve is equivalent to check-links' tracked-set test.
+    # NB: write to a temp file, NOT $(...) — a `case` inside command-substitution is a POSIX trap
+    # that bash-as-/bin/sh mis-parses (dash is fine). The redirect form sidesteps it.
+    _badf=$(mktemp)
+    find "$_d" -name '*.md' -type f | while IFS= read -r _f; do
+      _fdir=$(dirname "$_f")
+      grep -oE '\]\([^)]+\)' "$_f" 2>/dev/null | sed -E 's/^\]\(//; s/\)$//' | while IFS= read -r _ln; do
+        case "$_ln" in
+          http://*|https://*|mailto:*|'#'*) continue ;;
+        esac
+        _tgt=$(printf '%s' "$_ln" | sed -E 's/[#?].*$//'); [ -z "$_tgt" ] && continue
+        case "$_tgt" in
+          /*) _r="$_d$_tgt" ;;
+          *)  _r="$_fdir/$_tgt" ;;
+        esac
+        [ -e "$_r" ] || printf '%s -> %s\n' "$_f" "$_ln"
+      done
+    done > "$_badf"
+    if [ -s "$_badf" ]; then echo "FAIL: broken relative links in export:"; cat "$_badf"; rc=1; fi
+    rm -f "$_badf"
   else
     echo "FAIL: adopter-export.sh errored"; rc=1
   fi
