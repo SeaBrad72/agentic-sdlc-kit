@@ -3,6 +3,30 @@
 All notable changes to Sparkwright are recorded here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.31.0] — 2026-06-20
+
+Pre-release dogfood **G2** — golden-path end-to-end execution harness (the headline meta-fix).
+Closes the G-series at **13 of 14** (G8 consciously deferred).
+(Backlog: `docs/ROADMAP-KIT.md` → "Pre-release dogfood findings".)
+
+### Added
+- **`.github/workflows/golden-path.yml`** — a path-filtered/weekly/dispatch CI job that scaffolds a
+  temp ts-node adopter project and **runs the reference artifacts end-to-end**: the npm pipeline
+  (`npm ci` → lint → type-check → test+coverage → build), `docker build` of the reference Dockerfile
+  (staged into the build context — incept leaves it COPY-&-ADAPT), and a `/healthz` liveness check
+  that asserts the `{"status":"ok"}` body. This is the kit's first heavy integration job; it
+  retroactively *executes* the G4/G6/G10/G12 fixes that were previously validated only piecemeal —
+  closing the dogfood's one root cause ("artifacts validated piecemeal, never run end-to-end").
+- **`conformance/golden-path-wired.sh`** — a regression-lock (registered claim, claims 18→19) that
+  the harness stays wired (npm/docker-build/Dockerfile-stage/`/healthz` steps + path/schedule/dispatch
+  triggers); `--selftest` red-greens.
+
+### Notes
+- **Honest split:** the lock proves the harness is *wired* on every PR; the harness *executes* on
+  profile-change / weekly / dispatch (and on its own introducing PR). **Documented residuals:** it runs
+  the workflow's *commands*, not the GHA *engine* (no `act`; `actionlint` validates the YAML statically);
+  and it does not exercise registry-push SLSA provenance (no registry — logic gated by G7).
+
 ## [3.30.0] — 2026-06-20
 
 Pre-release dogfood **G8 deferred** — documented the guard's over-deny (false-positive) ceiling.
