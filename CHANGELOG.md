@@ -3,6 +3,24 @@
 All notable changes to Sparkwright are recorded here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.30.0] — 2026-06-20
+
+Pre-release dogfood **G8 deferred** — documented the guard's over-deny (false-positive) ceiling.
+(Backlog: `docs/ROADMAP-KIT.md` → "Pre-release dogfood findings".)
+
+### Changed
+- **`docs/operations/runtime-guards.md` now documents the over-deny (false-positive) ceiling**
+  of the control-plane shell-mutation check: it matches a control-plane path + a mutation verb
+  by substring over the whole command, so it over-denies when either is mentioned in *prose*
+  (commit message, `--body`, heredoc, `grep` pattern) — the guard failing *safe*. Workarounds:
+  the `!` user-shell escape, the Read tool, or `KIT_GUARD_SELFEDIT=1` in the launching shell.
+- **G8 marked deferred** in the roadmap with full rationale: a narrow fix was built but the
+  mandatory dual security-review of the scratch caught confirmed bypasses (whole-string `-b`
+  negative; lost `install` wrapper coverage). Root cause = whole-command substring matching;
+  the real fix is **per-segment** command parsing, a deliberate larger slice with its own
+  security pass. Deferred because the FP fails safe and the real backstop is the PR
+  `gate-agent-boundary`. No guard behavior changed.
+
 ## [3.29.0] — 2026-06-20
 
 Pre-release dogfood **G11** — `incept` warns on `@your-org` CODEOWNERS placeholders.
