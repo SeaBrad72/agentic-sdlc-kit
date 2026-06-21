@@ -3,6 +3,28 @@
 All notable changes to Sparkwright are recorded here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.36.1] — 2026-06-21
+
+**S3b — adopter conformance-carve (completes the obtain fix).** After S3a, a fresh `--profile` export's
+first CI push was *still* red — `claims-registry` failed on `drift-watch` + `golden-path` (their
+maintainer-only workflows are export-ignored, but the claims + checks ship). Same class as S3a's fixtures
+bug, newly unmasked. **And S3a's "behavioural" lock was itself piecemeal** — it checked check-links +
+fixtures, not the adopter's *full* claims-registry. No new capability.
+
+### Fixed
+- **`scripts/adopter-export.sh` carves the maintainer-only claims** `drift-watch`, `golden-path`, and
+  `adopter-export` from the adopter's *copy* of `conformance/claims.tsv` + `claims-registry.sh`
+  (`REQUIRED_IDS`) — the kit's own registry is untouched and still requires them. (`adopter-export` is
+  carved because an adopter has no reason to verify the kit's *own* export mechanism — and keeping it
+  would recurse with the upgraded lock.) A fresh adopter export's `claims-registry` now passes.
+
+### Changed
+- **`conformance/adopter-export-wired.sh`** upgraded from a partial behavioural check to running the
+  adopter's **full `claims-registry`** against a real export (`git init` + commit → run → assert green) —
+  the "run the whole adopter CI" check that catches *any* orphaned/maintainer-only claim, not just the
+  one we touched. It makes the explicit carve list self-correcting: add a maintainer-only workflow+claim
+  without carving it and the kit's own CI goes red here.
+
 ## [3.36.0] — 2026-06-21
 
 **S3a — adopter-export green (RETEST-2 fix).** A `--profile` adopter export produced a tree whose

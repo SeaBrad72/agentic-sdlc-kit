@@ -32,6 +32,24 @@ do_export() {  # <dest> <profile-or-empty>  — returns nonzero on bad dest/prof
   fi
   tar -x -C "$_dest" < "$_ar"
   rm -f "$_ar"
+  # --- S3b: carve maintainer-only claims whose verified workflows are export-ignored ---
+  # .github/workflows/{drift-watch,golden-path}.yml are export-ignored (maintainer-only CI), but
+  # their claims + wired-checks ship; the claims' real-workflow verifiers would FAIL in the adopter's
+  # claims-registry. Strip those claims from the adopter's COPY of claims.tsv + REQUIRED_IDS (the kit's
+  # own registry is untouched). The wired-check scripts stay — their --selftest in the adopter ci.yml
+  # is self-contained and passes. If a new maintainer-only workflow+claim is added without carving it,
+  # conformance/adopter-export-wired.sh goes RED (it runs the adopter's full claims-registry).
+  # adopter-export is ALSO carved: it is a kit-self check (an adopter has no reason to verify the kit's
+  # OWN export mechanism), AND keeping it would recurse (claims-registry -> adopter-export-wired.sh ->
+  # claims-registry -> ...). The kit still verifies adopter-export in its own CI.
+  _ct="$_dest/conformance/claims.tsv"; _cr="$_dest/conformance/claims-registry.sh"
+  if [ -f "$_ct" ] && [ -f "$_cr" ]; then
+    _tab=$(printf '\t')
+    for _c in drift-watch golden-path adopter-export; do
+      grep -v "^${_c}${_tab}" "$_ct" > "$_ct.$$.s3b" && mv "$_ct.$$.s3b" "$_ct"
+      sed "s/ ${_c}\\([\"[:space:]]\\)/\\1/" "$_cr" > "$_cr.$$.s3b" && mv "$_cr.$$.s3b" "$_cr"
+    done
+  fi
   _pruned=0
   if [ -n "$_prof" ]; then
     for _p in $(known_profiles); do
@@ -79,6 +97,13 @@ if [ "${1:-}" = "--selftest" ]; then
   if [ -f "$_d/docs/STACK-SELECTION.md" ] && ! grep -Fq '](../profiles/go.md)' "$_d/docs/STACK-SELECTION.md"; then
     echo "PASS: STACK-SELECTION stubbed (no pruned-profile link)"
   else echo "FAIL: STACK-SELECTION still links a pruned profile (or missing)"; fail=1; fi
+  # S3b: the maintainer-only claims are carved from the export's registry copies
+  for p in drift-watch golden-path adopter-export; do
+    if grep -q "^$p$(printf '\t')" "$_d/conformance/claims.tsv"; then echo "FAIL: claim $p not carved from claims.tsv"; fail=1
+    else echo "PASS: $p carved from claims.tsv"; fi
+    if grep -qE '[" ]'"$p"'[ "]' "$_d/conformance/claims-registry.sh"; then echo "FAIL: $p not carved from REQUIRED_IDS"; fail=1
+    else echo "PASS: $p carved from REQUIRED_IDS"; fi
+  done
   # pruned profile → ABSENT
   [ -e "$_d/profiles/go" ] && { echo "FAIL: pruned profile present: go"; fail=1; } || echo "PASS: pruned profiles/go"
   [ -e "$_d/profiles/go.md" ] && { echo "FAIL: pruned profile doc present: go.md"; fail=1; } || echo "PASS: pruned profiles/go.md"

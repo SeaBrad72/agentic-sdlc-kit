@@ -1,8 +1,9 @@
 #!/bin/sh
 # adopter-export-wired.sh — regression-lock for the S3 adopter-clean obtain mechanism.
 # Asserts: the export mechanism exists, the .gitattributes export-ignore set is present, the set is
-# LINK-SAFE (no export-ignored path is a `](path)` markdown-link target from a kept doc), and the
-# export is CI-green: fixtures ship, STACK-SELECTION is stubbed on `--profile`, no broken links.
+# LINK-SAFE (no export-ignored path is a `](path)` markdown-link target from a kept doc), the
+# export is CI-green: fixtures ship, STACK-SELECTION is stubbed on `--profile`, no broken links,
+# AND the exported tree's own claims-registry passes (orphaned-maintainer-only-claim guard).
 #   sh conformance/adopter-export-wired.sh [--selftest]
 # Exit: 0 = wired + link-safe + CI-green · 1 = regression · 2 = setup. POSIX sh; dash-clean.
 set -eu
@@ -63,6 +64,22 @@ run() {
     done > "$_badf"
     if [ -s "$_badf" ]; then echo "FAIL: broken relative links in export:"; cat "$_badf"; rc=1; fi
     rm -f "$_badf"
+    # S3b BEHAVIOURAL: the exported tree's OWN claims-registry passes (the integrity gate the adopter's
+    # CI runs). git-init + add + COMMIT so verifiers needing a HEAD (`git archive HEAD`) or `git ls-files`
+    # (e.g. check-links) work — matching what a real adopter does. This is the "run the whole adopter CI"
+    # check: it catches ANY orphaned/maintainer-only claim.
+    if ( cd "$_d" && git init -q && git add -A \
+         && git -c user.email=ci@kit -c user.name=ci commit -qm export >/dev/null 2>&1 \
+         && sh conformance/claims-registry.sh >/dev/null 2>&1 ); then
+      echo "PASS: exported tree's claims-registry passes"
+    else
+      echo "FAIL: exported tree's claims-registry does NOT pass (an orphaned maintainer-only claim — carve it in adopter-export.sh)"; rc=1
+    fi
+    for _cc in drift-watch golden-path adopter-export; do
+      if grep -q "^$_cc$(printf '\t')" "$_d/conformance/claims.tsv"; then
+        echo "FAIL: claim $_cc not carved from the export"; rc=1
+      fi
+    done
   else
     echo "FAIL: adopter-export.sh errored"; rc=1
   fi
