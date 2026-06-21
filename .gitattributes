@@ -4,6 +4,5 @@
 docs/ROADMAP-KIT.md                 export-ignore
 .github/workflows/drift-watch.yml   export-ignore
 .github/workflows/golden-path.yml   export-ignore
-scripts/fixtures/                   export-ignore
 docs/superpowers/                   export-ignore
 .superpowers/                       export-ignore

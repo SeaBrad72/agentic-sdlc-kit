@@ -3,6 +3,30 @@
 All notable changes to Sparkwright are recorded here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.36.0] — 2026-06-21
+
+**S3a — adopter-export green (RETEST-2 fix).** A `--profile` adopter export produced a tree whose
+first CI push went red, *before* Inception — caught by re-running the cold-adopter dogfood on the
+shipped kit. Two real `adopter-export` defects, both the same shape: a **static** conformance check
+passed in the kit's CI while the **actual exported tree** failed the adopter's CI. Fixes the defects
+and upgrades the lock from static to **behavioural**. No new capability.
+
+### Fixed
+- **`--profile` prune left `docs/STACK-SELECTION.md` linking to the 9 pruned profiles** → `check-links`
+  failed on the adopter's first push. `scripts/adopter-export.sh` now replaces it, on `--profile`, with
+  a stub linking only to the kept selected profile (emitted via `printf '%s'` so the profile name is
+  pure data — no heredoc/`sed` interpolation surface). Inbound links (README, START-HERE, the kept
+  profile doc) stay valid.
+- **`scripts/fixtures/` was `export-ignore`d but the adopter CI runs `tier-advice`/`agent-scorecard
+  --selftest`, which need it** → those selftests failed. `.gitattributes` now ships `scripts/fixtures/`.
+
+### Changed
+- **`conformance/adopter-export-wired.sh`** strengthened from *static* link-safety to *behavioural*:
+  it now runs a real `--profile` export and asserts the result is CI-green — fixtures present,
+  STACK-SELECTION stubbed, and **no broken relative links in the exported tree** (an on-disk link walk;
+  `check-links` needs a git repo so it can't run on a raw export). This is the E-series
+  "attestation → behaviour" move applied to the export mechanism that motivated it. Claim id unchanged.
+
 ## [3.35.0] — 2026-06-21
 
 Pre-release dogfood **S4** — the `explain` why-layer (the last S-series epic; pairs with S1). The kit

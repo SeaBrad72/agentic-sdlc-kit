@@ -39,6 +39,21 @@ do_export() {  # <dest> <profile-or-empty>  — returns nonzero on bad dest/prof
       if [ -d "$_dest/profiles/$_p" ]; then rm -rf "$_dest/profiles/$_p"; _pruned=$((_pruned + 1)); fi
       [ -f "$_dest/profiles/$_p.md" ] && rm -f "$_dest/profiles/$_p.md"
     done
+    # docs/STACK-SELECTION.md links to every profiles/<stack>.md; after a single-profile prune
+    # those 9 links dangle (check-links FAILS on the adopter's first push). Replace it with a stub
+    # that links only to the KEPT selected profile, so the exported tree is link-clean. The file
+    # still exists, so inbound links (README, START-HERE, the kept profile doc) stay valid.
+    # Emit via printf with $_prof as a %s ARGUMENT (never interpreted) — closes any heredoc/sed
+    # interpolation class even if a future profile dir name contained shell/regex metacharacters.
+    if [ -f "$_dest/docs/STACK-SELECTION.md" ]; then
+      {
+        printf '# Stack selection\n\n'
+        printf 'This export was created for the **%s** profile — see [the profile guide](../profiles/%s.md).\n\n' "$_prof" "$_prof"
+        printf 'The full multi-stack comparison matrix lives in the upstream Sparkwright kit\n'
+        printf '(`docs/STACK-SELECTION.md`); it is omitted here because the other stack profiles\n'
+        printf 'are not included in a single-profile export.\n'
+      } > "$_dest/docs/STACK-SELECTION.md"
+    fi
   fi
   _src_n=$( ( cd "$ROOT" && git ls-files | wc -l ) | tr -d ' ' )
   _out_n=$(find "$_dest" -type f | wc -l | tr -d ' ')
@@ -52,13 +67,18 @@ if [ "${1:-}" = "--selftest" ]; then
   _d="$_t/exp"
   do_export "$_d" typescript-node >/dev/null || { echo "FAIL: export errored"; fail=1; }
   # export-ignored → ABSENT
-  for p in docs/ROADMAP-KIT.md .github/workflows/golden-path.yml .github/workflows/drift-watch.yml scripts/fixtures; do
+  for p in docs/ROADMAP-KIT.md .github/workflows/golden-path.yml .github/workflows/drift-watch.yml; do
     [ -e "$_d/$p" ] && { echo "FAIL: export-ignored path present: $p"; fail=1; } || echo "PASS: absent $p"
   done
-  # kept → PRESENT
-  for p in MAINTAINING.md CHANGELOG.md WALKTHROUGH.md conformance templates profiles/_TEMPLATE.md profiles/typescript-node; do
+  # kept → PRESENT (scripts/fixtures now SHIPS — the tier-advice/agent-scorecard selftests in the
+  # adopter ci.yml depend on scripts/fixtures/scorecard/)
+  for p in MAINTAINING.md CHANGELOG.md WALKTHROUGH.md conformance templates profiles/_TEMPLATE.md profiles/typescript-node scripts/fixtures/scorecard; do
     [ -e "$_d/$p" ] && echo "PASS: present $p" || { echo "FAIL: kept path missing: $p"; fail=1; }
   done
+  # STACK-SELECTION stubbed on --profile: exists + no link to a pruned profile (e.g. go)
+  if [ -f "$_d/docs/STACK-SELECTION.md" ] && ! grep -Fq '](../profiles/go.md)' "$_d/docs/STACK-SELECTION.md"; then
+    echo "PASS: STACK-SELECTION stubbed (no pruned-profile link)"
+  else echo "FAIL: STACK-SELECTION still links a pruned profile (or missing)"; fail=1; fi
   # pruned profile → ABSENT
   [ -e "$_d/profiles/go" ] && { echo "FAIL: pruned profile present: go"; fail=1; } || echo "PASS: pruned profiles/go"
   [ -e "$_d/profiles/go.md" ] && { echo "FAIL: pruned profile doc present: go.md"; fail=1; } || echo "PASS: pruned profiles/go.md"
