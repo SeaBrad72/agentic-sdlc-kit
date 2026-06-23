@@ -46,8 +46,8 @@ Any team — humans, agents, or both — starting a new project who wants produc
    git clone --depth 1 <kit-url> /tmp/sparkwright-src
    sh /tmp/sparkwright-src/scripts/adopter-export.sh ./my-project --profile typescript-node
    ```
-   You get **242 files** for typescript-node (the kit + your chosen stack), down from 392. The export drops the kit's own
-   backlog/CI-watchers/test-fixtures and the 9 stack profiles you aren't using.
+   The export script prints the exact file count it wrote (`exported … files`) — the kit plus your chosen stack, with the kit's own
+   backlog, CI-watchers, and test-fixtures plus the stack profiles you aren't using pruned out.
    *(Why the script: `export-ignore` only takes effect via `git archive`/this script. A plain
    `cp -R` drags gitignored scratch + `node_modules`; a plain `git clone` carries the full kit.
    The kit's conformance suite and a few maintainer docs are intentionally retained.)*
