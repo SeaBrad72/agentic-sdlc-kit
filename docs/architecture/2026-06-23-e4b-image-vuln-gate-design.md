@@ -67,17 +67,22 @@ so the **claim count stays 26**.
 Mirrors the E4a `containment-audit` job (self-contained, path-filtered, ts-node reference). It:
 incept a temp ts-node project → stage the Dockerfile → `docker build` the reference image →
 
-- **PASS scan:** Trivy scans the reference image with the policy → must exit 0 (distroless/slim
-  reference is clean) — proves the scanner runs and the reference passes.
-- **RED scan (non-vacuous):** Trivy scans a **pinned known-vulnerable base image** (by digest) with
-  the *identical* policy → must exit **non-zero** — proves the gate actually blocks. A shell step
-  inverts the expected failure (`trivy …; rc=$?; [ "$rc" -ne 0 ] || { echo "RED: gate failed to block"; exit 1; }`).
+- **PASS scan:** SHA-pinned `aquasecurity/trivy-action` scans the reference image with the policy →
+  must exit 0 (ts-node slim reference is clean) — proves the scanner runs and the reference passes.
+- **RED scan (non-vacuous):** the same SHA-pinned `aquasecurity/trivy-action` scans a **pinned
+  known-vulnerable base image** (by digest) with the *identical* policy, with `continue-on-error:
+  true`. A shell assert step then checks *both* that the trivy-action step `outcome == 'failure'`
+  *and* that `jq '[.Results[]?.Vulnerabilities // [] | length] | add // 0' trivy-red.json` is
+  greater than 0 — proving the gate blocked on actual CRITICAL/HIGH *findings*, not merely on a
+  network/pull failure. This findings-count assert is the canonical GHA idiom for non-vacuous RED
+  proofs; it closes the false-"RED OK" hole that would occur if the fixture became unpullable (404)
+  while the vuln DB was fine.
 
-**Trivy mechanism in the proof job:** the **CLI** (checksum-pinned binary, mirroring the kit's
-gitleaks pattern) for both scans, so the RED's expected-non-zero is cleanly assertable (the action
-would fail the step). The policy (severity/ignore-unfixed) is identical to the profile gate — the
-action is a wrapper around the same engine, so proving the CLI policy proves the gate. Stated
-honestly in the job comment.
+**Trivy mechanism in the proof job:** the SHA-pinned **`aquasecurity/trivy-action`** for both PASS
+and RED scans (with `format: json` + `output: trivy-red.json` on the RED so the assert step can
+count findings). The policy (severity/ignore-unfixed/vuln-type) is identical to the profile gate.
+The `continue-on-error: true` + outcome-assert-on-findings idiom is the canonical GHA way to assert
+a step failed on real data — not a bare exit-code check that a pull failure would satisfy.
 
 ### 2.4 `conformance/golden-path-wired.sh` (control-plane)
 Extend its token list to lock the new `image-vuln` job + its load-bearing steps (the PASS scan, the
@@ -106,7 +111,7 @@ at run time on the runner.
 
 ## 4. Error handling / scope / footprint
 
-- **Network:** Trivy pulls its vuln DB (golden-path has network; the action/binary caches it). The
+- **Network:** Trivy pulls its vuln DB (golden-path has network; the action caches it). The
   RED fixture is pulled by digest.
 - **Scan target:** the **runtime** image (what ships — distroless nonroot), same target as `gate-image-sbom`.
 - **Honest boundary:** gates **fixable** CRITICAL/HIGH only (actionable). Unfixed CVEs are
