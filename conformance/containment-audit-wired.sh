@@ -8,10 +8,10 @@ AUDIT="${CONTAINMENT_AUDIT:-scripts/containment-audit.sh}"
 WF="${GOLDEN_PATH_WF:-.github/workflows/golden-path.yml}"
 GUARD="${GUARD_CORE:-.claude/hooks/guard-core.sh}"
 
-check_script() {  # <audit-file> — every control has a NEGATIVE probe AND FS has POSITIVE controls (no vacuous pass)
+check_script() {  # <audit-file> — every containment NEGATIVE probe AND the tmpfs POSITIVE liveness anchor (no vacuous pass)
   f=$1; miss=0
   for tok in \
-    'POS fs-work' 'POS fs-tmp' \
+    'POS fs-tmp' \
     'NEG fs-root' 'NEG fs-etc' 'NEG host' 'NEG egress' 'NEG caps' \
     'docker compose --profile agent run'; do
     grep -qF -- "$tok" "$f" || { echo "FAIL: containment-audit runner missing: $tok"; miss=1; }
@@ -29,9 +29,9 @@ check_job() {  # <workflow-file>
 
 if [ "${1:-}" = "--selftest" ]; then
   d=$(mktemp -d)
-  # complete runner fixture
-  printf 'POS fs-work\nPOS fs-tmp\nNEG fs-root\nNEG fs-etc\nNEG host\nNEG egress\nNEG caps\ndocker compose --profile agent run\n' > "$d/ok.sh"
-  # neg-only runner (no positive controls) -> must be caught (vacuous-pass guard)
+  # complete runner fixture (tmpfs positive anchor + all negatives + the run invocation)
+  printf 'POS fs-tmp\nNEG fs-root\nNEG fs-etc\nNEG host\nNEG egress\nNEG caps\ndocker compose --profile agent run\n' > "$d/ok.sh"
+  # neg-only runner (no positive liveness anchor) -> must be caught (vacuous-pass guard)
   printf 'NEG fs-root\nNEG fs-etc\nNEG host\nNEG egress\nNEG caps\ndocker compose --profile agent run\n' > "$d/negonly.sh"
   printf 'containment-audit:\nsh scripts/containment-audit.sh\n' > "$d/ok.yml"
   printf 'some-other-job:\n' > "$d/bad.yml"

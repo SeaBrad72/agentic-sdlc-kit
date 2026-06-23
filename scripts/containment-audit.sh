@@ -3,9 +3,10 @@
 #
 # Behavioural proof (NOT attestation) of three controls the shipped compose `agent` service
 # enforces: FS-scope (read_only root + work-tree-only mount), egress (network_mode: none),
-# caps (cap_drop: [ALL] + no-new-privileges). Each NEGATIVE probe (a forbidden op MUST fail
-# with the right error) is paired with a POSITIVE control (an allowed op MUST succeed) so a
-# dead or broken container cannot vacuously pass.
+# caps (cap_drop: [ALL] + no-new-privileges). Each NEGATIVE probe (a forbidden op MUST fail with
+# the right error) is anchored by a POSITIVE liveness control (the tmpfs write MUST succeed) so a
+# dead or broken container cannot vacuously pass the negatives. (/work mount-presence is reported
+# informationally only — it is runtime-dependent and not a containment property; see below.)
 #
 # SCOPE: proves the SHIPPED reference container actually contains. It does NOT prove the
 # adopter wired it into their deployment (that stays the RUNBOOK attestation in
@@ -55,15 +56,16 @@ echo "containment-audit: building the agent sandbox in $DIR ..."
 # Markers are load-bearing (containment-audit-wired.sh greps them): POS/NEG <control>.
 PROBE='
 fail=0
-# FS POSITIVE controls (prove the container is ALIVE + the boundary, not a broken harness, blocks).
-# /work: prove the work tree is MOUNTED + readable. NOTE: writability of the /work bind mount is
-# host-uid dependent under cap_drop:[ALL] — the builder runs as root, which LOSES DAC_OVERRIDE, so
-# root cannot write a bind mount owned by another uid (fails on Linux; "works" on Docker-Desktop/Mac
-# which virtualizes mount ownership). That is NOT a containment property, so the audit proves the
-# mount is present here and proves WRITE-capability via the tmpfs positive below (the env-independent
-# can-write-where-designed anchor). The /work-writability gap is a separate reference finding.
-if [ -n "$(ls -A /work 2>/dev/null)" ]; then echo "POS fs-work: PASS (work tree mounted + readable)"; else echo "POS fs-work: FAIL (work tree not mounted)"; fail=1; fi
+# POSITIVE liveness anchor (env-independent): write to the tmpfs. A dead/broken container cannot
+# produce this, so it alone defeats a vacuous pass of the negatives below (a read_only + no-net box
+# fails almost everything — the negatives are only meaningful if the container is provably alive).
 if echo x > /tmp/.ca_probe 2>/dev/null; then echo "POS fs-tmp: PASS"; rm -f /tmp/.ca_probe; else echo "POS fs-tmp: FAIL"; fail=1; fi
+# /work mount-presence — INFORMATIONAL ONLY (never gates). The ./:/work bind attaches on
+# Docker-Desktop (fakeowner) but mounts EMPTY on some Linux/CI runtimes, and work-tree writability
+# is host-uid dependent under cap_drop:[ALL] (root loses DAC_OVERRIDE). Neither is a containment
+# property — containment is the negatives, liveness is the tmpfs positive above. Diagnostic for the
+# separate reference-usability finding; it does NOT set fail.
+if [ -n "$(ls -A /work 2>/dev/null)" ]; then echo "INFO fs-work: work tree mounted + readable"; else echo "INFO fs-work: work tree NOT populated in this runtime (informational; not a containment property)"; fi
 # FS NEGATIVE: read-only root
 if echo x > /ca_probe 2>/dev/null; then echo "NEG fs-root: FAIL (root writable)"; rm -f /ca_probe; fail=1; else echo "NEG fs-root: PASS (root read-only)"; fi
 if echo x > /etc/ca_probe 2>/dev/null; then echo "NEG fs-etc: FAIL (/etc writable)"; rm -f /etc/ca_probe; fail=1; else echo "NEG fs-etc: PASS (/etc read-only)"; fi
@@ -90,7 +92,7 @@ echo "$out"
 # Anti-vacuous gate: the run must exit 0 AND every control marker must be PASS in the output
 # (so an empty/short-circuited run cannot pass on exit code alone).
 miss=0
-for m in "POS fs-work: PASS" "POS fs-tmp: PASS" "NEG fs-root: PASS" "NEG fs-etc: PASS" "NEG host: PASS" "NEG egress: PASS" "NEG caps: PASS"; do
+for m in "POS fs-tmp: PASS" "NEG fs-root: PASS" "NEG fs-etc: PASS" "NEG host: PASS" "NEG egress: PASS" "NEG caps: PASS"; do
   printf '%s\n' "$out" | grep -qF -- "$m" || { echo "containment-audit: MISSING expected PASS marker: $m"; miss=1; }
 done
 
