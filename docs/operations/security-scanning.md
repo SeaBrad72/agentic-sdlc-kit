@@ -63,3 +63,36 @@ still passes (the kit's "rewrite the reference, keep the contract" rule):
 2. A strict / audited legal license-compliance obligation.
 3. Shipping a proprietary product with copyleft exposure.
 4. You need build-graph scoping (allow a dev-only copyleft tool, deny it at runtime).
+
+## DAST — dynamic application security testing (E4c)
+
+SAST (`gate-sast`), dependency scans (`gate-dep-scan`), and image scans (`gate-image-vuln`) are all
+**static** — they read code, lockfiles, and image layers. DAST tests the **running** app: it sends
+real requests and inspects responses for misconfigurations, missing protections, and injection.
+
+**The proven floor — runtime-security headers (shipped + gated).** The reference app sets four
+security headers on every response (`X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`,
+`Content-Security-Policy: default-src 'none'`, `Referrer-Policy: no-referrer`), and the `golden-path`
+workflow **asserts them on the booted container** (locked by `conformance/runtime-security.sh`). This
+is a real, deterministic runtime-security check — not a pentest.
+
+**Full DAST — the reference pattern (opt-in).** For a real web attack surface (routes, forms, auth,
+user input), wire an **OWASP ZAP baseline** scan against the deployed / preview URL. Copy-paste,
+SHA-pin when you adopt it:
+
+```yaml
+  dast:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: zaproxy/action-baseline@<pin-a-sha>   # OWASP ZAP baseline
+        with:
+          target: ${{ env.PREVIEW_URL }}            # your deployed/preview URL (see preview-environments.md)
+          # fail_action: true   # gate the PR on new alerts once you've tuned the rules
+```
+
+**Honest boundary.** The kit *proves* the runtime-security header floor on its (intentionally
+trivial) reference app; **full DAST against your real surface is yours to wire** — it is a documented
+reference, **not** a forced gate (a heavy ZAP run on every service would be false universality, the
+trap the §14 conditional-gate framework warns against). HSTS is intentionally **not** emitted by the
+reference (it terminates plain HTTP; `Strict-Transport-Security` is the TLS-terminator's
+responsibility — ingress / load balancer).

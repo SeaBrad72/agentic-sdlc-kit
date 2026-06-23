@@ -3,6 +3,30 @@
 All notable changes to Sparkwright are recorded here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.45.0] — 2026-06-23
+
+**E4c — DAST / runtime-security: proven security-header floor + documented ZAP reference.** Closes
+the last named gap-assessment blind spot (no DAST / runtime security). The reference CI did only
+*static* analysis (`gate-sast`, deps, image) — nothing exercised the *running* app.
+
+### Added
+- **Security headers on the reference app** (`profiles/typescript-node/scaffold/src/server.ts`,
+  zero-dep, every response): `X-Content-Type-Options: nosniff` · `X-Frame-Options: DENY` ·
+  `Content-Security-Policy: default-src 'none'` · `Referrer-Policy: no-referrer`.
+- **`conformance/runtime-security.sh`** (claim `runtime-security`; claims **27 → 28**) — static-locks
+  the reference app's headers + the golden-path runtime assertion; `--selftest`; wired into `verify.sh`
+  + CI. Carved from the adopter export (reads the export-ignored `golden-path.yml`), mirroring
+  `containment-audit`; the hardened `server.ts` still ships.
+- **golden-path runtime-security assertion** — on the booted reference container, asserts all four
+  headers are present (deterministic, non-vacuous; runs live on PR + main).
+- **`docs/operations/security-scanning.md` DAST section** — the OWASP ZAP baseline pattern as a
+  documented reference for adopters with real attack surface (opt-in, not a forced gate).
+
+### Honest boundary
+The kit *proves* the runtime-security header floor on its (intentionally trivial) reference; full
+DAST against real routes/auth/inputs is the documented adopter pattern. HSTS is intentionally absent
+(the reference terminates plain HTTP; HSTS is the TLS-terminator's responsibility).
+
 ## [3.44.0] — 2026-06-23
 
 **E4a′ — Token-scope static gate (completes the 4-platform-controls coverage).** E4a proved three
