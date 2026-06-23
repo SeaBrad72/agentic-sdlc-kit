@@ -55,8 +55,14 @@ echo "containment-audit: building the agent sandbox in $DIR ..."
 # Markers are load-bearing (containment-audit-wired.sh greps them): POS/NEG <control>.
 PROBE='
 fail=0
-# FS POSITIVE controls (prove the container is ALIVE + the boundary, not a broken harness, blocks)
-if echo x > /work/.ca_probe 2>/dev/null && rm -f /work/.ca_probe 2>/dev/null; then echo "POS fs-work: PASS"; else echo "POS fs-work: FAIL"; fail=1; fi
+# FS POSITIVE controls (prove the container is ALIVE + the boundary, not a broken harness, blocks).
+# /work: prove the work tree is MOUNTED + readable. NOTE: writability of the /work bind mount is
+# host-uid dependent under cap_drop:[ALL] — the builder runs as root, which LOSES DAC_OVERRIDE, so
+# root cannot write a bind mount owned by another uid (fails on Linux; "works" on Docker-Desktop/Mac
+# which virtualizes mount ownership). That is NOT a containment property, so the audit proves the
+# mount is present here and proves WRITE-capability via the tmpfs positive below (the env-independent
+# can-write-where-designed anchor). The /work-writability gap is a separate reference finding.
+if [ -n "$(ls -A /work 2>/dev/null)" ]; then echo "POS fs-work: PASS (work tree mounted + readable)"; else echo "POS fs-work: FAIL (work tree not mounted)"; fail=1; fi
 if echo x > /tmp/.ca_probe 2>/dev/null; then echo "POS fs-tmp: PASS"; rm -f /tmp/.ca_probe; else echo "POS fs-tmp: FAIL"; fail=1; fi
 # FS NEGATIVE: read-only root
 if echo x > /ca_probe 2>/dev/null; then echo "NEG fs-root: FAIL (root writable)"; rm -f /ca_probe; fail=1; else echo "NEG fs-root: PASS (root read-only)"; fi

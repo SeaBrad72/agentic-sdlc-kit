@@ -145,10 +145,21 @@ with a positive control so a dead container cannot vacuously pass.
 
 | Control | Negative probe (MUST fail, right errno) | Positive control (MUST succeed) |
 |---|---|---|
-| **FS-scope** | write to `/etc/<probe>`, `/<probe>` → EROFS (read-only root) | write to `/work/<probe>` and `/tmp/<probe>` → succeed |
-| **Host-unreachable** | `~/.aws`, `~/.ssh`, `/var/run/docker.sock` absent | `/work` holds the staged project (mount live) |
+| **FS-scope** | write to `/etc/<probe>`, `/<probe>` → EROFS (read-only root) | write to `/tmp/<probe>` (tmpfs) → succeed = can-write-where-designed + liveness anchor; `/work` **mounted + readable** (see note) |
+| **Host-unreachable** | `~/.aws`, `~/.ssh`, `/var/run/docker.sock` absent | `/work` holds the staged project (mount live + readable) |
 | **Egress** | outbound connect → ENETUNREACH, via `node` (guaranteed in the builder stage — not a maybe-missing `curl`) | (FS positives prove the container is alive; no positive network control exists under `network_mode: none`) |
 | **Caps** | a CAP-gated op (`mknod` needs CAP_MKNOD, or `chown` to another uid needs CAP_CHOWN) → EPERM | a non-privileged op succeeds |
+
+**`/work` writability — a CI-surfaced reference finding (not a containment property).** The original
+positive control wrote to `/work`. CI (Linux) revealed the `agent` service builds the `builder` stage,
+which runs as **root** (no `USER`), and `cap_drop: [ALL]` strips **DAC_OVERRIDE** — so root cannot write
+the `/work` bind mount owned by the host runner's uid (fails on Linux; "works" on Docker-Desktop/Mac,
+which virtualizes mount ownership). Blocking the write is arguably containment *working*, so the audit
+must not fail on it. The positive control is therefore **mounted + readable** (env-independent mount-present
+proof), and write-capability is proven via the **tmpfs** positive (env-independent). That the shipped
+sandbox can't write its own work tree on Linux under `cap_drop:[ALL]` is a real **reference-usability**
+finding — flagged as an E4 follow-up (a small `user:`-mapping option or a documented uid requirement),
+separate from E4a's containment scope.
 
 **Anti-vacuous-pass discipline (the headline hardening invariant):** in a `read_only` +
 `network_mode: none` container almost every command fails, so "expect the forbidden op to fail" is
