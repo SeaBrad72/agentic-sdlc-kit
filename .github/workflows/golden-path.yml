@@ -57,6 +57,12 @@ jobs:
           # Boot 1 — flag OFF (default). smoke (also OFF) expects the kill-switch greeting.
           docker run -d --name gp -p 3000:3000 golden-path:ci
           wait_live
+          # E4c — runtime-security: the booted app must return the security headers (proven, non-vacuous).
+          rs_hdrs=$(curl -sS -D - -o /dev/null http://localhost:3000/healthz)
+          for h in 'x-content-type-options: nosniff' 'x-frame-options: DENY' "content-security-policy: default-src 'none'" 'referrer-policy: no-referrer'; do
+            printf '%s\n' "$rs_hdrs" | grep -iqF -- "$h" || { echo "runtime-security: MISSING header: $h"; docker logs gp || true; docker rm -f gp >/dev/null 2>&1 || true; exit 1; }
+          done
+          echo "runtime-security: OK — all security headers present on the booted app"
           if ! sh scripts/smoke.sh; then echo "golden-path: OFF smoke failed (kill-switch path)"; docker logs gp || true; docker rm -f gp >/dev/null 2>&1 || true; exit 1; fi
           docker rm -f gp >/dev/null 2>&1 || true
 

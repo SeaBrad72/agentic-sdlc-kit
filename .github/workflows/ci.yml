@@ -115,6 +115,8 @@ jobs:
         run: sh scripts/containment-audit.sh --selftest
       - name: containment-audit self-test (sandbox boot+probe wired into golden-path)
         run: sh conformance/containment-audit-wired.sh --selftest
+      - name: runtime-security self-test (reference app security headers wired)
+        run: sh conformance/runtime-security.sh --selftest
       - name: feature-flags-ready self-test (skip/OK/FAIL fixtures)
         run: sh conformance/feature-flags-ready.sh --selftest
       - name: DR-readiness checklist present
