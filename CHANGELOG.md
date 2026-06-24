@@ -5,6 +5,34 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versioning: [S
 
 > Claim verbs ("proven"/"PROVEN") are scoped to the reference implementation unless an entry states broader coverage — see [MAINTAINING.md §3](MAINTAINING.md#3-releasing-platform-team).
 
+## [3.48.6] — 2026-06-24
+
+**T3d — consolidation wrap-up: backlog reorg, release-line, and the retire-convention doc.**
+Closes the T3 right-weighting arc (T3a assessment → T3c content cuts → T3d reconciliation). Docs-only;
+no code or gate change.
+
+### Added
+- **`docs/operations/retiring-conventions.md`** — the safe-retirement discipline this arc exercised
+  (design-intent KEEP-default lens · inbound-ref classification · prove-no-gate-depends · content-
+  preserving migration · control-plane via apply.py · gate-and-deletion atomic). T3b descoped to this
+  convention (the T3a assessment found zero conformance/claims to retire — no mechanism to build).
+  Cross-referenced from `MAINTAINING.md` §1.
+
+### Changed
+- **`docs/ROADMAP-KIT.md`** — epic reorg (ratified): **E12 + E14 → E3** (context-engineering and
+  human-in-loop are orchestration slices), **E13 → E4d + E6**, **E8 deferred**, **E9/E11 kept but
+  scope-challenged**; net feature epics 10 → 6. **Release-line decided:** stay **3.x**; 1.0 gated on
+  feature-complete + E10 + a real external adopter (T2 established pre-adoption). T3 marked DONE; two
+  T3-banked findings logged to T4 (the `check-links.sh` code-span gotcha; the `docs/architecture/`
+  ships-to-adopters export-ignore candidate). Stale "this release v1.0.0" line corrected; the
+  "first-class 10 profiles unqualified" residue marked closed (v3.48.1).
+- **`templates/JIRA-SETUP-TEMPLATE.md`** — adds a reciprocal **tier note** (server-enforced *Only
+  Assignee* tier vs `TRACKER-SETUP`'s convention tier; deliberately distinct, per design-intent
+  reversal #3 keeping both).
+- **`docs/architecture/2026-06-24-t3a-rightweight-assessment.md`** — records **design-intent reversal
+  #12** (AI-POLICY kept in `templates/` — it's one of the 9 incept-stamped governance templates; moving
+  only it breaks set-coherence for a cosmetic gain).
+
 ## [3.48.5] — 2026-06-24
 
 **T3c (consolidation) — frame.md + shape.md folded into discovery-loop.md as sections.**

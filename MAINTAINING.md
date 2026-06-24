@@ -27,6 +27,8 @@ Every capability the kit ships has three parts. This is the same "universal stan
 
 A team on Python deletes the Node workflow, writes their own, and stays conformant because the gates still fire.
 
+**Retiring an artifact** (doc/template/claim) is the reverse move — keep it honest and reversible with the discipline in **`docs/operations/retiring-conventions.md`** (design-intent KEEP-default · find inbound refs · prove no gate depends on it · migrate distinct value · control-plane refs via apply.py).
+
 ---
 
 ## 2. Versioning
