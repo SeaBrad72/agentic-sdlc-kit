@@ -88,7 +88,7 @@ feed PLAN, which produces a **Ready** story via the existing FEATURE-REQUEST/SPE
 Across all stages, the rule is the same: **AI does the tasks; the human takes the turns that carry
 judgment, accountability, or a gate.** AI normalizes, synthesizes, drafts, prototypes, scores; the
 human frames the problem, chooses direction, sets priorities, and approves each gate. The per-stage
-split is in the **FRAME** and **SHAPE** sections below. It is **guidance, not an automated gate** —
+split is in the **FRAME** and **SHAPE** sections of this page. It is **guidance, not an automated gate** —
 discovery is judgment work.
 
 ## Honesty
