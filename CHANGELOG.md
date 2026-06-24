@@ -5,6 +5,34 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versioning: [S
 
 > Claim verbs ("proven"/"PROVEN") are scoped to the reference implementation unless an entry states broader coverage — see [MAINTAINING.md §3](MAINTAINING.md#3-releasing-platform-team).
 
+## [3.48.2] — 2026-06-24
+
+**T3c (consolidation) — retire 6 completed E4 build-design docs (dead artifacts).**
+Subtractive right-weighting: the six E4 design docs are completed-build artifacts whose rationale lives
+on in the CHANGELOG entries (E4a–E4e) + the live implementation. No live code, conformance check, or
+markdown link depends on them.
+
+### Removed
+- `docs/architecture/2026-06-22-e4a-containment-audit-design.md`
+- `docs/architecture/2026-06-23-e4-work-mount-fix-design.md`
+- `docs/architecture/2026-06-23-e4a-prime-token-scope-design.md`
+- `docs/architecture/2026-06-23-e4b-image-vuln-gate-design.md`
+- `docs/architecture/2026-06-23-e4c-dast-runtime-security-design.md`
+- `docs/architecture/2026-06-23-e4e-author-not-approver-sod-design.md`
+
+### Changed
+- **`docs/ROADMAP-KIT.md`** — the 6 E4-shipped entries' trailing "Design: `…`" pointers (backtick
+  mentions, not links) now read "Design retired in T3c" instead of naming the deleted files.
+
+### Notes
+- **Kept** (not dead): `2026-06-22-e3-…-design.md` (E3 not built — live spec),
+  `e-series-consolidation-audit`, `meta-control-first-run`, `t2-real-validation-findings`, `t3a-rightweight-assessment`.
+- The ledger's "delete atomically with 5 companion plan docs or check-links breaks" rationale was
+  **disproven against the mechanism**: `check-links.sh` scans only tracked `*.md` and only relative
+  Markdown link targets; the plan docs are gitignored (never scanned/shipped). Correction recorded in the T3a assessment doc.
+- *Open follow-up (not this slice):* `docs/architecture/` ships to adopters — whether the kit's
+  internal build-design history should be export-ignored wholesale is a candidate for T3d/T4.
+
 ## [3.48.1] — 2026-06-24
 
 **T3c (consolidation) — profile maturity relabel: honest first-class vs experimental tiers.**
