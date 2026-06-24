@@ -20,6 +20,10 @@ locked with a selftest so it can't silently return.
   CommonMark renderer; the dropped set is a strict subset of the renderer's non-rendered set).
   Conservative by design (rare nested-fence shapes may over-extract = fail-safe false-flag, never a
   missed link). Adds a `--selftest` (code-span / fence skipping is load-bearing) wired into `ci.yml`.
+- **`conformance/adopter-export-wired.sh`** — the same gotcha lived in its inline export link-check
+  (CI caught it: this entry's own code-span examples tripped it); applied the identical (reviewed)
+  awk code-strip. *(There are now two copies of the awk — the `wf-helpers.sh` refactor, the next T4
+  item, dedupes both, incl. line 31's narrower basename grep.)*
 - builder ≠ reviewer + security-review-of-scratch both APPROVE.
 
 ## [3.48.9] — 2026-06-24
