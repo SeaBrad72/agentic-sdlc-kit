@@ -65,6 +65,7 @@
 > the **spec gate** (§7) before Build. Leave blank for small/obvious slices — a vibe-coder or a tiny
 > increment never needs it. (The base sections above — *Problem & user*, *Success metric*,
 > *UX & accessibility* — carry forward; this section adds the Plan-phase depth, it doesn't repeat them.)
+> After sign-off, scope changes are a **new revision** — note them here.
 
 ### Goals & non-goals
 > What this delivers; what it explicitly does **not** (the YAGNI fence).
