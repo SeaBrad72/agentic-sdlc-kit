@@ -3,7 +3,7 @@
 All notable changes to Sparkwright are recorded here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-> Claim verbs ("proven"/"PROVEN") are scoped to the reference implementation unless an entry states broader coverage — see [MAINTAINING.md](MAINTAINING.md) §3.
+> Claim verbs ("proven"/"PROVEN") are scoped to the reference implementation unless an entry states broader coverage — see [MAINTAINING.md §3](MAINTAINING.md#3-releasing-platform-team).
 
 ## [3.47.2] — 2026-06-23
 
@@ -18,7 +18,7 @@ several release headlines used a bare "PROVEN" verb their bodies already scoped 
 - **`docs/enterprise/EXEC-BRIEF.md`** §5 — adds the pre-adoption maturity line to the honest-boundaries
   picture (F3).
 - **CHANGELOG** — re-scoped four over-claimed headline verbs (E4a / E2 / E4c / E4e) to single-reference
-  reality; entry bodies were already honest (F4).
+  reality; bodies were already honest except one E4e lead sentence ("a *proven* control") similarly qualified (F4).
 - **`MAINTAINING.md`** §3 + CHANGELOG header — a forward claim-verb discipline so "proven" can't
   out-claim its scope again (F4).
 

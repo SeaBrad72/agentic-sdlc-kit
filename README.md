@@ -25,7 +25,7 @@ Any team — humans, agents, or both — starting a new project who wants produc
 
 ## Maturity & validation status
 
-Sparkwright is **pre-adoption**. It is built by dogfooding its own loop, runs its own CI on every push, and has been validated end-to-end by **two synthetic adopter dogfoods** (the feedback-triage service) — both authored in-house, by the same author. It has **not yet been adopted by an external team**.
+Sparkwright is **pre-adoption**. It is built by dogfooding its own loop, runs its own CI on every push, and has been validated end-to-end by **two synthetic in-house dogfood runs** of a feedback-triage service (the same project, exercised twice) — both authored by the same author. It has **not yet been adopted by an external team**.
 
 What that means for you:
 - **`typescript-node` is the maturity-verified reference path** — its language gates are maintainer-executed green on clone. Other stacks are **provided, not maintainer-executed** (see the Quickstart's per-stack honesty).
