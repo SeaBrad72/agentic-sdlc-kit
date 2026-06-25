@@ -16,6 +16,8 @@ is_control_plane_path() {
     *.claude/settings.json|*.claude/settings.local.json|\
     *.claude/mcp-policy.json|.claude/mcp-policy.json|\
     *.claude/agents/*|.claude/agents/*|\
+    docs/governance/.meta-control-last|*/docs/governance/.meta-control-last|\
+    docs/governance/meta-control-log.md|*/docs/governance/meta-control-log.md|\
     */hooks/pre-push|hooks/pre-push|*/scripts/kit-guard|scripts/kit-guard|\
     */.github/workflows/*|.github/workflows/*|*/CODEOWNERS|CODEOWNERS|*/.git/*|.git/*|\
     conformance/*|*/conformance/*|adapters/*|*/adapters/*|\
@@ -70,10 +72,10 @@ guard_check_command() {
   if ! selfedit_allowed && printf '%s' "$cmd" | grep -Eq 'git[[:space:]]+config[[:space:]]+([^;&|]*[[:space:]])?core\.hooksPath'; then
     printf '%s' '13: git config core.hooksPath would disable the agent guard - human-gated. Set KIT_GUARD_SELFEDIT=1 for deliberate human maintenance.'; return 1
   fi
-  if ! selfedit_allowed && printf '%s' "$cmd" | grep -Eq '(\.claude(/|[[:space:]]|$)|\.github/workflows|/CODEOWNERS|(^|[^a-zA-Z.])CODEOWNERS|\.git(/|[[:space:]]|$)|hooks/pre-push|scripts/kit-guard)'; then
+  if ! selfedit_allowed && printf '%s' "$cmd" | grep -Eq '(\.claude(/|[[:space:]]|$)|\.github/workflows|/CODEOWNERS|(^|[^a-zA-Z.])CODEOWNERS|\.git(/|[[:space:]]|$)|hooks/pre-push|scripts/kit-guard|docs/governance/\.meta-control-last|docs/governance/meta-control-log\.md)'; then
     if printf '%s' "$cmd" | grep -Eq '(^|[^[:alnum:]_])(rm|rmdir|mv|cp|truncate|shred|chmod|chown|dd|sed|tee|ln|install|patch)[[:space:]]' \
        || printf '%s' "$cmd" | grep -Eq '(^|[^[:alnum:]_])git[[:space:]]+(checkout|restore)([[:space:]]|$)' \
-       || printf '%s' "$cmd" | grep -Eq '>[[:space:]]*[^[:space:]]*(\.claude|\.github/workflows|CODEOWNERS|\.git|hooks/pre-push|scripts/kit-guard)'; then
+       || printf '%s' "$cmd" | grep -Eq '>[[:space:]]*[^[:space:]]*(\.claude|\.github/workflows|CODEOWNERS|\.git|hooks/pre-push|scripts/kit-guard|docs/governance/\.meta-control-last|docs/governance/meta-control-log\.md)'; then
       # WS1 (DENY-BY-DEFAULT): the co-occurrence test above is the safe FLOOR — it would deny. Allow
       # back ONLY a provably-safe SINGLE READ command: no ;/&&/||/|/&/redirect chaining, and a leading
       # verb (after stripping a leading backslash / env-assignments / sudo+common wrappers) that is a
@@ -343,7 +345,7 @@ guard_check_path() {
     esac
     if [ "$_bare" = 1 ]; then
       case "$base" in
-        guard.sh|guard-core.sh|kit-guard|pre-push|settings.json|settings.local.json|mcp-policy.json|CODEOWNERS)
+        guard.sh|guard-core.sh|kit-guard|pre-push|settings.json|settings.local.json|mcp-policy.json|CODEOWNERS|.meta-control-last|meta-control-log.md)
           printf '13: modifying a control-plane file (%s) is denied (control-plane integrity). Set KIT_GUARD_SELFEDIT=1 for deliberate human maintenance.' "$base"; return 1 ;;
       esac
     fi

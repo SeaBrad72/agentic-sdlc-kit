@@ -105,6 +105,19 @@ validate_state() {
     echo "FAIL: marker verdict missing ($MARKER must be 'VERSION VERDICT')."
     return 1
   fi
+  # M2-S5: reject a FUTURE-PINNED marker — marker version must be <= the working tree's VERSION. This
+  # allows the legitimate ship-seam (marker == the about-to-ship version before its tag exists, e.g.
+  # S2's 3.48.15 while 3.48.14 was newest) but rejects a fabricated 99.0.0 that would pin the gate FRESH
+  # forever. Skip gracefully if VERSION is absent / non-semver (an adopter may version otherwise).
+  if [ -f "$ROOT/VERSION" ]; then
+    _vraw=$(ver_norm "$(tr -d '[:space:]' < "$ROOT/VERSION" 2>/dev/null || true)")
+    if printf '%s' "$_vraw" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+$' \
+       && [ "$MVER" != "$_vraw" ] \
+       && [ "$(printf '%s\n%s\n' "$MVER" "$_vraw" | sort -V | tail -1)" = "$MVER" ]; then
+      echo "FAIL: marker version $MVER is ahead of VERSION $_vraw — a future-pinned marker would pin the gate FRESH forever. Set the marker to a real run's version (<= VERSION)."
+      return 1
+    fi
+  fi
   _lver=$(log_field 3) || { echo "FAIL: cannot parse a data row from $LOG."; return 1; }
   _lverdict=$(log_field 6)
   _lver=$(ver_norm "$_lver")
@@ -115,8 +128,29 @@ validate_state() {
   return 0
 }
 
+# trailing_deferred — count consecutive DEFERRED verdicts from the END of the log (the serial-defer cap).
+trailing_deferred() {
+  awk -F'|' '
+    /^[ \t]*\|/ {
+      t=$2; gsub(/^[ \t]+|[ \t]+$/,"",t)
+      if (t=="Date") next
+      if ($0 ~ /^[ \t]*\|[ \t:|-]+$/) next
+      v=$6; gsub(/^[ \t]+|[ \t]+$/,"",v); rows[++n]=v
+    }
+    END { c=0; for (i=n;i>=1;i--){ if(rows[i]=="DEFERRED") c++; else break } print c+0 }
+  ' "$ROOT/$LOG" 2>/dev/null
+}
+
 # freshness — prints FRESH/OVERDUE; returns 0/1. Uses MVER (set by validate_state).
 freshness() {
+  # M2-S5: serial-deferral cap — a deferral covers ONE cadence, but >=N consecutive DEFERRED rows force
+  # a real run (you cannot defer forever). Independent of the tag count.
+  _defcap="${META_CONTROL_DEFER_CAP:-2}"
+  _trail=$(trailing_deferred)
+  if [ "${_trail:-0}" -ge "$_defcap" ]; then
+    echo "OVERDUE: $_trail consecutive DEFERRED rows (cap $_defcap) — a real meta-control panel run is now required; serial deferral is not permitted."
+    return 1
+  fi
   _cnt=$(count_newer "$MVER")
   if [ "$_cnt" -gt "$N" ]; then
     echo "OVERDUE: $_cnt release tags since the last addressed meta-control panel ($MVER, $MVERDICT; N=$N)."
@@ -168,9 +202,10 @@ if [ "${1:-}" = "--selftest" ]; then
   else echo "meta-control-fresh --selftest: FAIL (not surfaced by scripts/doctor.sh)"; sfail=1; fi
 
   # fixture helpers: build a ROOT with a kit marker, a marker file, and a minimal valid log.
-  _mkfix() { # <dir> <marker-line> <log-version> <log-verdict>
+  _mkfix() { # <dir> <marker-line> <log-version> <log-verdict> [VERSION=99.99.99]
     mkdir -p "$1/docs/governance"
     : > "$1/docs/ROADMAP-KIT.md"                       # make is_kit true (applies)
+    printf '%s\n' "${5:-99.99.99}" > "$1/VERSION"     # M2-S5: satisfy the marker<=VERSION check
     printf '%s\n' "$2" > "$1/docs/governance/.meta-control-last"
     {
       printf '| Date | Version | Trigger | Profile | Verdict | Artifact | Ledger |\n'
@@ -208,6 +243,18 @@ if [ "${1:-}" = "--selftest" ]; then
   rc=0; ( ROOT="$_d"; run ) >/dev/null 2>&1 || rc=$?; _expect "real git-tag path: 2 newer (non-semver ignored) = FRESH" 0 "$rc"
   ( cd "$_d" && for _tg in v1.0.3 v1.0.4 v1.0.5 v1.0.6; do git tag "$_tg" >/dev/null 2>&1 || true; done )
   rc=0; ( ROOT="$_d"; run ) >/dev/null 2>&1 || rc=$?; _expect "real git-tag path: 6 newer = OVERDUE" 1 "$rc"
+  # J. M2-S5 future-pinned marker (MVER 9.9.9 > VERSION 1.0.0) → FAIL
+  _d="$_t/j"; _mkfix "$_d" "9.9.9 GO" "9.9.9" "GO" "1.0.0"; rc=0; ( ROOT="$_d"; META_CONTROL_TAGS="1.0.0" run ) >/dev/null 2>&1 || rc=$?; _expect "future-pinned marker (>VERSION) = FAIL" 1 "$rc"
+  # K. M2-S5 two consecutive DEFERRED → OVERDUE (serial-defer cap), regardless of tag count
+  _d="$_t/k"; mkdir -p "$_d/docs/governance"; : > "$_d/docs/ROADMAP-KIT.md"; printf '99.99.99\n' > "$_d/VERSION"
+  printf '1.0.0 DEFERRED\n' > "$_d/docs/governance/.meta-control-last"
+  { printf '| Date | Version | Trigger | Profile | Verdict | Artifact | Ledger |\n'; printf '|---|---|---|---|---|---|---|\n'; printf '| 2026-01-01 | 0.9.0 | t | l | DEFERRED | a | s |\n'; printf '| 2026-01-02 | 1.0.0 | t | l | DEFERRED | a | s |\n'; } > "$_d/docs/governance/meta-control-log.md"
+  rc=0; ( ROOT="$_d"; META_CONTROL_TAGS="1.0.0" run ) >/dev/null 2>&1 || rc=$?; _expect "2 consecutive DEFERRED = OVERDUE (serial-defer cap)" 1 "$rc"
+  # L. M2-S5 single trailing DEFERRED (prior row a real verdict) → still FRESH (one deferral allowed)
+  _d="$_t/l"; mkdir -p "$_d/docs/governance"; : > "$_d/docs/ROADMAP-KIT.md"; printf '99.99.99\n' > "$_d/VERSION"
+  printf '1.0.0 DEFERRED\n' > "$_d/docs/governance/.meta-control-last"
+  { printf '| Date | Version | Trigger | Profile | Verdict | Artifact | Ledger |\n'; printf '|---|---|---|---|---|---|---|\n'; printf '| 2026-01-01 | 0.9.0 | t | l | GO | a | s |\n'; printf '| 2026-01-02 | 1.0.0 | t | l | DEFERRED | a | s |\n'; } > "$_d/docs/governance/meta-control-log.md"
+  rc=0; ( ROOT="$_d"; META_CONTROL_TAGS="1.0.0" run ) >/dev/null 2>&1 || rc=$?; _expect "single trailing DEFERRED = FRESH (one deferral allowed)" 0 "$rc"
 
   rm -rf "$_t"
   [ "$sfail" -eq 0 ] && { echo "meta-control-fresh --selftest: OK"; exit 0; } || exit 1

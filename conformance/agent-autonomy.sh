@@ -230,6 +230,14 @@ assert_deny "Write agent def"      '{"tool_name":"Write","tool_input":{"file_pat
 # --- M2-S3: must still ALLOW (the glob matches the agents/ dir only, not a sibling) ---
 assert_allow "Write agents-notes"  '{"tool_name":"Write","tool_input":{"file_path":".claude/agents-notes.md","content":"x"}}'
 assert_allow "read agent def"      '{"tool_name":"Read","tool_input":{"file_path":".claude/agents/kit-steward.md"}}'
+# --- M2-S5: meta-control verdict state is control-plane (TOOL path + SHELL path must DENY) ---
+assert_deny "Edit marker"          '{"tool_name":"Edit","tool_input":{"file_path":"docs/governance/.meta-control-last","old_string":"a","new_string":"b"}}'
+assert_deny "Write verdict log"    '{"tool_name":"Write","tool_input":{"file_path":"docs/governance/meta-control-log.md","content":"x"}}'
+assert_deny "shell redirect marker" '{"tool_name":"Bash","tool_input":{"command":"printf x > docs/governance/.meta-control-last"}}'
+assert_deny "shell sed verdict log" '{"tool_name":"Bash","tool_input":{"command":"sed -i s/a/b/ docs/governance/meta-control-log.md"}}'
+# --- M2-S5: must still ALLOW (reading the verdict state is fine) ---
+assert_allow "read marker"         '{"tool_name":"Read","tool_input":{"file_path":"docs/governance/.meta-control-last"}}'
+assert_allow "cat verdict log"     '{"tool_name":"Bash","tool_input":{"command":"cat docs/governance/meta-control-log.md"}}'
 # --- 9b review hardening: must still ALLOW (no new over-block) ---
 assert_allow "git config user"      '{"tool_name":"Bash","tool_input":{"command":"git config user.name Dev"}}'
 assert_allow "git checkout src"     '{"tool_name":"Bash","tool_input":{"command":"git checkout HEAD -- src/app.ts"}}'
