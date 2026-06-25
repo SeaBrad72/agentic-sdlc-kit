@@ -128,7 +128,7 @@ Why: Agents propose; a human ratifies. Someone must own "is this actually what w
   gate can make for you. Naming the intent owner up front means a change always has an accountable human
   behind its *purpose*, separate from whoever (or whatever) built it. It is the human half of "agents
   propose, humans ratify".
-Defined in: DEVELOPMENT-PROCESS.md §12 (ratification) + CLAUDE.md (working style)
+Defined in: DEVELOPMENT-PROCESS.md §2 (roles) + §12 (ratification) + CLAUDE.md (working style)
 Read more: docs/operations/review-lane.md
 
 ## wip-limit
@@ -137,5 +137,5 @@ Why: Starting is easy; finishing is what ships. A WIP limit lets you pull the ne
   capacity frees up, so bottlenecks surface instead of hiding behind a pile of half-done work, and
   context-switching (the silent tax on quality) drops. It is the Kanban core the kit keeps after
   dropping story points and sprints — flow over throughput theater.
-Defined in: DEVELOPMENT-PROCESS.md §6 (work-item flow)
+Defined in: DEVELOPMENT-PROCESS.md §4 (the loop) + §12 (multi-agent coordination)
 Read more: DEVELOPMENT-PROCESS.md
