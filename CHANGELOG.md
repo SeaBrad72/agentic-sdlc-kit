@@ -5,6 +5,29 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versioning: [S
 
 > Claim verbs ("proven"/"PROVEN") are scoped to the reference implementation unless an entry states broader coverage — see [MAINTAINING.md §3](MAINTAINING.md#3-releasing-platform-team).
 
+## [3.48.17] — 2026-06-25
+
+**M2-S5 — ratification integrity: the freshness circuit-breaker's headline guarantee now HOLDS.**
+The S4 meta-control panel (run #3) found — and reproduced — that the gate was self-certifiable: the
+verdict log + marker were ordinary docs, so an agent with Write could append a `GO` row + advance the
+marker → FRESH, no panel, no human. This slice closes that gap, making *"an autonomous squad cannot
+soften the circuit-breaker"* true mechanically rather than aspirationally.
+
+### Changed
+- **`.claude/hooks/guard-core.sh`** — `docs/governance/.meta-control-last` + `meta-control-log.md` are
+  now control-plane in **both** matchers: `is_control_plane_path` (the Edit/Write tool path) **and** the
+  `guard_check_command` regex (the shell mutation + redirect path — a redirect like `printf > marker`
+  was the back door a tool-path-only fix would have left open). Writing a verdict now requires
+  `KIT_GUARD_SELFEDIT=1` / a human commit.
+- **`conformance/meta-control-fresh.sh`** — `validate_state` rejects a **future-pinned marker** (marker
+  version must be ≤ `VERSION`; allows the legitimate ship-seam, rejects a fabricated `99.0.0`);
+  `freshness` **caps serial deferral** (≥2 consecutive `DEFERRED` → OVERDUE). Three new `--selftest`
+  fixtures (future-pin → FAIL, 2× DEFERRED → OVERDUE, 1× DEFERRED → FRESH) lock both.
+- **`conformance/agent-autonomy.sh`** — deny cases for the marker + log on **both** the tool path
+  (Edit/Write) and the shell path (`printf >` / `sed -i`), plus read-allow guards (mutation-locked).
+- **`docs/operations/meta-control.md`** — documents the hardening. **`conformance/adopter-export-wired.sh`**
+  — IGN += the S4 verdict artifact (the export-ignore-set sync deferred from S4).
+
 ## [3.48.16] — 2026-06-25
 
 **M2-S3 — `.claude/agents/*` is now control-plane (the guard's Edit/Write deny-matrix).**

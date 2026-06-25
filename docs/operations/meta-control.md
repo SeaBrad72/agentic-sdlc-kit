@@ -162,6 +162,16 @@ from a one-line machine marker `docs/governance/.meta-control-last` (`VERSION VE
 > `meta-control-log.md` **and** set `.meta-control-last` to the same `VERSION VERDICT`. The gate fails
 > on desync, so they cannot drift apart silently.
 
+> **M2-S5 hardening (ratification integrity).** The marker + verdict log are **control-plane** — an
+> agent cannot write them (Edit/Write *and* shell are denied; `KIT_GUARD_SELFEDIT=1` or a human commit
+> is required), so a verdict is a human-ratified act, not something the governed agent can self-issue.
+> The gate also **rejects a future-pinned marker** (a version ahead of `VERSION`) and **caps serial
+> deferral** (≥2 consecutive `DEFERRED` → OVERDUE). Together these make *"an autonomous squad cannot
+> soften the circuit-breaker"* hold mechanically, not by assertion.
+>
+> *The shell-mutation deny is a speed-bump like the rest of the guard (`docs/operations/runtime-guards.md`);
+> the durable control is the Edit/Write-tool deny plus the human-reviewed commit that authors the verdict.*
+
 ## Who runs it (the Kit-Steward — neutral role)
 
 A **steward agent** owns the meta-control: it runs the panel, synthesizes the ledgers, and *produces*
