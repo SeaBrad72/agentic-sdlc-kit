@@ -49,8 +49,9 @@ approaching their ceilings, so the operator can intervene before a hard stop.
 runaway-guard.sh step  --tokens N --agents N   # record this step's usage, then check all ceilings
 runaway-guard.sh check                         # verdict only (no record; useful for mid-step audit)
 runaway-guard.sh reset                         # start a fresh run (clear/rotate the tally)
-runaway-guard.sh --selftest                    # run built-in fixtures (used by CI conformance check)
 ```
+
+Verify the kill-switch is wired and enforcing: `sh conformance/runaway-killswitch-wired.sh --selftest`
 
 **Exit codes** (the kit's three-state convention):
 
