@@ -62,7 +62,7 @@ Verify the kill-switch is wired and enforcing: `sh conformance/runaway-killswitc
 ## The config — `.kit/budget.conf`
 
 The ceiling config is **control-plane** (committed, agent-immutable). An autonomous agent cannot
-raise its own ceiling — the kit's path-guard blocks any write to `.kit/`. This is the M2-S5 lesson
+raise its own ceiling — the kit's path-guard blocks any write to `.kit/budget.conf`. This is the M2-S5 lesson
 applied directly: enforcement whose config is agent-writable is not enforced.
 
 ```ini
@@ -109,7 +109,7 @@ done
 - **Ceiling config** — `.kit/budget.conf` — committed, control-plane, agent-immutable. Changing
   a ceiling is a **ratified act** (requires PR + dual review). This is the immutable guarantee.
 - **Run tally** — `.kit-run/tally` — runtime state, **gitignored**, ephemeral per-run.
-  `reset` clears it; `step` appends one record; `check` sums the append-only log.
+  `reset` clears it; `step` appends one record; `check` sums the append-only log (append-only by convention; the platform cap is the backstop if the log is defeated — see Honest ceiling below).
 
 ## Conformance lock
 
@@ -133,6 +133,11 @@ threshold → exit 0 + warning; missing/malformed config → fail-closed (exit 2
 - **A tamper-proof runtime tally.** An agent with write access could truncate the tally to
   evade the step ceiling. The primary guarantee is the immutable ceiling config; the
   platform cap is the backstop if the tally is defeated.
+- **A tamper-proof guard script body.** The Write/Edit tool path to `scripts/runaway-guard.sh`
+  is hard-denied by the path-guard; a direct shell edit is caught by git diff + the per-PR
+  conformance run — the same posture as other kit control scripts. Only the `.kit/budget.conf`
+  config path carries the hard Write/Edit deny; the script body shares the tally's best-effort
+  posture against committed shell tampering.
 - **Wall-clock bounding.** Platform/CI job timeouts already own this. Adding it here would
   over-claim a control the kit does not hold.
 - **Dollar-precise billing.** `tokens × COST_PER_1K_USD` is an estimate for informational
