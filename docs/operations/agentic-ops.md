@@ -78,6 +78,73 @@ the kit ships only sensitivity defaults and **never pools or phones home** any a
 - **MP-3a.2 (done):** `scripts/agent-trace.sh` — the working Claude Code dev-time emitter (transcript→trace); turns the kit's own session transcripts into the corpus that calibrates MP-3b.
 - **MP-3b (done):** `scripts/agent-scorecard.sh` — the behavior scorecard tool; reads a trace dir, computes risk metrics per agent, classifies regressed/steady/earned, and emits the asymmetric tier directive.
 
+## Enterprise observability — OTLP export
+
+This section documents two complementary paths that share a single trace emission: the kit-internal scorecard loop, and an opt-in export path that forwards traces to any OTLP-compatible backend.
+
+### The sensor loop on real data (kit-internal)
+
+The operate-loop feedback path:
+
+1. `scripts/orchestrator-trace-demo.sh` — emits an OTel-shaped NDJSON trace representing an orchestrator run. **This is a labelled stand-in**: it produces the same schema that E3a (the real multi-agent orchestrator, a future slice) will emit when it runs. Use it now to exercise the downstream tools against realistic data.
+2. `scripts/otel-to-scorecard.sh` — adapter that reads the OTel NDJSON and maps it to the MP-3a trace schema the scorecard expects. This is the seam between the OTel shape and the kit-internal format.
+3. `scripts/agent-scorecard.sh` — the behavior scorecard tool (unchanged). Reads the adapted trace directory, computes risk metrics per agent, classifies regressed/steady/earned, and emits the tier directive. No modification needed; the adapter keeps this tool harness-neutral.
+
+The result: orchestrator traces flow into the same tier-advice loop as Claude Code dev-time traces — one scoring tool, multiple emitter shapes, the adapter absorbs the difference.
+
+### The opt-in enterprise export path
+
+The same OTel NDJSON that drives the scorecard can be forwarded to an external observability backend without re-instrumenting anything:
+
+1. `scripts/otel-trace.sh` — emits the OTel-shaped NDJSON trace (the same format as `orchestrator-trace-demo.sh`, usable directly or as the source when integrating a real harness).
+2. `scripts/otlp-export.sh` — reads the NDJSON and POSTs it to the configured OTLP HTTP endpoint. The exporter appends `/v1/traces` to `OTEL_EXPORTER_OTLP_ENDPOINT`.
+
+**Concrete backends the export path targets:**
+
+| Backend | Notes |
+|---|---|
+| **Datadog** | set endpoint to your Datadog OTLP ingest URL; use `OTEL_EXPORTER_OTLP_HEADERS` for the `DD-API-KEY` header |
+| **Honeycomb** | set endpoint to `https://api.honeycomb.io`; pass `x-honeycomb-team` in headers |
+| **Grafana Tempo** | set endpoint to your Tempo OTLP HTTP receiver; use bearer auth in headers |
+| **Jaeger** | set endpoint to your Jaeger OTLP receiver (default port 4318) |
+| **OpenTelemetry Collector** | the recommended hub: the Collector receives, enriches, and fans out to multiple backends from one endpoint |
+
+### Standard environment variables
+
+| Variable | Purpose |
+|---|---|
+| `OTEL_EXPORTER_OTLP_ENDPOINT` | Base URL of the collector or backend. The exporter appends `/v1/traces`. Example: `https://api.honeycomb.io` |
+| `OTEL_EXPORTER_OTLP_HEADERS` | Vendor auth and routing headers in `key=value,key=value` form. Consumed by the exporter; never logged. |
+
+These follow the [OpenTelemetry environment variable specification](https://opentelemetry.io/docs/specs/otel/protocol/exporter/) and are recognized by any standard OTLP exporter.
+
+### The pluggable-sink design
+
+One emission feeds both consumers off a single seam — no duplicate instrumentation:
+
+```
+otel-trace.sh (emits NDJSON)
+        │
+        ├── otel-to-scorecard.sh → agent-scorecard.sh  (kit-internal tier loop)
+        └── otlp-export.sh → POST /v1/traces             (enterprise backend)
+```
+
+`orchestrator-trace-demo.sh` exercises this same graph with stand-in data today; E3a replaces it with real orchestrator spans at the same seam when it ships.
+
+### Honest ceiling
+
+The exporter produces and POSTs valid OTLP/HTTP JSON to the configured endpoint. What this kit does **not** assert:
+
+- **Live vendor backend delivery** — the adopter supplies the endpoint URL and auth credentials; the kit cannot verify delivery against a vendor that it does not connect to. Confirm receipt in your backend's UI after a test run.
+- **`orchestrator-trace-demo.sh` is a stand-in** — it emits realistic, schema-valid traces, but it is not a real orchestrator. E3a (the multi-agent orchestrator, a future slice) replaces it at the same seam.
+- **This is agent-ops sensor tracing, not app-level request tracing** — these traces record *how agents worked* (tool calls, gates, cost, outcome). They are not distributed traces of end-user HTTP requests, which your application stack instruments separately.
+
+### Design reference
+
+Architecture and design-decision rationale: [`docs/architecture/2026-06-26-e5-thin-otel-sensor-design.md`](../architecture/2026-06-26-e5-thin-otel-sensor-design.md)
+
+---
+
 ## See also
 
 - [`drift-self-check.md`](./drift-self-check.md) — the **agent-side complement** to this observation layer: agentic-ops *observes* the run (trace + scorecard, after the fact); the drift self-check is the agent **correcting itself within** the run, at a checkpoint, before any gate sees the drift.
