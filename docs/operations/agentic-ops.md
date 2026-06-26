@@ -116,7 +116,7 @@ The same OTel NDJSON that drives the scorecard can be forwarded to an external o
 | `OTEL_EXPORTER_OTLP_ENDPOINT` | Base URL of the collector or backend. The exporter appends `/v1/traces`. Example: `https://api.honeycomb.io` |
 | `OTEL_EXPORTER_OTLP_HEADERS` | Vendor auth and routing headers in `key=value,key=value` form. Consumed by the exporter; never logged. |
 
-These follow the [OpenTelemetry environment variable specification](https://opentelemetry.io/docs/specs/otel/protocol/exporter/) and are recognized by any standard OTLP exporter.
+These are the standard OpenTelemetry environment variables; `scripts/otlp-export.sh` reads them directly. See the [OpenTelemetry environment variable specification](https://opentelemetry.io/docs/specs/otel/protocol/exporter/) for details.
 
 ### The pluggable-sink design
 

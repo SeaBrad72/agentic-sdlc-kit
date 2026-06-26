@@ -10,7 +10,7 @@
 #   review.rounds      : attributes["review.rounds"] (default 0)
 #
 # Usage:
-#   scripts/otel-to-scorecard.sh TRACE.ndjson   # prints JSON array to stdout
+#   scripts/otel-to-scorecard.sh TRACE.ndjson   # prints records array to stdout
 #   scripts/otel-to-scorecard.sh --selftest
 # sh + jq. No JSON hand-built. Zero deps beyond sh and jq.
 set -eu
@@ -21,6 +21,8 @@ map_trace() {
   # default mapping:
   #   run-level .outcome : ERROR -> "error", else "ok"
   #   step .outcome      : kit.denied==true -> "denied"; else mirror run outcome
+  # start/end are stringified nanos (19-digit). Lexical sort == numeric sort at exactly 19 digits,
+  # so the scorecard sort_by(.start) is safe. E3a should keep nanos numeric/19-digit to stay sort-safe.
   jq -s '
     [ .[] | select(.parent_span_id != null)
       | (.attributes["kit.denied"] == "true") as $denied
@@ -56,6 +58,6 @@ selftest() {
 
 case "${1:-}" in
   --selftest) selftest; exit $? ;;
-  -*|"") printf 'usage: otel-to-scorecard.sh TRACE.ndjson [--stdout]\n' >&2; exit 2 ;;
+  -*|"") printf 'usage: otel-to-scorecard.sh TRACE.ndjson  # prints records array to stdout\n' >&2; exit 2 ;;
   *) map_trace "$1" ;;
 esac

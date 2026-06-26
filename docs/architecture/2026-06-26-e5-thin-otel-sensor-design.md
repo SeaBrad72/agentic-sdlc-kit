@@ -36,7 +36,7 @@ Owned by E5-full / E3 / E6:
 - Live OTLP export proven against a **vendor backend** (we prove *valid OTLP is produced and POSTed*; the adopter supplies the endpoint + auth).
 - App-level request tracing — `server.ts` stays `/healthz`-only (E5-full).
 - The **real** orchestrator loop — we ship a **labelled stand-in**; E3a replaces its body.
-- Regression **classification** — one run stays `steady` / no directive (needs ≥5 runs; fail-safe by design).
+- Regression **classification** — the golden-path proof runs the scorecard with `--min-runs 1` to exercise classification on the single emitted trace; the denied agent classifies `regressed` with an `auto-downgrade` directive (the non-vacuous signal the job asserts). The scorecard's ≥5-run trailing baseline is its production default for stability — not what this thin proof exercises.
 
 ## 3. The cross-cutting principle this slice establishes
 
@@ -113,7 +113,7 @@ This is deliberately left for Bradley to shape rather than decided silently.
 
 **Proven:** OTel-shaped span emission runs; a real (non-fixture) trace is produced by a reference orchestrator run; the adapter maps it; the unchanged scorecard computes real metrics from it; the loop runs end-to-end in CI; the exporter produces **valid OTLP** and POSTs it.
 
-**Not proven / out of scope:** no assertion against a **live vendor backend** (adopter's endpoint + auth); the orchestrator is a **labelled stand-in** (E3a wires the real fan-out); classification needs ≥5 runs so `tier-advice` stays `steady`/no-directive on one trace (fail-safe); this is the **agent-ops** sensor, not app-level OTel (E5-full); the app scaffold stays `/healthz`-only.
+**Not proven / out of scope:** no assertion against a **live vendor backend** (adopter's endpoint + auth); the orchestrator is a **labelled stand-in** (E3a wires the real fan-out); the golden-path proof deliberately runs the scorecard with `--min-runs 1` to exercise classification on the single emitted trace — so the denied agent classifies `regressed` with an `auto-downgrade` directive (the non-vacuous signal the job asserts). The scorecard's ≥5-run trailing baseline is its production default for stability, not what this thin proof exercises; this is the **agent-ops** sensor, not app-level OTel (E5-full); the app scaffold stays `/healthz`-only.
 
 This is the kit's established **FLOOR + opt-in NATIVE binding** pattern (mirrors E4c's opt-in OWASP ZAP reference, E4e's FLOOR+NATIVE SoD).
 

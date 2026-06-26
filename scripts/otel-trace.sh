@@ -9,7 +9,10 @@ set -eu
 rand_hex() { od -An -N"$1" -tx1 /dev/urandom | tr -d ' \n'; }
 new_trace() { rand_hex 16; }
 
-# portable unix-nanos: prefer date +%s%N (GNU); fall back to seconds * 1e9 (macOS/BSD)
+# portable unix-nanos: prefer date +%s%N (GNU); fall back to seconds * 1e9 (macOS/BSD).
+# NOTE: when start/end are not supplied, both default to now_nano() at call time — yielding
+# zero-duration spans (start==end). Thin-slice behaviour by design; E3a should bracket
+# real start/end timestamps to capture meaningful span durations.
 now_nano() {
   _n=$(date +%s%N 2>/dev/null)
   case "$_n" in *N|"") printf '%s000000000' "$(date +%s)";; *) printf '%s' "$_n";; esac
@@ -66,7 +69,7 @@ selftest() {
   # span subcommand: space-containing --attr value must survive word-split (Finding 1)
   sink2=$(mktemp)
   tid2=$(new_trace)
-  sh "$0" span --trace "$tid2" --name "space-test" --attr "msg=hello world" --sink "$sink2"
+  sh "$0" span --trace "$tid2" --name "space-test" --attr "msg=hello world" --sink "$sink2" >/dev/null
   [ "$(jq -r '.attributes.msg' "$sink2")" = "hello world" ] || { echo "FAIL: space in attr value corrupted"; st_fail=1; }
   rm -f "$sink2"
   [ "$st_fail" -eq 0 ] || { echo "otel-trace --selftest: FAIL" >&2; return 1; }
