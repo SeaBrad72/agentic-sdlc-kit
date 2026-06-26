@@ -37,7 +37,9 @@ Give the no-git branch the established **kit-self N/A-skip**, anchored on the ex
 
 Update the `--selftest` no-git cases:
 - **F (export):** no git + no `docs/ROADMAP-KIT.md` → **N/A (0)**, regardless of `--require` (was UNVERIFIED/FAIL).
-- **G (kit, new):** no git + `docs/ROADMAP-KIT.md` present → **UNVERIFIED (2)**, escalates to **FAIL (1)** under `--require` (proves fail-closed).
+- **G (kit, new):** no git + `docs/ROADMAP-KIT.md` present → **UNVERIFIED (2)**, escalates to **FAIL (1)** under `--require`.
+
+**Case F is the regression discriminator** — its expectation *flips* (UNVERIFIED/FAIL → N/A), so the pre-fix code fails the new F. **Case G proves the kit arm still escalates** (fail-closed did not regress); it passes on both old and new code, so it is a guard against future regression, not a discriminator of this change.
 
 ## Mechanics
 
