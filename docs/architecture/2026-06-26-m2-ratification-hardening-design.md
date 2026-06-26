@@ -38,7 +38,7 @@ The center of gravity is therefore **(e)** — a *new* check closing an *open* g
 
 **Wiring (coverage requires both):**
 - Into `conformance/verify.sh` → per-PR + `drift-watch` + `doctor` (catches invariant 1; catches invariant 2 on any run where HEAD is tagged).
-- Into the **golden-path (tag-push) workflow** → this is the path that runs on `push: tags`, so it is where invariant 2 catches a premature/mismatched tag *at push time* (today's exact failure mode). Per-PR CI cannot see a future tag; the tag-push job is the real catch.
+- Into a dedicated **`.github/workflows/release-coherence.yml`** triggered on `push: tags: ['v*']` → this is where invariant 2 catches a premature/mismatched tag *at push time* (today's exact failure mode). Per-PR CI cannot see a future tag; the tag-push job is the real catch. **[Updated at implementation: a dedicated workflow was chosen rather than wiring into `golden-path.yml`, because golden-path triggers on `paths:`/`schedule`, not robustly on tag pushes — a `tags:`-only workflow is unambiguous.]**
 - Register: `conformance/claims.tsv` row `version-tag-coherent`, add to `REQUIRED_IDS`, index in `conformance/README.md`.
 
 **Selftest fixtures:** VERSION==tag PASS · VERSION ahead of latest tag, HEAD untagged (ship-seam) PASS · HEAD tagged but VERSION≠tag FAIL (today's bug) · VERSION behind latest tag FAIL · no tags N/A → 0 · git absent → 2.
@@ -49,9 +49,11 @@ The center of gravity is therefore **(e)** — a *new* check closing an *open* g
 
 In `conformance/meta-control-fresh.sh`, the verdict field is parsed case-sensitively (`awk ... if (rows[i]=="DEFERRED")`), so a lowercase `deferred` silently evades the serial-DEFERRED cap.
 
-**Fix:** uppercase-normalize the verdict on parse in both `log_field` and `trailing_deferred` (`v=toupper(v)`), and validate the normalized value against the allowed set `GO | NO-GO | DEFERRED`. An unrecognized verdict is treated as **not-addressed** (fail-safe: it does not satisfy freshness and does not silently reset the DEFERRED streak — flag it).
+**Fix (normalization-only — see update note):** uppercase-normalize the verdict on parse in `trailing_deferred` (`toupper(v)`) and on the marker/log verdicts before the desync compare (`norm_verdict`), so a lowercase/mixed-case `deferred` still counts toward the serial-DEFERRED cap.
 
-**Fixtures:** `deferred`/`Deferred` now count toward the cap (→ OVERDUE at ≥2) · a garbage verdict (`MAYBE`) is rejected/flagged, not silently treated as addressed.
+> **[Updated at implementation — the enum was dropped.]** The original design here proposed *also* validating the verdict against a fixed allowed set `GO | NO-GO | DEFERRED`. The clone dry-run proved that wrong: the real verdict vocabulary is **open-ended** — the kit's own log uses `GO-WITH-CONDITIONS` and `KEEP-BIASED`, and the marker stores `GO-WITH-CONDITIONS`. A fixed enum rejected the kit's own state. The only integrity-relevant verdict is `DEFERRED` (for the serial cap); any non-DEFERRED value legitimately means "an addressed run" and correctly breaks the streak. So (b) is **normalization-only, no enum restriction**. The in-code comment records this rationale.
+
+**Fixtures:** `deferred`/`Deferred` now count toward the cap (→ OVERDUE at ≥2); `GO-WITH-CONDITIONS`/`KEEP-BIASED` accepted (no enum). (The original "garbage verdict rejected" fixture was removed with the enum.)
 
 ---
 
