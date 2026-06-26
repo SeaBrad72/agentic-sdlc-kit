@@ -5,6 +5,30 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versioning: [S
 
 > Claim verbs ("proven"/"PROVEN") are scoped to the reference implementation unless an entry states broader coverage — see [MAINTAINING.md §3](MAINTAINING.md#3-releasing-platform-team).
 
+## [3.51.0] — 2026-06-26
+
+**E5-thin — OTel-shaped agent-ops sensor → one real scorecard (the operate-loop sensor E3 consumes).**
+A reference orchestrator stand-in (`scripts/orchestrator-trace-demo.sh`) now **emits** an OTel-shaped
+span tree (root + engineer + reviewer + a guard-**denied** gate span) via a zero-dep emitter
+(`scripts/otel-trace.sh`, one OTel-semantic span per NDJSON line, pluggable sink). A thin adapter
+(`scripts/otel-to-scorecard.sh`) maps those spans into the MP-3a record shape the **unchanged**
+`scripts/agent-scorecard.sh` consumes — so for the first time a real (non-fixture) run closes the
+operate-loop and the scorecard's `denial_rate` is **derived from an emitted span**, proven
+non-vacuously by a new golden-path `agentops-sensor` job (a dead emitter cannot produce that number).
+An opt-in reference exporter (`scripts/otlp-export.sh`) renders the same trace as valid OTLP/JSON
+`resourceSpans` and POSTs it to `$OTEL_EXPORTER_OTLP_ENDPOINT/v1/traces`. New behaviour lock
+`conformance/agentops-sensor-wired.sh` (claim `agentops-sensor`) asserts the four selftests pass,
+the scripts are executable, and the golden-path proof is wired; carved from the adopter export
+(kit-self, mirrors `runtime-security`/`feature-flags-wired`).
+Honest ceiling: **valid OTLP is produced and POSTed** — NOT asserted against a live vendor backend
+(the adopter supplies endpoint + auth); the orchestrator is a **labelled stand-in E3a replaces**;
+the golden-path proof runs the scorecard with `--min-runs 1` — so the denied agent classifies
+`regressed` with an `auto-downgrade` directive (the non-vacuous signal the job asserts); this
+is the **agent-ops** sensor, not app-level OTel (E5-full). `agent-scorecard.sh` is untouched
+(selftest still green). The second of the two thin inputs (E1-thin ✅ / E5-thin ✅) that lead E3;
+NEXT is E3a (the thin orchestrator loop, which replaces the stand-in body). See
+`docs/architecture/2026-06-26-e5-thin-otel-sensor-design.md` and `docs/operations/agentic-ops.md`.
+
 ## [3.50.0] — 2026-06-26
 
 **E1-thin — integration + e2e test layers (the E3 oracle).**
