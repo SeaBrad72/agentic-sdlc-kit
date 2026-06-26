@@ -3,9 +3,9 @@ name: golden-path
 # Heavy + path-filtered/scheduled so the fast per-PR ci.yml stays seconds-quick.
 on:
   pull_request:
-    paths: ['profiles/typescript-node/**', 'scripts/incept.sh', '.github/workflows/golden-path.yml', 'scripts/new-profile.sh', 'scripts/adopter-export.sh', 'scripts/containment-audit.sh', 'profiles/_TEMPLATE.md']
+    paths: ['profiles/typescript-node/**', 'scripts/incept.sh', '.github/workflows/golden-path.yml', 'scripts/new-profile.sh', 'scripts/adopter-export.sh', 'scripts/containment-audit.sh', 'profiles/_TEMPLATE.md', 'scripts/otel-trace.sh', 'scripts/orchestrator-trace-demo.sh', 'scripts/otel-to-scorecard.sh', 'scripts/agent-scorecard.sh']
   push:
-    paths: ['profiles/typescript-node/**', 'scripts/incept.sh', '.github/workflows/golden-path.yml', 'scripts/new-profile.sh', 'scripts/adopter-export.sh', 'scripts/containment-audit.sh', 'profiles/_TEMPLATE.md']
+    paths: ['profiles/typescript-node/**', 'scripts/incept.sh', '.github/workflows/golden-path.yml', 'scripts/new-profile.sh', 'scripts/adopter-export.sh', 'scripts/containment-audit.sh', 'profiles/_TEMPLATE.md', 'scripts/otel-trace.sh', 'scripts/orchestrator-trace-demo.sh', 'scripts/otel-to-scorecard.sh', 'scripts/agent-scorecard.sh']
   schedule:
     - cron: '0 7 * * 1'
   workflow_dispatch:
@@ -134,6 +134,23 @@ jobs:
       - name: Boot the agent sandbox and probe containment (FS/egress/caps PROVEN)
         working-directory: ${{ env.CA_DIR }}
         run: CI=1 sh scripts/containment-audit.sh .
+  agentops-sensor:
+    # E5-thin — PROVE the operate-loop sensor runs on REAL emitted data (not a fixture):
+    # emit an OTel trace from the orchestrator stand-in, adapt it, score it, and assert
+    # the scorecard's denial_rate reflects the emitted DENIED span (a dead emitter can't).
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10  # v6.0.3
+      - name: emit -> adapt -> score, assert non-vacuous denial_rate
+        run: |
+          t=$(sh scripts/orchestrator-trace-demo.sh)
+          d=$(mktemp -d)
+          i=0; sh scripts/otel-to-scorecard.sh "$t" | jq -c '.[]' | while read -r r; do echo "$r" > "$d/$i.json"; i=$((i+1)); done
+          sh scripts/agent-scorecard.sh --traces "$d" --min-runs 1 --stdout > sc.json
+          jq -e '[.[]|select(.metrics.denial_rate>0)]|length>=1' sc.json >/dev/null \
+            || { echo "agentops-sensor: scorecard did not reflect the emitted denied span (vacuous)"; cat sc.json; exit 1; }
+          echo "agentops-sensor: OK — real emit->adapt->score loop, denial_rate derived from emitted span"
+
   image-vuln:
     # E4b — PROVE the image-vuln gate runs + discriminates. Scan the reference image (must PASS
     # clean) and a pinned KNOWN-VULNERABLE fixture (must FAIL) under the identical policy, so the
