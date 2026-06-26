@@ -5,6 +5,21 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versioning: [S
 
 > Claim verbs ("proven"/"PROVEN") are scoped to the reference implementation unless an entry states broader coverage — see [MAINTAINING.md §3](MAINTAINING.md#3-releasing-platform-team).
 
+## [3.50.0] — 2026-06-26
+
+**E1-thin — integration + e2e test layers (the E3 oracle).**
+The typescript-node reference now demonstrates an **integration** layer (feature-flag → `/greeting`
+wiring over real HTTP) and an **e2e** layer (full service journey: liveness → greeting → 404),
+in-suite and zero-dependency (`server.listen(0)` + global `fetch`) — the runnable battery E3's
+orchestrator will execute per integrated branch. New stack-neutral conditional gate
+`conformance/test-layers-ready.sh` requires the integration + e2e layers when a project has a service
+surface (Dockerfile / compose service), else N/A; detection is by cross-stack convention. Honest
+ceiling: presence-by-convention (not test quality), behaviourally proven on the ts-node reference only
+(a presence gate elsewhere until E1-full). Wiring mirrors `test-data-ready` (a `verify.sh` `check doc`
+line + a CI `--selftest` step + a `conformance/README.md` row; not a §14 gate, so the gate counts are
+unchanged). First slice of E1; the full battery (contract/security/a11y/property/load) fans out
+post-E3. See `docs/operations/test-layers.md`.
+
 ## [3.49.1] — 2026-06-26
 
 **Release-coherence gate + M2 ratification hardening.**
