@@ -11,6 +11,12 @@
 
 The "Architect seat" was reframed twice on grounding: (1) by the kit's own **agents-vs-skills rule** (§3), design+plan is a **skill**, not a seat — it has no parallelism/independence requirement (unlike Engineer's fan-out or Reviewer's builder≠reviewer). (2) The skill it should be is **kit-authored**, not the external superpowers `brainstorming` — because the self-hosting commitment is to *replace* superpowers with the kit's own, improved, inherent craft. **Roles are not dropped** — roles (earned seats: independence/parallelism) and skills (craft the seats invoke) are complementary; this slice is the *skill-library* track, the roster track continues in parallel.
 
+### Intent (unambiguous): FULL REPLACEMENT, not enhancement
+
+The goal is **zero runtime dependency on superpowers** — the kit's own process is served entirely by kit-authored, harness-neutral, inherent skills. "Improves on superpowers" is the **quality bar for the re-authoring** (make it better, don't clone), NOT "enhance superpowers while still depending on it." Acceptance is **E10: build a real slice using only the kit's own roster + skills — zero superpowers.**
+
+This is a **multi-brick spine**, not one slice. The skills the kit's flow currently borrows from superpowers — `brainstorming`, `writing-plans`, `subagent-driven-development`/`executing-plans`, `test-driven-development`, `requesting-code-review`, `using-git-worktrees`, `verification-before-completion`, and the meta-skill `using-superpowers` (skill **discovery + invocation**) — each get a kit-authored equivalent, one proven slice at a time. **This `design` skill is brick #1.** Each brick drops one more piece of the dependency; until E10, the maintainer's bootstrap *use* of superpowers continues honestly. **The skill-discovery floor this brick establishes ("invoke by reading `skills/<name>/SKILL.md`") is the seed of the kit's own `using-superpowers` replacement** — the meta-skill, not just the content skills. The full replacement roadmap is banked in the backlog.
+
 ## 1. What this slice is
 
 Establish the kit's **skill-invocation floor** and author its **first own skill — `design`** (a brainstorm/spec-equivalent), invoked by the Orchestrator as the **Architect hat** in Shape/Plan. FLOOR-only-first: the skill is invoked by being **read + followed** (universal across harnesses); the formal `skills` adapter dimension + native per-harness bindings are **deferred to brick #2** (avoid build-ahead for a single skill).
