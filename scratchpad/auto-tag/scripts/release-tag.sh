@@ -22,12 +22,15 @@ decide() {
   # coherence backstop INLINE: VERSION must not be behind a reachable tag (don't tag a stale/dup).
   sh "$COHERENCE" . --require >/dev/null 2>&1 || { echo "release-tag: coherence check failed for VERSION $v" >&2; return 1; }
   # idempotency: already tagged? remote first (authoritative), then local.
-  if git ls-remote --tags "$REMOTE" "v$v" 2>/dev/null | grep -q "refs/tags/v$v$" \
+  if git ls-remote --tags "$REMOTE" "v$v" 2>/dev/null | grep -Fq "refs/tags/v$v" \
      || git tag -l "v$v" 2>/dev/null | grep -qx "v$v"; then
     echo "NOOP v$v already tagged"; return 0
   fi
   echo "TAG v$v"; return 0
 }
+
+# on_remote V -> 0 if vV exists on the remote (authoritative), 1 otherwise
+on_remote() { git ls-remote --tags "$REMOTE" "$1" 2>/dev/null | grep -Fq "refs/tags/$1"; }
 
 run() {
   out=$(decide) || return $?
@@ -41,8 +44,17 @@ run() {
     echo "release-tag: would create + push $v on $(git rev-parse --short HEAD)"; return 0
   fi
   git tag "$v"
-  git push "$REMOTE" "$v"
-  echo "release-tag: created + pushed $v"
+  if git push "$REMOTE" "$v"; then
+    echo "release-tag: created + pushed $v"; return 0
+  fi
+  # push failed: a concurrent run may have pushed it (race) — that's fine; otherwise the local
+  # tag is a poison pill (a future run would NOOP green with no remote tag), so roll it back + fail.
+  git tag -d "$v" >/dev/null 2>&1 || true
+  if on_remote "$v"; then
+    echo "release-tag: $v already on remote (concurrent run) — ok"; return 0
+  fi
+  echo "release-tag: push of $v failed and it is NOT on the remote — rolled back local tag" >&2
+  return 1
 }
 
 selftest() {

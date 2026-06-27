@@ -24,6 +24,12 @@ def patch(path, old, new):
     if new in s: print(f"  [skip] {path}: already patched"); return
     if old not in s: die(f"anchor not found in {path}: {old!r}")
     write(path, s.replace(old, new, 1), os.stat(path).st_mode & 0o777)
+def replace_all(path, old, new):
+    s = read(path)
+    if old not in s:
+        if new in s: print(f"  [skip] {path}: already replaced"); return
+        die(f"replace anchor not found in {path}: {old!r}")
+    write(path, s.replace(old, new), os.stat(path).st_mode & 0o777)
 def append_once(path, marker, text):
     s = read(path)
     if marker in s: print(f"  [skip] {path}: marker present"); return
@@ -65,14 +71,22 @@ patch(".claude/hooks/guard-core.sh",
       "    scripts/orchestrator-run.sh|*/scripts/orchestrator-run.sh|\\",
       "    scripts/orchestrator-run.sh|*/scripts/orchestrator-run.sh|\\\n"
       "    scripts/release-tag.sh|*/scripts/release-tag.sh|\\")
+# shell-mutation parity (M2-S5 two-matcher standard): the SAME `agents/...agent.md)` tail ends BOTH
+# shell matchers (the outer "mentions a control-plane path" grep AND the redirect-target grep), so a
+# single replace_all adds release-tag.sh to both -> sed -i / > / mv against it are denied (run still allowed).
+replace_all(".claude/hooks/guard-core.sh",
+            "agents/[^[:space:]]*\\.agent\\.md)",
+            "agents/[^[:space:]]*\\.agent\\.md|scripts/release-tag\\.sh)")
 
 # -- 6. agent-autonomy regressions
 print("-- agent-autonomy fixtures")
 patch("conformance/agent-autonomy.sh",
       'if [ "$fail" -ne 0 ]; then echo "FAIL: agent-autonomy conformance failed"; exit 1; fi',
-      "# --- auto-tag: release-tag.sh is control-plane (DENY write, ALLOW read/run) ---\n"
-      "assert_deny \"Write release-tag\"  '{\"tool_name\":\"Write\",\"tool_input\":{\"file_path\":\"scripts/release-tag.sh\",\"content\":\"x\"}}'\n"
-      "assert_allow \"run release-tag\"   '{\"tool_name\":\"Bash\",\"tool_input\":{\"command\":\"sh scripts/release-tag.sh --dry-run\"}}'\n"
+      "# --- auto-tag: release-tag.sh is control-plane (DENY write/redirect/sed, ALLOW read/run) ---\n"
+      "assert_deny \"Write release-tag\"    '{\"tool_name\":\"Write\",\"tool_input\":{\"file_path\":\"scripts/release-tag.sh\",\"content\":\"x\"}}'\n"
+      "assert_deny \"redirect release-tag\" '{\"tool_name\":\"Bash\",\"tool_input\":{\"command\":\"echo x > scripts/release-tag.sh\"}}'\n"
+      "assert_deny \"sed -i release-tag\"   '{\"tool_name\":\"Bash\",\"tool_input\":{\"command\":\"sed -i s/a/b/ scripts/release-tag.sh\"}}'\n"
+      "assert_allow \"run release-tag\"     '{\"tool_name\":\"Bash\",\"tool_input\":{\"command\":\"sh scripts/release-tag.sh --dry-run\"}}'\n"
       'if [ "$fail" -ne 0 ]; then echo "FAIL: agent-autonomy conformance failed"; exit 1; fi')
 
 # -- 7. ci.yml: wire both new --selftests (ci-selftest-coverage requires their basenames in ci.yml)
