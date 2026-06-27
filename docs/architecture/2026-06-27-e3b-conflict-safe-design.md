@@ -36,7 +36,9 @@ After the engineers return (the `$built` branch list) and **before** the integra
    - emit a **trusted-layer** `kit.conflict=true` span naming the file + the two slices (set only by the orchestrator from the computed sets — never agent-supplied, same discipline as `kit.denied`/`kit.escalated`);
    - print an explicit `conflict: slices 'X' and 'Y' both modified 'F' — refusing integration`;
    - stop **without attempting any merge** (the tree stays clean — no conflict markers).
-4. **Disjoint → integrate** via the existing clean merge loop, unchanged.
+4. **Disjoint → integrate** via the merge loop.
+
+**Rename-divergence (closed at security review):** the diff uses **`--no-renames`** so a rename surfaces *both* the deleted source and the added target — two slices renaming the same source to different targets thus still collide on the source (a plain rename-detecting `--name-only` would see disjoint `{A}` vs `{B}` and miss it). **The merge loop is the fail-closed floor** for anything the changed-file granularity can still miss: on a merge failure it **aborts the half-merge (clean tree), removes worktrees, and emits the same trusted `kit.conflict` span** — so any residual git catches is *also* clean + observable, never a dirty tree with dangling worktrees.
 
 This is **detection-by-inspection** replacing detection-by-failure: observable, regression-proof, clean-tree, and composing with the existing `kit.denied`/`kit.escalated` trusted-span pattern.
 
@@ -61,7 +63,7 @@ Item 6: *"avoided — clean disjoint slices only"* → **"proven mechanic (E3b):
 
 ## 7. Honest ceiling (named, not built)
 
-- **Changed-file-set granularity** — detects two agents touching the *same file*; it does **not** detect *semantic* conflicts between edits to *different* files (that is correctness review, not an integration mechanic). Stated plainly in the claim + ops doc.
+- **Changed-file-set granularity** (`git diff --name-only --no-renames`) — detects two agents touching the *same path*, including renames of the same source (via `--no-renames`); it does **not** detect *semantic* conflicts between edits to *different* files (that is correctness review, not an integration mechanic). The **merge loop is the fail-closed floor** for any residual the changed-file check misses — it aborts + emits `kit.conflict` + cleans up, so even a missed overlap halts cleanly and observably (never a dirty tree). Stated plainly in the claim + ops doc.
 - **Detect + refuse, not resolve** — the **full re-sync / precedence procedure** (rebase, retry, ordered precedence, partial integration) is **deferred** to a later increment when a real fleet needs graceful resolution (F5 — no dynamic-queue/large-fan-out need at N=2).
 - **Governs live + fixture identically** — it inspects real git diffs, so the mechanic is genuinely harness-neutral behaviour for both a fixture and a live LLM engineer (this is *why* it was chosen over FS-isolation, whose meaningful case was unprovable in a FLOOR).
 
