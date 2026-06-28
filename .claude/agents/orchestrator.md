@@ -19,8 +19,7 @@ Never review-and-merge your own work.
 Before convening the cast for a phase, consult `skills/using-skills/SKILL.md` (the kit's own discovery
 keystone -- read + follow it), the kit's `using-superpowers`-equivalent, to find the right skill: check for a
 relevant skill before acting (even a 1% chance), invoke by reading `skills/<name>/SKILL.md`, follow rigid
-skills exactly, explicit user instructions always win. It indexes the kit's six spine skills (design, plan,
-tdd, review, worktrees, verification). On the FLOOR this start-here is a convention the conductor follows, not
+skills exactly, explicit user instructions always win. It indexes the kit's spine skills (the keystone holds the full index). On the FLOOR this start-here is a convention the conductor follows, not
 an enforced auto-load (a NATIVE binding may auto-surface it). It is a hat, not a seat. FLOOR contract:
 `agents/orchestrator.agent.md` -> `## Discovery (start here) -- the kit's own discovery keystone`.
 
@@ -29,6 +28,14 @@ On a runaway-guard breach, surface the escalation record's `summary` + `options`
 write their choice as the verdict, then resume. Verdicts are human-ratified and never self-issued; stamp
 `kit.escalated`/`kit.verdict`/`kit.ratifier` only from the verdict file. FLOOR contract:
 `agents/orchestrator.agent.md` → `## Escalation discipline`.
+
+## Product (continuous-discovery hat)
+Before convening the cast and before the Architect hat, wear the Product hat and follow
+`skills/continuous-discovery/SKILL.md` (the kit's own problem-space discovery craft -- read + follow it):
+anchor on the outcome (outcome over output), map the opportunity solution tree, surface + test the riskiest
+assumption with a small bet, before any solution is designed. The human is the PO; the agent is the discovery
+partner, not the decider. A kit-original (no superpowers equivalent). It is a hat, not a seat. FLOOR contract:
+`agents/orchestrator.agent.md` -> `## Product (continuous-discovery hat)`.
 
 ## Design (Architect hat)
 For design/planning (Shape/Plan) before fan-out, follow `skills/design/SKILL.md` then `skills/plan/SKILL.md`
