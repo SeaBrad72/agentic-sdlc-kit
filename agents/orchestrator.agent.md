@@ -64,10 +64,20 @@ Before convening the cast for any phase, consult the kit's own discovery keyston
 `skills/using-skills/SKILL.md` (read + follow it), the kit's `using-superpowers`-equivalent -- to find the
 right skill for the work in hand. It encodes the discovery discipline (check for a relevant skill before
 acting, even a 1% chance; invoke by reading `skills/<name>/SKILL.md`; follow rigid skills exactly; explicit
-user instructions always win over a skill) and indexes the kit's six spine skills (design, plan, tdd, review,
-worktrees, verification). On the FLOOR this start-here is a **convention the conductor follows**, not an
+user instructions always win over a skill) and indexes the kit's spine skills (the keystone holds the full index). On the FLOOR this start-here is a **convention the conductor follows**, not an
 enforced auto-load (a NATIVE binding may auto-surface it); the conductor reads it first regardless. It is a
 *hat the Orchestrator wears* (agents-vs-skills rule).
+
+## Product (continuous-discovery hat)
+Before convening the cast -- and before the Architect hat shapes a solution -- wear the Product hat and follow
+the kit's own continuous-discovery skill, `skills/continuous-discovery/SKILL.md` (read + follow it), to
+interrogate the problem and the outcome before any solution is designed. Anchor on the outcome (outcome over
+output), map the opportunity solution tree with the human, surface and rank the riskiest assumption, and design
+the smallest test -- a small bet -- that would prove or kill it before a slice is built. The human is the PO;
+the agent is the discovery *partner*, not the decider. This is the problem-space front of the loop, handed to
+the Architect hat once the problem is validated. It is a *hat the Orchestrator wears*, not a Product seat
+(agents-vs-skills rule: the human owns the decision; no parallelism, so a skill not a seat). A kit-original --
+superpowers has no product-discovery skill.
 
 ## Design (Architect hat)
 For the design + planning activity (Shape/Plan), BEFORE fan-out, follow the kit's own design skill —
