@@ -47,6 +47,7 @@ A **new claim** `structured-logging` (registry +1), not overloading `runtime-sec
 - Proves the structured-logging FLOOR on the **reference app only**; an adopter still selects their stack's logger — the kit ships the **pattern + the proof it works**, not a universal logging framework.
 - **INFO-level request logging** only; ERROR/WARN/DEBUG per-event are the adopter's choice (the standard names the levels; this slice proves the request-log floor).
 - No log shipping/retention/aggregation (infra, not this slice). No app-level tracing/metrics (E5-trace / E5-metrics).
+- **`path` query-string redaction (folded from security review Low).** The logged `path` is the full `req.url` including any query string. The reference app's routes carry no query secrets, but an adopter whose query params can carry tokens/PII must redact `path` before logging — stated in the `server.ts` logger comment so the adopter sees it at the code site.
 - Behavioural truth (the app actually emits the line) is proven on **CI docker** via golden-path — local green ≠ docker green (the kit's standing lesson); the conformance `--selftest` is the local red→green for the lock's teeth.
 
 ## Scope & build model — AMBER
