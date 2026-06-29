@@ -13,7 +13,7 @@
 In addition to the E5-log structured line, emit one OTel-semantic **span** line per request in the exact `otel-trace.sh` schema (`{trace_id, span_id, parent_span_id, name, start_unix_nano, end_unix_nano, attributes, status}`):
 - `trace_id` = `randomBytes(16).toString('hex')` (32 hex); `span_id` = `randomBytes(8).toString('hex')` (16 hex); `parent_span_id: null` (root span). `node:crypto` — no dependency.
 - `name` = `` `${method} ${pathWithoutQuery}` `` — strip the query string (span-name cardinality + the same secret-hygiene reason as E5-log's `path` note).
-- `start_unix_nano`/`end_unix_nano` = wall-clock (`Date.now()` × 1e6) anchored at request start + `process.hrtime.bigint()` delta on finish → a **real non-zero duration** (improves on `otel-trace.sh`'s documented zero-duration agent spans).
+- `start_unix_nano`/`end_unix_nano` = wall-clock (`Date.now()` × 1e6) anchored at request start + `process.hrtime.bigint()` delta on finish → a **real non-zero duration** (improves on `otel-trace.sh`'s documented zero-duration agent spans). Emitted as **exact decimal strings** (folded from review Minor): OTLP/JSON canonically represents `*_unix_nano` as strings, and a JS `Number` would lose precision past ~9e15 (unix nanos are ~1.8e18); the golden-path duration check compares via `|tonumber`.
 - `attributes`: `{ 'http.request.method': method, 'http.response.status_code': String(status), 'request_id': requestId }`. `request_id` correlates the span to the E5-log line; snake_case so it does not collide with E5-log's `"requestId"` golden-path grep.
 - `status: { code: status >= 500 ? 'ERROR' : 'OK' }`.
 - Sink: honor `OTEL_TRACE_FILE` if set, else stdout (mirrors `otel-trace.sh`). In the golden-path container it is stdout → captured by `docker logs`.
