@@ -208,7 +208,7 @@ The exact filter strings for the apply.py (both `pull_request.paths` and `push.p
 2. **`.github/workflows/golden-path.yml`** — read once into a buffer; replace the OLD filter list with NEW on **both** the `pull_request` and `push` `paths:` lines (per-file buffer, single write). Idempotent: if NEW already present, skip.
 3. **`.github/workflows/ci.yml`** — insert two steps immediately after the `Golden-path-wired self-test` step (anchor: the line `        run: sh conformance/golden-path-wired.sh --selftest`):
 ```yaml
-      - name: Golden-path filter parity (paths: covers every invoked script)
+      - name: Golden-path filter parity (filter covers every invoked script)
         run: sh conformance/golden-path-filter-parity.sh
       - name: Golden-path-filter-parity self-test
         run: sh conformance/golden-path-filter-parity.sh --selftest
