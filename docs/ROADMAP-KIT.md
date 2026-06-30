@@ -2,7 +2,7 @@
 
 The kit's **own backlog** (dogfooding `DEVELOPMENT-PROCESS.md` §6). Each remaining item ships as a **contract → reference → conformance** vertical (`MAINTAINING.md` §1), in priority order, each with its own spec → plan → build → dual-review → ratify.
 
-**Current state:** `v3.75.0`. **Epic E5 (observability / operate-loop) complete.** Skill spine = 10 content skills + the `using-skills` keystone. Roster = Orchestrator (Architect/Product/Ops hats) · Engineer×N · Reviewer · Security-reviewer · Kit-Steward (meta-control).
+**Current state:** `v3.77.0`. **Epic E5 (observability / operate-loop) complete.** Skill spine = 10 content skills + the `using-skills` keystone. Roster = Orchestrator (Architect/Product/Ops hats) · Engineer×N · Reviewer · Security-reviewer · Kit-Steward (meta-control).
 
 > **Completed history is NOT tracked here.** Every shipped slice (v1.0.0 → v3.75.0) lives in `CHANGELOG.md` (per-version detail) and `git log` (full record). This file holds **only open work** — rewritten 2026-06-29 to stop carrying the full historical arc inline. Per-slice design docs are in `docs/architecture/`; per-slice meta-control verdicts in `docs/governance/meta-control-log.md`.
 
@@ -14,7 +14,7 @@ The theme: **clean the board → lay the governance foundation → de-risk the o
 
 1. **Roadmap rewrite** *(this file — housekeeping, done 2026-06-29).*
 2. **Proportional Promotion Contract — Slice 1** (model/standards keystone) *(done 2026-06-29, v3.76.0)*. The governance foundation; changes how all later work is governed; low-risk authoring.
-3. **`orchestrator-loop-wired.sh` refactor** (the one real refactoring candidate — see Refactoring below). Behavior-preserving, selftest-guarded; do it before it compounds further.
+3. **`orchestrator-loop-wired.sh` refactor** *(✅ done, v3.77.0, panel #28)* — the one real refactoring candidate; behaviour-preserving (1064→333 lines), differential-characterization-proven.
 4. **T4 — CI-trust blockers** (honest integrity defects).
 5. **Proportional Promotion Contract — Slices 2–4** (enforcement; guard-touching slices last, sequenced by risk).
 6. **T2-team-live** (needs a 2nd forge identity; validates the contract's team side).
@@ -69,7 +69,7 @@ Scoped down to essentially **one real slice** (see Refactoring lens below): make
 
 The kit is broadly clean. **One real candidate, one watch-item, everything else appropriately sized** (the doc-budget ratchet on `DEVELOPMENT-PROCESS`/`STANDARDS` is actively preventing re-bloat — working as intended, not a smell).
 
-- **#1 — Real, worth a slice: `conformance/orchestrator-loop-wired.sh` selftest fixtures.** Measured super-linear growth — each new skill brick costs ~128 lines (a `check_*_skill` fn + 2 cases + ~81 lines of retroactive boilerplate across all 27 existing cases). Fix: a `{skill, markers, seat}` table + one generic `check_skill` + an enumerating selftest harness. The 27-case selftest is its own complete behavior-preserving safety net. Worsens with every future brick → do it soon (priority #3).
+- **#1 — ✅ SHIPPED v3.77.0 (panel #28).** `conformance/orchestrator-loop-wired.sh` made data-driven: 10 near-identical `check_*_skill` fns + 27 copy-pasted selftest cases → one `spine_table()` + one generic `check_spine_skill` + a table-driven selftest. **1064 → 333 lines**; a future brick is ~1 row. Behaviour-preserving, dual-reviewed (correctness APPROVE + security PASS-WITH-NOTES), proven by a build-time **differential characterization harness** (OLD verifier vs NEW across an 81-fixture matrix, equivalence on exit codes; the harness itself mutation-proven non-vacuous). ★ **Reusable technique now banked:** this differential-characterization pattern (oracle = `git show HEAD:`, fixture matrix = every break the verifier should catch, mutation-test the harness) de-risks any future "rewrite the net + the thing it protects at once" refactor — notably the `guard-core.sh` #2 candidate below.
 - **#2 — Watch, don't touch yet: `guard-core.sh` `is_control_plane_path` per-script enumeration.** Linear growth with a 3-location sync risk (case + the two shell-redirect regexes). High-risk file → only refactor when a *cluster* of new scripts forces it; otherwise leave it.
 
 ---
@@ -81,6 +81,8 @@ Pull opportunistically or when a related slice makes them cheap:
 - **`tier-checkpoint preemptive approval`** — Option B: an `escalate.sh` second caller for preemptive approval before a high-consequence autonomous step (B-ready, not wired).
 - **`guard-dev-clone-affordance`** — a sanctioned env/flag so the guard reliably recognizes a throwaway-clone context (ergonomic).
 - **Kit-Steward FLOOR parity** — backfill the Orchestrator-reference negative selftest for `check_skill`/`check_plan_skill` (bricks #1/#2).
+- **`orchestrator-loop` marker-table cleanup** *(owner-approved as the next refactoring-lens slice — F2 from panel #28)* — now that the markers live in `spine_table()`, drop the weak/brittle low-entropy markers `fresh` (verification) + `native` (worktrees); the teeth rest on the high-entropy kit-coined phrases. Behaviour-CHANGE (not the v3.77.0 behaviour-preserving refactor) → its own slice with a fixture proving the dropped marker no longer gates.
+- **`orchestrator-loop` shipped-marker teeth** *(F1 from panel #28 / security note)* — consider promoting a few high-value markers (e.g. `red-team`, `<HARD-GATE>`) from build-time-only (the differential harness) to shipped selftest cases, narrowing the CI-probes-10/56-markers gap. Pairs with the cleanup slice.
 - **`M2-ratification-hardening` residual** — future-pin shape (allow exactly the one unreleased seam version); verdict enum case-normalization; CODEOWNERS on `docs/governance/`; `ver_gt` dedup. (Backstopped by M2-S5; non-blocking.)
 - **`adopter-conformance-carve`** — relocate kit-self checks under `conformance/kit-internal/` or graceful skip-missing (with a security review of the false-negative risk). ~75-file triage.
 - **G8 / per-segment guard** — replace the guard's co-occurrence heuristic with per-segment command parsing (split on `;`/`&&`/`||`/`|`; judge each segment). Deferred — every narrow fix had confirmed bypasses; needs its own security pass.
