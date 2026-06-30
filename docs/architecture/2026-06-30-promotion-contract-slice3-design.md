@@ -37,6 +37,31 @@ At gate time (pre-merge, PR context) the gate already holds `control-plane-prese
 
 ---
 
+## Human-facing legibility (owner requirement, 2026-06-30)
+
+**Whenever a human is needed, the surface they read must be legible and unambiguous on its own** — no jargon-only output, no implied knowledge. The stable tokens (`RATIFIED-BY-SECOND-REVIEWER` / `SOLO-ADMIN-OVERRIDE-LOGGED`) are **machine identifiers** (the conformance lock greps for them; they must stay byte-stable), but every human-facing surface — the `control-plane-ratification` check-run title and summary — **pairs the token with plain language** answering five questions:
+
+1. **What happened** — what changed and its change-class.
+2. **What it means** — why this is gated (a §13 governance merge-gate, *not* a build failure / no test failed).
+3. **The honest SoD state** — second-reviewer vs. solo admin-override, said plainly.
+4. **What to do next** — the concrete action(s), with the exact command for the solo path.
+5. **Where to read more** — `docs/operations/review-lane.md`.
+
+The single surface that matters most is the **`action_required`** state — the only conclusion where a human is actually required. Canonical copy (the build implements this, not terse strings):
+
+> **Title:** `Ratification required — a control-plane change is awaiting a human`
+>
+> **Summary:**
+> `What changed: a control-plane change (the kit's own guardrails / CI / standards / governance). Change-class: control-plane.`
+> `Why: control-plane changes must be ratified by a human before merge. This is a §13 governance merge-gate, NOT a build failure — no test failed.`
+> `Current SoD state: SOLO-ADMIN-OVERRIDE-LOGGED — no non-author approval is present yet, so the only merge path is a logged solo admin-override (honestly weaker than a second reviewer).`
+> `To proceed: (a) get a non-author approval on this PR → becomes RATIFIED-BY-SECOND-REVIEWER; or (b) solo — merge via 'gh pr merge --squash --admin --delete-branch'; GitHub logs the override as the audit trail.`
+> `More: docs/operations/review-lane.md.`
+
+The `success` state is similarly glossed (`ratified by a second reviewer` vs. `no control-plane change — nothing to ratify`); the `failure` state states plainly that the gate could not evaluate the diff and is the one conclusion that *is* a real error. **Principle:** the token is for the machine, the sentence is for the human — every human-needed surface carries both.
+
+---
+
 ## Mechanics — where each piece lives
 
 Kit principle: decision logic stays pure and `--selftest`-able in a conformance script; CI only wires inputs → outputs.
@@ -87,7 +112,7 @@ A wiring lock (mirrors `promotion-readiness-wired.sh` / `golden-path-filter-pari
 ## Acceptance criteria
 
 1. `agent-boundary.sh` emits `RATIFIED-BY-SECOND-REVIEWER` for a control-plane + ratified fixture and `SOLO-ADMIN-OVERRIDE-LOGGED` for a control-plane + unratified fixture, and no label for an ordinary diff — proven by `--selftest`, with the always-team mutation flipping the solo case to FAIL.
-2. The `control-plane-ratification` check-run surfaces both the state label and the change-class; the class comes from `promotion-readiness.sh --class --no-verify`.
+2. The `control-plane-ratification` check-run surfaces both the state label and the change-class; the class comes from `promotion-readiness.sh --class --no-verify`. **Legibility:** the human-needed (`action_required`) summary pairs the machine token with plain language covering all five questions (what changed · what it means · honest SoD state · what to do, incl. the exact solo command · where to read more) — verified by the lock greping the summary for the plain-language anchors *and* the token, not the token alone.
 3. `conformance/proportional-gate-wired.sh --selftest` passes and is non-vacuous (both load-bearing negatives proven).
 4. The gate's existing pass/fail behaviour and exit codes are unchanged (all current `agent-boundary --selftest` cases stay green).
 5. Fresh-clone `verify --require` green; claim count +1; CHANGELOG/VERSION/README coherent at ship.
