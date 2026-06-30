@@ -10,6 +10,9 @@
 # property of incept's design — the floor stamping runs unconditionally and curate_for_mode is purely
 # additive — and running incept inside a conformance check would need the full kit tree in CWD; the
 # enforcement-surface grep below is the load-bearing invariant.)
+# Also asserts (additively, in run()) that the PRODUCER (incept.sh) offers only the honest
+# lean|enterprise canonical modes + carries the prototype|team->lean deprecation alias, so the
+# dial cannot silently regress to dead/false names. See the (2) HONEST MODE NAMES block below.
 #   sh conformance/mode-enforcement-blind.sh [--selftest]
 # Exit: 0 = mode-blind · 1 = a gate reads the mode (regression) · 2 = setup. POSIX sh; dash-clean.
 set -eu
@@ -38,6 +41,17 @@ run() {
     printf '%s\n' "$_hits" | sed 's/^/  /'
     rc=1
   fi
+  # (2) HONEST MODE NAMES: the producer (incept.sh) offers only lean|enterprise as canonical modes,
+  # and deprecates the former prototype|team to lean (so the dial can't silently regress to dead names
+  # and old --mode values keep working). incept is NAMED here (this is a read of the producer, distinct
+  # from the blind-scan exclusion above — that forbids a GATE reading the stamped mode, not this lock
+  # asserting the producer's mode set).
+  _ip="$ROOT/scripts/incept.sh"
+  if [ -f "$_ip" ]; then
+    grep -q 'PROCESS_MODES="lean enterprise"' "$_ip" || { echo "FAIL: incept PROCESS_MODES is not the honest 'lean enterprise'"; rc=1; }
+    grep -Eq 'PROCESS_MODES="[^"]*(prototype|team)' "$_ip" && { echo "FAIL: incept still offers a dead canonical mode (prototype/team) in PROCESS_MODES"; rc=1; }
+    grep -Eq 'prototype\|team\).*MODE="lean"' "$_ip" || { echo "FAIL: incept lacks the prototype|team -> lean deprecation alias (old --mode values would break or dead names could return)"; rc=1; }
+  fi
   [ "$rc" -eq 0 ] && echo "PASS: process mode is enforcement-blind (no gate / script / workflow / hook reads it)"
   return $rc
 }
@@ -47,7 +61,7 @@ if [ "${1:-}" = "--selftest" ]; then
   run >/dev/null 2>&1 || { echo "mode-enforcement-blind --selftest: FAIL (real tree not green)"; sfail=1; }
   # negative: a conformance dir containing a mode-reading check must FAIL the lock.
   _n=$(mktemp -d); mkdir -p "$_n/conformance" "$_n/.github/workflows"
-  printf '#!/bin/sh\ncase "$mode" in prototype) exit 0;; esac\n# Process mode\n' > "$_n/conformance/bad.sh"
+  printf '#!/bin/sh\ncase "$mode" in lean) exit 0;; esac\n# Process mode\n' > "$_n/conformance/bad.sh"
   : > "$_n/.github/workflows/ci.yml"
   # Direct rebind of $ROOT (NOT `MODE_BLIND_ROOT=$_n run` — an env-prefix does not rebind the
   # already-captured $ROOT; the S2/S3 lesson). Save/restore so the positive run above is unaffected.
@@ -55,6 +69,14 @@ if [ "${1:-}" = "--selftest" ]; then
   if run >/dev/null 2>&1; then echo "mode-enforcement-blind --selftest: FAIL (mode-reading check passed)"; sfail=1; fi
   ROOT="$_saved_root"
   rm -rf "$_n"
+  # negative (honest-names): an incept.sh that still offers prototype/team as a canonical mode must FAIL.
+  _h=$(mktemp -d); mkdir -p "$_h/scripts" "$_h/conformance" "$_h/.github/workflows"
+  printf '#!/bin/sh\nPROCESS_MODES="prototype team enterprise"\n' > "$_h/scripts/incept.sh"
+  : > "$_h/.github/workflows/ci.yml"
+  _saved_root2="$ROOT"; ROOT="$_h"
+  if run >/dev/null 2>&1; then echo "mode-enforcement-blind --selftest: FAIL (dead canonical mode name passed honest-names)"; sfail=1; fi
+  ROOT="$_saved_root2"
+  rm -rf "$_h"
   [ "$sfail" -eq 0 ] && { echo "mode-enforcement-blind --selftest: OK"; exit 0; } || exit 1
 fi
 
