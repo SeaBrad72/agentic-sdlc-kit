@@ -5,6 +5,11 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versioning: [S
 
 > Claim verbs ("proven"/"PROVEN") are scoped to the reference implementation unless an entry states broader coverage — see [MAINTAINING.md §3](MAINTAINING.md#3-releasing-platform-team).
 
+## [3.79.0] — 2026-06-29
+
+### Changed
+- **Honest ceremony dial: `prototype`/`team` → `lean` (T4 item 7 / C1).** `incept.sh --mode` offered `prototype|team|enterprise`, but `prototype` and `team` were a single identical branch (only `enterprise` differed) — a false tier, and "team" collided with the kit's *other* use of the word (the solo→team `enforce_admins`/`review-lane.md` governance upgrade). The dial is now the honest **`lean`** (default) / **`enterprise`**; `--mode prototype` and `--mode team` are **deprecated aliases** that warn and map to `lean` (backward-compatible — no invocation breaks). The CLAUDE `Process mode` field gains a disambiguation clause (*ceremony only; solo-vs-team governance is the separate `enforce_admins`/review-lane axis*). The **solo-vs-team governance axis is untouched** — `lean`/`enterprise` is *ceremony apparatus*, orthogonal to who ratifies. Teeth: `conformance/mode-enforcement-blind.sh` (the existing mode lock — no new claim) now also asserts `incept` offers only `lean|enterprise` canonical + carries the `prototype|team→lean` alias, with a load-bearing selftest negative; the behavioural deprecation/error matrix is clone-proven at build time. `lean` scaffolds exactly what `prototype|team` did; `enterprise` unchanged; enforcement stays mode-blind. Design/plan: `docs/architecture/2026-06-29-mode-dial-lean-{design,plan}.md`.
+
 ## [3.78.0] — 2026-06-29
 
 ### Changed
