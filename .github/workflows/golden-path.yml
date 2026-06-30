@@ -3,9 +3,9 @@ name: golden-path
 # Heavy + path-filtered/scheduled so the fast per-PR ci.yml stays seconds-quick.
 on:
   pull_request:
-    paths: ['profiles/typescript-node/**', 'scripts/incept.sh', '.github/workflows/golden-path.yml', 'scripts/new-profile.sh', 'scripts/adopter-export.sh', 'scripts/containment-audit.sh', 'profiles/_TEMPLATE.md', 'scripts/otel-trace.sh', 'scripts/orchestrator-run.sh', 'scripts/fixtures/engineer-fixture.sh', 'conformance/orchestrator-loop-wired.sh', 'scripts/otel-to-scorecard.sh', 'scripts/agent-scorecard.sh']
+    paths: ['profiles/typescript-node/**', 'scripts/incept.sh', '.github/workflows/golden-path.yml', 'scripts/new-profile.sh', 'scripts/adopter-export.sh', 'scripts/containment-audit.sh', 'profiles/_TEMPLATE.md', 'scripts/otel-trace.sh', 'scripts/orchestrator-run.sh', 'scripts/fixtures/engineer-fixture.sh', 'conformance/orchestrator-loop-wired.sh', 'scripts/otel-to-scorecard.sh', 'scripts/agent-scorecard.sh', 'scripts/smoke.sh', 'scripts/otlp-export.sh', 'scripts/escalate.sh', 'conformance/escalation-wired.sh', 'conformance/actionlint-valid.sh', 'conformance/provenance-precondition.sh', 'conformance/ci-gates.sh']
   push:
-    paths: ['profiles/typescript-node/**', 'scripts/incept.sh', '.github/workflows/golden-path.yml', 'scripts/new-profile.sh', 'scripts/adopter-export.sh', 'scripts/containment-audit.sh', 'profiles/_TEMPLATE.md', 'scripts/otel-trace.sh', 'scripts/orchestrator-run.sh', 'scripts/fixtures/engineer-fixture.sh', 'conformance/orchestrator-loop-wired.sh', 'scripts/otel-to-scorecard.sh', 'scripts/agent-scorecard.sh']
+    paths: ['profiles/typescript-node/**', 'scripts/incept.sh', '.github/workflows/golden-path.yml', 'scripts/new-profile.sh', 'scripts/adopter-export.sh', 'scripts/containment-audit.sh', 'profiles/_TEMPLATE.md', 'scripts/otel-trace.sh', 'scripts/orchestrator-run.sh', 'scripts/fixtures/engineer-fixture.sh', 'conformance/orchestrator-loop-wired.sh', 'scripts/otel-to-scorecard.sh', 'scripts/agent-scorecard.sh', 'scripts/smoke.sh', 'scripts/otlp-export.sh', 'scripts/escalate.sh', 'conformance/escalation-wired.sh', 'conformance/actionlint-valid.sh', 'conformance/provenance-precondition.sh', 'conformance/ci-gates.sh']
   schedule:
     - cron: '0 7 * * 1'
   workflow_dispatch:

@@ -5,6 +5,17 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versioning: [S
 
 > Claim verbs ("proven"/"PROVEN") are scoped to the reference implementation unless an entry states broader coverage — see [MAINTAINING.md §3](MAINTAINING.md#3-releasing-platform-team).
 
+## [3.80.0] — 2026-06-30
+
+**Golden-path trigger-filter parity (T4 item 1) + item 5 closed.**
+
+### Added
+- **Claim `golden-path-trigger` — the golden-path `paths:` trigger filter covers every script the workflow invokes (`conformance/golden-path-filter-parity.sh`).** The heavy golden-path harness is path-filtered so per-PR CI stays fast; the filter was a hand-kept list that had drifted — 7 invoked scripts (`scripts/smoke.sh`, `scripts/otlp-export.sh`, `scripts/escalate.sh`, `conformance/escalation-wired.sh`, `conformance/actionlint-valid.sh`, `conformance/provenance-precondition.sh`, `conformance/ci-gates.sh`) were absent, so a change to any of them would silently skip the end-to-end proof. The new check extracts the filter set and the invoked-script set and asserts invoked ⊆ filter (one-directional — an over-broad filter is conservative, not a bug; glob-aware so it survives a filter rewrite; kit-self N/A in adopter trees; non-vacuous 4-case selftest). Registered as a headline claim + wired into `ci.yml`.
+
+### Changed
+- **Widened `.github/workflows/golden-path.yml` `paths:`** (both `pull_request` and `push`) with the 7 drifted files, clearing the parity RED.
+- **`docs/ROADMAP-KIT.md`** — T4 item 1 marked DONE; T4 item 5 marked DONE (the private-repo `enforce_admins` 404 caveat already shipped in `review-lane.md` at v3.48.11; the roadmap entry was stale).
+
 ## [3.79.0] — 2026-06-29
 
 ### Changed
