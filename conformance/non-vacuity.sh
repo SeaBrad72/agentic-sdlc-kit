@@ -34,14 +34,17 @@ cd "$(dirname "$0")/.." 2>/dev/null || true
 
 # ── first_marker <src> : print the 1-based line number where the selftest ORACLE region begins — the
 #    earliest of a  ^selftest()  function definition OR an  if [ ... --selftest ... ]  block opener
-#    (the two kit oracle conventions that carry fixtures + assertions). A bare  --selftest)  case arm is
-#    used ONLY as a fallback when neither exists (it is usually an arg-parse mode-setter or the tail
-#    dispatch, not the oracle body). Prints 0 if no marker at all. LC_ALL=C: byte-safe (some checks
-#    carry multibyte chars in comments; awk char scanning must not choke on them).
+#    (the two kit oracle conventions that carry fixtures + assertions). An  if [ … --selftest … ]  block
+#    opener counts only when it tests a positional arg (`$1`/`${1`) — an `if ! sh child --selftest`
+#    INVOCATION of another script's selftest is not a dispatch and must not win over the real oracle. A
+#    bare  --selftest)  case arm is used ONLY as a fallback when neither exists (it is usually an
+#    arg-parse mode-setter or the tail dispatch, not the oracle body). Prints 0 if no marker at all.
+#    LC_ALL=C: byte-safe (some checks carry multibyte chars in comments; awk char scanning must not
+#    choke on them).
 first_marker() {
   LC_ALL=C awk '
     /^[[:space:]]*selftest[[:space:]]*\(\)/ { if (fn==0) fn=NR }
-    /^[[:space:]]*if[[:space:]].*--selftest/ { if (ifb==0) ifb=NR }
+    /^[[:space:]]*if[[:space:]].*--selftest/ && ($0 ~ /\$1/ || $0 ~ /\$\{1/) { if (ifb==0) ifb=NR }
     /--selftest\)/ { if (arm==0) arm=NR }
     END {
       m=0
@@ -52,6 +55,13 @@ first_marker() {
     }
   ' "$1"
 }
+
+# ── has_selftest_dispatch <file> : 0 iff <file> exposes a real --selftest ORACLE region (first_marker>0);
+#    1 if --selftest appears only as a non-dispatch substring (e.g. a fixture payload). This is the
+#    membership predicate for the mutation target set: a check with no dispatch region is NOT
+#    selftest-bearing, so there is no selftest for a mutant to prove vacuous — it is reported SKIPPED, never
+#    UNCOVERED (which would falsely imply a wider operator could reach a verdict on a selftest that isn't there).
+has_selftest_dispatch() { [ "$(first_marker "$1")" != 0 ]; }
 
 # ── mutate <src> <dst> <metafile> <mark> : write a FAIL-path-neutered copy of <src> to <dst>, mutating
 #    ONLY lines strictly BEFORE <mark> (the oracle region begins at <mark> and runs to EOF, emitted
@@ -189,7 +199,7 @@ _judge_core() {
   _sent=$(mutate "$_chk" "$_jmut" "$_jmut.meta" "$_mark")
   case "$_sent" in
     APPLIED=0*)
-      echo "UNCOVERED: $_base — no FAIL-path idiom in the check region before the oracle (reason: no-idiom)"
+      echo "UNCOVERED: $_base — no mutable FAIL-path idiom before the oracle; this check's teeth live in its --selftest region or a sibling helper, so mutating this file cannot fail its selftest (reason: no-idiom)"
       return 2 ;;
   esac
   _acc=$(printf '%s' "$_sent" | sed -n 's/.*;ACC=\([0-9]*\).*/\1/p'); [ -n "$_acc" ] || _acc=0
@@ -239,7 +249,21 @@ target_set() {
     | grep -oE 'conformance/[a-z0-9-]+\.sh' | sort -u \
     | while IFS= read -r _f; do
         [ -f "$_f" ] || continue
-        grep -q -- '--selftest' "$_f" 2>/dev/null && printf '%s\n' "$_f"
+        grep -q -- '--selftest' "$_f" 2>/dev/null || continue
+        has_selftest_dispatch "$_f" && printf '%s\n' "$_f"
+      done
+}
+
+# ── nonbearing_set : control checks whose file contains the --selftest substring but expose NO dispatch
+#    region (first_marker==0). These are NOT mutation-testable (no selftest oracle to prove vacuous); the
+#    sweep prints them as SKIPPED so the exclusion is visible (no silent cap), never counted UNCOVERED.
+nonbearing_set() {
+  grep -E '^check control' conformance/verify.sh 2>/dev/null \
+    | grep -oE 'conformance/[a-z0-9-]+\.sh' | sort -u \
+    | while IFS= read -r _f; do
+        [ -f "$_f" ] || continue
+        grep -q -- '--selftest' "$_f" 2>/dev/null || continue
+        has_selftest_dispatch "$_f" || printf '%s\n' "$_f"
       done
 }
 
@@ -265,6 +289,9 @@ sweep() {
   sweep_clean   # defensive: clear any straggler from a prior interrupted run before we start
   echo "non-vacuity sweep (mutation testing of the control-set conformance checks)"
   echo "------------------------------------------------------------------------"
+  for _s in $(nonbearing_set); do
+    printf '  SKIPPED: %s — not selftest-bearing (--selftest present only as a fixture payload; no dispatch region)\n' "$(basename "$_s")"
+  done
   for _c in $(target_set); do
     _total=$((_total + 1))
     set +e
@@ -407,6 +434,53 @@ EOF
   ( judge "$d/ctx/ctxchk.sh" ) >/dev/null 2>&1; c=$?
   set -e
   if [ "$c" = 0 ]; then echo "PASS: sibling-sourcing check (sibling present) -> KILLED at run location"; else echo "FAIL: sibling-sourcing check mis-verdicted (got $c, want 0=KILLED)"; st=1; fi
+
+  # INVOCATION-VS-DISPATCH fixture (fix ②) — a check whose body contains a spurious
+  #   `if ! sh "$prog" --selftest ...` INVOCATION line (no $1/${1) placed BEFORE its real selftest(), with
+  #   a load-bearing `fail=1` accumulator between them. Under the OLD marker rule the invocation line wins
+  #   -> the accumulator is protected -> UNCOVERED(no-idiom). Under the fix the real selftest() is the
+  #   marker -> the accumulator is mutated -> the negative fixture flips -> KILLED. (Reproduces the harness's
+  #   OWN blind spot: non-vacuity.sh's line-177 `if ! sh "$_chk" --selftest` was masking selftest() @304.)
+  cat > "$d/inv.sh" <<'EOF'
+#!/bin/sh
+set -eu
+prog=child.sh
+warm() {
+  if ! sh "$prog" --selftest >/dev/null 2>&1; then echo warned; fi
+}
+check_x() { fail=0; grep -q TOKEN "$1" || fail=1; [ "$fail" = 0 ] && echo PASS || { echo FAIL; return 1; }; }
+selftest() {
+  st=0; t=$(mktemp -d); printf 'TOKEN\n' > "$t/y"; : > "$t/n"
+  check_x "$t/y" >/dev/null || { echo pos; st=1; }
+  check_x "$t/n" >/dev/null && { echo neg; st=1; }
+  [ "$st" = 0 ] && echo "inv --selftest: OK" || { echo "inv --selftest: FAIL" >&2; return 1; }
+}
+case "${1:-}" in --selftest) selftest; exit $? ;; *) check_x "$2"; exit $? ;; esac
+EOF
+  # unit: first_marker must pick the real selftest() line, NOT the spurious invocation line.
+  _exp=$(grep -n '^selftest()' "$d/inv.sh" | cut -d: -f1)
+  _got=$(first_marker "$d/inv.sh")
+  if [ "$_got" = "$_exp" ]; then echo "PASS: first_marker skips an --selftest INVOCATION line, picks the real dispatch"; else echo "FAIL: first_marker picked a non-dispatch line (got $_got, want $_exp)"; st=1; fi
+  # end-to-end: the accumulator between the invocation line and the real selftest must be mutated -> KILLED.
+  set +e
+  ( judge "$d/inv.sh" ) >/dev/null 2>&1; iv=$?
+  set -e
+  if [ "$iv" = 0 ]; then echo "PASS: invocation-masked accumulator -> mutant KILLED (marker fix load-bearing)"; else echo "FAIL: invocation-masked check not killed (got $iv, want 0=KILLED)"; st=1; fi
+
+  # PAYLOAD-ONLY fixture (fix ①) — a check that runs assertions directly; `--selftest` appears ONLY inside
+  #   quoted payload strings, never as a dispatch. It is NOT selftest-bearing and must be EXCLUDED from the
+  #   mutation target set (reported SKIPPED), not counted UNCOVERED. (Reproduces agent-autonomy.sh, whose
+  #   only `--selftest` occurrences are guard/escalate command payloads.)
+  cat > "$d/payload.sh" <<'EOF'
+#!/bin/sh
+set -eu
+run_case() { printf '%s\n' "$1" >/dev/null; }
+run_case '{"tool":"Bash","command":"sh scripts/kit-guard --selftest"}'
+run_case '{"tool":"Bash","command":"sh scripts/escalate.sh --selftest"}'
+[ -n "${CI:-}" ] || true
+EOF
+  if has_selftest_dispatch "$d/payload.sh"; then echo "FAIL: payload-only --selftest wrongly treated as selftest-bearing"; st=1; else echo "PASS: payload-only --selftest -> not selftest-bearing (SKIPPED, not UNCOVERED)"; fi
+  if has_selftest_dispatch "$d/good.sh"; then echo "PASS: a genuine --selftest dispatch -> selftest-bearing (included)"; else echo "FAIL: a genuine dispatch was wrongly excluded"; st=1; fi
 
   [ "$st" = 0 ] && echo "non-vacuity --selftest: OK" || { echo "non-vacuity --selftest: FAIL" >&2; return 1; }
   return "$st"

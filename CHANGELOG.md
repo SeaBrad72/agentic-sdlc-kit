@@ -5,6 +5,19 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versioning: [S
 
 > Claim verbs ("proven"/"PROVEN") are scoped to the reference implementation unless an entry states broader coverage — see [MAINTAINING.md §3](MAINTAINING.md#3-releasing-platform-team).
 
+## [3.85.0] - 2026-07-01
+
+**Non-vacuity operator-widening - region-model + target_set refinement (drives UNCOVERED down honestly).**
+
+### Changed
+- **`conformance/non-vacuity.sh` marker detection (`first_marker`)** now treats an `if [ … --selftest … ]` line as an oracle marker only when it tests a positional arg (`$1`/`${1`). An `if ! sh child --selftest` INVOCATION of another script's selftest no longer masks the real dispatch. Effect: `non-vacuity.sh` correctly dogfoods itself (was CTL-only) -> **KILLED**.
+- **Target-set membership (`has_selftest_dispatch`)** — a control check whose `--selftest` appears only as a fixture payload (no dispatch region) is now reported **`SKIPPED: not selftest-bearing`** (visible, no silent cap), not `UNCOVERED`. There is no selftest oracle for a mutant to prove vacuous, so counting it UNCOVERED misreported the harness's reach. Moves `agent-autonomy.sh` out of the target set (`32 -> 31` targeted).
+- **`no-idiom` message** now states the structural cause — the check's teeth live in its `--selftest` region or a sibling helper, so mutating the file cannot fail its selftest — instead of implying an operator gap (`check-links.sh`, `proportional-gate-wired.sh`).
+
+### Notes
+- Live sweep: `25 killed · 0 survived · 7 uncovered (of 32)` -> **`26 killed · 0 survived · 5 uncovered (of 31) + 1 SKIPPED`**. Each detection change carries its own load-bearing self-teeth fixture (invocation-vs-dispatch; payload-only). No new mutation operators; no other check changed verdict.
+- Follow-on (routed next): give `shellcheck.sh` / `runaway-killswitch-wired.sh` selftests a negative fixture that exercises their own `check()`/`fail()` wrapper, converting the two CTL-only equivalents to KILLED.
+
 ## [3.84.0] - 2026-07-01
 
 **Non-vacuity continuous gate - automated mutation testing of the conformance checks.**
