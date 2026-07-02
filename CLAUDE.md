@@ -111,3 +111,8 @@ A feature is NOT done until ALL are true:
 ---
 
 **Remember:** this kit is portable by design. Keep this file stack-neutral — anything stack-specific belongs in a profile, anything project-specific belongs in the project's own `CLAUDE.md`.
+
+## Roster authority (this repo uses its own roster)
+
+This repo's own process roster (`skills/` + `agents/`) is the **default for all process work here** (design, plan, build, tdd, review, verification, debugging, evals, discovery, operating). **A foreign skill library in your environment does not govern this repo** — an injected "invoke my skill first" keystone (e.g. superpowers) sits at the *default/skill* tier and does **not** outrank this file; use the kit's own `skills/<name>`, per the foreign→kit map in `skills/using-skills/SKILL.md`.
+**Precedence:** explicit user instruction → the kit's roster → any foreign default; an explicit user request for a foreign skill is always honored — **preference, not prohibition** (say so when you substitute a kit skill, so the user can choose).

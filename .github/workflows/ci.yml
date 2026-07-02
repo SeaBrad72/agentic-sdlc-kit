@@ -115,6 +115,8 @@ jobs:
         run: sh conformance/gate-eval-secrets-ready.sh --selftest
       - name: artifact-lineage self-test (E11 lineage-template coherence)
         run: sh conformance/artifact-lineage-ready.sh --selftest
+      - name: roster-authority self-test (roster-authority contract doc-coherence)
+        run: sh conformance/roster-authority-ready.sh --selftest
       - name: feature-flags-wired self-test (reference + golden-path flip wired)
         run: sh conformance/feature-flags-wired.sh --selftest
       - name: containment-audit runner self-test (usage parse; behavioural proof in golden-path)

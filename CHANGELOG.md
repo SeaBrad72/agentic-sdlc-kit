@@ -6,6 +6,20 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versioning: [S
 > Claim verbs ("proven"/"PROVEN") are scoped to the reference implementation unless an entry states broader coverage — see [MAINTAINING.md §3](MAINTAINING.md#3-releasing-platform-team).
 
 
+## [3.93.0] - 2026-07-02
+
+**Roster authority Slice A (FLOOR) — the kit's own roster is the authoritative default for process work.**
+
+### Added
+- **`conformance/roster-authority-ready.sh`** (new `check doc` `roster-authority`, kit-self) — a doc-coherence lock asserting the roster-authority contract is present + coherent: the `## Roster authority` section lives in both `CLAUDE.md` and `AGENTS.md` (carrying its precedence-ordering + preference-not-prohibition clauses), the `skills/using-skills/SKILL.md` keystone carries its foreign-injection self-defense clause + the foreign→kit equivalence map, and no map row is dangling. `--selftest` = anchor + N/A-path + 11 load-bearing negatives (wired into CI's selftest coverage). 15 -> 16 doc-checks; control count unchanged at 40 (doc-checks aren't claims — no claims-registry edit).
+
+### Changed
+- **`CLAUDE.md` + `AGENTS.md`** gain a `## Roster authority` section: in this repo the kit's own roster (spine skills in `skills/`, seats/hats in `agents/`) is the default for process work; a foreign skill library (e.g. superpowers) injected at session start sits at the default/skill tier and does not outrank this file. Preference, not prohibition — an explicit user request for a foreign skill is always honored.
+- **`skills/using-skills/SKILL.md`** gains a self-defense keystone clause + a foreign→kit equivalence map (each superpowers process skill → its kit spine equivalent).
+
+### Notes
+- Honest ceiling: a green run proves the contract is PRESENT and COHERENT (the words are on disk in both authority files, the keystone carries its clause + map, no map row is dangling); it does NOT prove any agent OBEYED the contract at runtime (presence, not behaviour). On Claude Code CLAUDE.md auto-loads every session; on a neutral harness delivery depends on the harness loading AGENTS.md.
+
 ## [3.92.0] - 2026-07-02
 
 **E11 -- produced-artifact lineage template + doc-coherence lock (closes E11).**
