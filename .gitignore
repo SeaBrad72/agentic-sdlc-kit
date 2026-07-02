@@ -48,3 +48,7 @@ scratchpad/
 
 # E4d runaway-guard tally (runtime state; best-effort)
 .kit-run/
+
+# Mutation-testing scratch — non-vacuity.sh writes + sweeps these; ignore so a leaked
+# artifact can never be committed into the tree (kit-eval finding, 2026-07-02).
+.nv-*
