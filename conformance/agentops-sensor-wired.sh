@@ -1,7 +1,7 @@
 #!/bin/sh
 # agentops-sensor-wired.sh — behaviour-lock for the E5-thin operate-loop sensor + its golden-path proof.
 # Asserts the emit -> adapt -> score -> export vertical is wired end-to-end so it cannot silently rot:
-# the four reference scripts pass their own selftests AND are executable, AND the golden-path job that
+# the five reference scripts pass their own selftests AND are executable, AND the golden-path job that
 # proves the loop on REAL emitted data is present + runs the right scripts. This locks the WIRING; the
 # BEHAVIOUR (a denied span really moves denial_rate>0) is proven by the golden-path agentops-sensor job
 # RUNNING the loop. Distinct from agentops-ready (posture/declaration) — this is behaviour.
@@ -10,7 +10,7 @@
 set -eu
 
 WF="${AGENTOPS_WF:-.github/workflows/golden-path.yml}"
-SCRIPTS="scripts/otel-trace.sh scripts/orchestrator-run.sh scripts/otel-to-scorecard.sh scripts/otlp-export.sh"
+SCRIPTS="scripts/otel-trace.sh scripts/orchestrator-run.sh scripts/otel-to-scorecard.sh scripts/otlp-export.sh scripts/agent-scorecard.sh"
 
 check_wf() {  # <golden-path.yml> — a job named agentops-sensor runs the emit->adapt->score scripts
   f=$1; miss=0
@@ -51,12 +51,13 @@ case "${1:-}" in "") : ;; *) echo "usage: agentops-sensor-wired.sh [--selftest]"
 if [ ! -f "docs/ROADMAP-KIT.md" ] && [ ! -f "$WF" ]; then echo "agentops-sensor: N/A — kit-self check (golden-path is the kit's own pipeline; not applicable outside the kit repo)"; exit 0; fi
 
 fail=0
-# 1) the four reference scripts pass their own selftests (the sensor logic is non-rotted)
+# 1) the five reference scripts pass their own selftests (the sensor logic is non-rotted)
 sh scripts/otel-trace.sh --selftest >/dev/null 2>&1            || { echo "FAIL: scripts/otel-trace.sh --selftest"; fail=1; }
 sh scripts/orchestrator-run.sh --selftest >/dev/null 2>&1 || { echo "FAIL: scripts/orchestrator-run.sh --selftest"; fail=1; }
 sh scripts/otel-to-scorecard.sh --selftest >/dev/null 2>&1     || { echo "FAIL: scripts/otel-to-scorecard.sh --selftest"; fail=1; }
 sh scripts/otlp-export.sh --selftest >/dev/null 2>&1           || { echo "FAIL: scripts/otlp-export.sh --selftest"; fail=1; }
-# 2) the four scripts exist and are executable
+sh scripts/agent-scorecard.sh --selftest >/dev/null 2>&1       || { echo "FAIL: scripts/agent-scorecard.sh --selftest"; fail=1; }
+# 2) the five scripts exist and are executable
 for s in $SCRIPTS; do
   [ -f "$s" ] || { echo "FAIL: missing $s"; fail=1; continue; }
   [ -x "$s" ] || { echo "FAIL: not executable: $s"; fail=1; }
@@ -64,5 +65,5 @@ done
 # 3) the golden-path job that proves the loop on REAL emitted data is present + runs the loop scripts
 [ -f "$WF" ] || { echo "FAIL: golden-path workflow not found: $WF"; fail=1; }
 [ "$fail" = 0 ] && { check_wf "$WF" || fail=1; }
-[ "$fail" = 0 ] && { echo "OK: operate-loop sensor wired (4 selftests + golden-path agentops-sensor proof)"; exit 0; }
+[ "$fail" = 0 ] && { echo "OK: operate-loop sensor wired (5 selftests + golden-path agentops-sensor proof)"; exit 0; }
 echo "FAIL: agentops-sensor under-wired"; exit 1
