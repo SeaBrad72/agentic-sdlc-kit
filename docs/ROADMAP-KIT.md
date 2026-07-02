@@ -53,8 +53,8 @@ Shipped: E3a thin loop (v3.52.0), escalation/HITL (v3.55.0), conflict-safe write
 ### E5-full *(E5 core complete; this is the narrow remainder)*
 On-call / SLA / paging reference (currently prose-only, a Tier-3 blind spot) · managed-secrets rotation / break-glass reference · long-term storage / retention / vendor-backend guidance beyond the reference Jaeger.
 
-### E6 — AI-native quality depth *(not started)*
-Real eval harness (pinned judge, not the deterministic stub) · prompt-injection / red-team reference · LLM cost/quality tracing closed loop · `gate-eval` secret-exposure reference (C5).
+### E6 — AI-native quality depth *(✅ COMPLETE — v3.88.0–v3.91.0, 2026-07-02)*
+All four sub-items shipped: real eval harness / pinned judge (✅ E6-a v3.88.0) · prompt-injection / red-team reference (✅ E6-b v3.89.0) · LLM cost/quality tracing loop (✅ E6-c v3.90.0) · `gate-eval` secret-exposure reference (✅ E6-d v3.91.0, C5). Follow-on: a short E11 scoping brainstorm (AI-artifact lifecycle/audit — "may be absorbed by E6"; likely largely covered).
 
 ### E1-full — Test battery breadth *(E1-thin shipped v3.50.0)*
 Contract tests / API-contract layer · property-based · a11y (jest-axe for a web variant) · runtime-security test layer · conditional conformance per layer.

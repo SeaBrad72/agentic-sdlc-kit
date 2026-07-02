@@ -111,6 +111,8 @@ jobs:
         run: sh conformance/deployable-ready.sh
       - name: Deployable-ready self-test (skip/OK/FAIL fixtures)
         run: sh conformance/deployable-ready.sh --selftest
+      - name: gate-eval-secrets self-test (E6-d C5 secret-reference coherence)
+        run: sh conformance/gate-eval-secrets-ready.sh --selftest
       - name: feature-flags-wired self-test (reference + golden-path flip wired)
         run: sh conformance/feature-flags-wired.sh --selftest
       - name: containment-audit runner self-test (usage parse; behavioural proof in golden-path)

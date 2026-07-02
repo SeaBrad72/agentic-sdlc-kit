@@ -6,6 +6,18 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versioning: [S
 > Claim verbs ("proven"/"PROVEN") are scoped to the reference implementation unless an entry states broader coverage — see [MAINTAINING.md §3](MAINTAINING.md#3-releasing-platform-team).
 
 
+## [3.91.0] - 2026-07-02
+
+**E6-d — gate-eval secret-exposure reference (C5) — CLOSES epic E6 (AI-native eval depth).**
+
+### Added
+- **`docs/operations/secrets-for-ai.md`** gains a **"Gate-eval secret handling (C5)"** section: the eval CI job mints a **short-lived** live-model credential via **OIDC** (restricted to push-to-main), the key is **never embedded** in the repo/image/logs, and the existing non-waivable **`secret-scan`** gate is the backstop for any committed key. A reference, not a new scanner (enforcement already exists).
+- **`conformance/gate-eval-secrets-ready.sh`** (new `check doc` `gate-eval-secrets`, kit-self) — a doc-coherence lock asserting the reference carries its load-bearing markers; `--selftest` = anchor + 5 load-bearing negatives. 13 -> 14 doc-checks; control count unchanged at 40 (doc-checks aren't claims — no claims-registry edit).
+
+### Notes
+- Honest ceiling: the reference is provided + structurally locked; committed-key detection is the existing `secret-scan` gate (pointed at, not rebuilt); an adopter's live OIDC/secrets-manager security is their own infrastructure (un-gateable). Provider-neutral.
+- **★ Epic E6 COMPLETE:** (a) eval-judge seam v3.88.0 · (b) red-team/injection defense v3.89.0 · (c) LLM cost/quality loop v3.90.0 · (d) gate-eval secret reference v3.91.0.
+
 ## [3.90.0] - 2026-07-02
 
 **E6-c — LLM cost/quality tracing loop (AI-native eval depth).**

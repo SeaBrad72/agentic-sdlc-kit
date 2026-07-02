@@ -55,6 +55,37 @@ wires; a human/CI executes the live run. Plan the eval with
 [`EVAL-PLAN-TEMPLATE.md`](../../templates/EVAL-PLAN-TEMPLATE.md); readiness is
 [`eval-readiness.md`](../../conformance/eval-readiness.md).
 
+## Gate-eval secret handling (C5)
+
+The §7 Eval gate runs the eval against the **real provider** in CI — which means
+the eval CI job needs a live model credential. Correct gate-eval secret handling
+mints that credential securely and keeps it out of the repo. Handle it like this:
+
+- **Mint a short-lived token via OIDC, don't store a long-lived key.** The eval
+  job requests its credential through **OIDC** (federated identity): CI presents
+  its signed workload identity to the provider (or to a managed secrets store /
+  cloud broker) and receives a **short-lived** token scoped to that run.
+  Restrict the federation to the trusted context — **push-to-main** — so a fork
+  PR or feature branch can never mint the credential. Enforce that restriction in
+  the **OIDC trust policy's subject (`sub`) condition** (e.g. bind to
+  `ref:refs/heads/main`), not merely in the workflow's trigger — the trust policy
+  is the real enforcement point. A short-lived, context-bound token beats a
+  long-lived key that lingers in CI settings.
+- **The key is never embedded.** No hardcoded credential belongs in the repo,
+  the built image, the eval runner, the eval plan, or the logs — the token is
+  minted at run time and expires. Nothing durable is written down.
+- **The `secret-scan` gate is the backstop.** The kit's **`secret-scan`** gate
+  is required and **non-waivable**, so a key accidentally committed into an eval
+  artifact (runner, plan, fixture) is already caught at the gate. This section
+  is the how-to-do-it-right reference, not a new scanner — enforcement already
+  exists.
+
+For managed stores, the OIDC broker mechanics, and rotation, see
+[`secrets-at-scale.md`](../enterprise/secrets-at-scale.md). The guard's
+secret-read speed-bump (above) complements this by keeping a live key *file* out
+of the agent's context in the first place — but the real control here is minting
+short-lived credentials so there is no long-lived key file to leak.
+
 ## See also
 
 - [`secrets-at-scale.md`](../enterprise/secrets-at-scale.md) — managed stores, OIDC, rotation
