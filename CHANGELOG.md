@@ -6,6 +6,19 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versioning: [S
 > Claim verbs ("proven"/"PROVEN") are scoped to the reference implementation unless an entry states broader coverage — see [MAINTAINING.md §3](MAINTAINING.md#3-releasing-platform-team).
 
 
+## [3.87.0] - 2026-07-01
+
+**`build` — the kit's own subagent-driven execution spine skill (the 11th spine skill; the last self-hosting roster gap).**
+
+### Added
+- **`skills/build/SKILL.md`** — the kit's own execute-the-plan craft: read an owner-approved INVEST-sliced plan, then per task hand off a **task brief as a file**, dispatch a **fresh executor per task** (the Engineer, building test-first via `skills/tdd`), gate each diff with **review between tasks** (builder ≠ reviewer), keep a **durable ledger** that survives compaction, fan out only disjoint-file-set tasks, and run a final **whole-branch review**. It is the successor `skills/plan`'s terminal state already named ("handed to the build skill"), and a hat the Orchestrator wears (agents-vs-skills rule) — not a new agent.
+
+### Changed
+- **`conformance/orchestrator-loop-wired.sh`** — a `build` row added to the data-driven `spine_table()` (+ path variable, `skill_path()` case, and the load-bearing `ORCH_LOOP_BUILD_SKILL` fixture override in the selftest's `st_run()`); the table-driven `--selftest` auto-generates the new row's marker-drop + reference-omitted teeth (both KILLED). `skills/using-skills` indexes `build`; `agents/orchestrator.agent.md` gains an `## Execution` hat; the `skill-spine` claim prose extends to name `build` (no new claim id).
+
+### Notes
+- Honest ceiling: `build` is *provided + structurally proven* (the SKILL.md exists, carries its markers, is indexed by the keystone, and is referenced by the Orchestrator); runtime loop-adherence is un-gateable (dispatch is harness-specific — the FLOOR is invoke-by-reading). `verify --require` unchanged at 39 controls / 0 failed (the spine check already existed; `build` extends its table).
+
 ## [3.86.0] - 2026-07-01
 
 **Non-vacuity ctl-only-wrappers - two checks' own FAIL paths made load-bearing (fail-closed).**

@@ -39,6 +39,7 @@ DEBUGGING_SKILL_FILE="${ORCH_LOOP_DEBUGGING_SKILL:-skills/debugging/SKILL.md}"
 EVALS_SKILL_FILE="${ORCH_LOOP_EVALS_SKILL:-skills/evals/SKILL.md}"
 DISCOVERY_SKILL_FILE="${ORCH_LOOP_DISCOVERY_SKILL:-skills/continuous-discovery/SKILL.md}"
 OPERATING_SKILL_FILE="${ORCH_LOOP_OPERATING_SKILL:-skills/operating/SKILL.md}"
+BUILD_SKILL_FILE="${ORCH_LOOP_BUILD_SKILL:-skills/build/SKILL.md}"
 REVIEWER_DEF="${ORCH_LOOP_REVIEWER_DEF:-agents/reviewer.agent.md}"
 ENGINEER_DEF="${ORCH_LOOP_ENGINEER_DEF:-agents/engineer.agent.md}"
 ORCH_DEF="${ORCH_LOOP_ORCH_DEF:-agents/orchestrator.agent.md}"
@@ -69,6 +70,7 @@ debugging${TAB}name: debugging|root cause|reproduce|regression test|one hypothes
 evals${TAB}name: evals|eval-driven|judge|red-team|threshold${TAB}eng:eval-driven build not wired to the Engineer;sec:red-team/safety lens not wired to the Security-reviewer
 continuous-discovery${TAB}name: continuous-discovery|discovery partner|outcome over output|opportunity solution tree|riskiest assumption|small bet${TAB}orch:Product hat not wired
 operating${TAB}name: operating|blast radius|advisory, not actuating|the human commands the catastrophic action|autonomy tier|surface, don't actuate${TAB}orch:Ops hat not wired to the Orchestrator
+build${TAB}name: build|fresh executor per task|task brief as a file|review between tasks|durable ledger|whole-branch review${TAB}orch:build skill not wired to the Orchestrator
 TABLE
 }
 
@@ -85,6 +87,7 @@ skill_path() {
     evals) echo "$EVALS_SKILL_FILE" ;;
     continuous-discovery) echo "$DISCOVERY_SKILL_FILE" ;;
     operating) echo "$OPERATING_SKILL_FILE" ;;
+    build) echo "$BUILD_SKILL_FILE" ;;
     *) echo "" ;;
   esac
 }
@@ -234,7 +237,7 @@ if [ "${1:-}" = "--selftest" ]; then
     ORCH_LOOP_SKILL="$t/skills/design/SKILL.md" ORCH_LOOP_PLAN_SKILL="$t/skills/plan/SKILL.md" ORCH_LOOP_TDD_SKILL="$t/skills/tdd/SKILL.md" \
     ORCH_LOOP_REVIEW_SKILL="$t/skills/review/SKILL.md" ORCH_LOOP_WORKTREES_SKILL="$t/skills/worktrees/SKILL.md" ORCH_LOOP_VBC_SKILL="$t/skills/verification/SKILL.md" \
     ORCH_LOOP_KEYSTONE="$t/skills/using-skills/SKILL.md" ORCH_LOOP_DEBUGGING_SKILL="$t/skills/debugging/SKILL.md" ORCH_LOOP_EVALS_SKILL="$t/skills/evals/SKILL.md" \
-    ORCH_LOOP_DISCOVERY_SKILL="$t/skills/continuous-discovery/SKILL.md" ORCH_LOOP_OPERATING_SKILL="$t/skills/operating/SKILL.md" \
+    ORCH_LOOP_DISCOVERY_SKILL="$t/skills/continuous-discovery/SKILL.md" ORCH_LOOP_OPERATING_SKILL="$t/skills/operating/SKILL.md" ORCH_LOOP_BUILD_SKILL="$t/skills/build/SKILL.md" \
     ORCH_LOOP_ORCH_DEF="$t/agents/orchestrator.agent.md" ORCH_LOOP_ENGINEER_DEF="$t/agents/engineer.agent.md" \
     ORCH_LOOP_REVIEWER_DEF="$t/agents/reviewer.agent.md" ORCH_LOOP_SECURITY_DEF="$t/agents/security.agent.md" \
     sh "$0" >/dev/null 2>&1 || rc=$?
