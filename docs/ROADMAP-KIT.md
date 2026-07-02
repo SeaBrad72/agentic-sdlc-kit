@@ -8,21 +8,20 @@ The kit's **own backlog** (dogfooding `DEVELOPMENT-PROCESS.md` §6). Each remain
 
 ---
 
-## ★ Priority sequence (2026-06-29, owner-approved)
+## ★ Priority sequence (2026-07-02, owner-approved — post self-evaluation)
 
-The theme: **clean the board → lay the governance foundation → de-risk the one compounding smell → fix integrity defects → validate teams → resume feature/depth epics → capstone.** Each feature epic enters Build only on an affirmative per-epic meta-control verdict.
+The board has **collapsed to two adoption-bridge frontiers, then validation, then polish.** Everything earlier is shipped (see `CHANGELOG.md` / `git log`). A 10-lens adversarial **self-evaluation (2026-07-02) graded the kit B+/B (84)** — A-grade core (executable self-proving conformance, fail-closed guard, honesty-as-a-feature), held back by a *self-inflicted credibility cluster* (now partly retired by the hygiene chore) and **zero external adopters**. The eval's #1 directive: **get a real adopter; freeze the E-series.** The three-bucket forward plan — **BUILD → PROVE → OPTIMIZE**:
 
-1. **Roadmap rewrite** *(this file — housekeeping, done 2026-06-29).*
-2. **Proportional Promotion Contract — Slice 1** (model/standards keystone) *(done 2026-06-29, v3.76.0)*. The governance foundation; changes how all later work is governed; low-risk authoring.
-3. **`orchestrator-loop-wired.sh` refactor** *(✅ done, v3.77.0, panel #28)* — the one real refactoring candidate; behaviour-preserving (1064→333 lines), differential-characterization-proven.
-4. **T4 — CI-trust blockers** (honest integrity defects).
-5. **Proportional Promotion Contract — Slices 2–4** (enforcement; guard-touching slices last, sequenced by risk).
-6. **T2-team-live** (needs a 2nd forge identity; validates the contract's team side).
-7. **E6 (AI-native eval depth) · E1-full (test-battery breadth) · E5-full** (the depth epics).
-8. **E7 / E9 / E11 scoping brainstorms** (clarify what's genuinely left — some may be near-done).
-9. **E10 capstone** (the 1.0 right-weight gate, last).
+1. **Kit hygiene** *(✅ done, v3.92.0 chore #241)* — removed stray fixtures (`foo`/`fo.bar`), untracked `scratchpad/`, gitignored `.nv-*`, refreshed this roadmap.
+2. **BUILD · Deployment-PLATFORM adoption axis** ← **NEXT.** The missing 3rd concretization axis (stack ✓, harness ✓, **deploy-target ✗**). A *neutral* obligations-contract + an adopter-filled `DEPLOYMENT-ENVIRONMENT` manifest — **the kit owns the questions, the adopter owns the answers** (AWS/K8s/Azure/multi-cloud fall out; runtime containment stays correctly org-owned). Run through the kit's own design→plan→build loop. Reference shape: `docs/adoption/` beside `brownfield.md`, surfaced at Inception.
+3. **BUILD · TEAM axis (T2-team-live)** — prove separation-of-duties with a real 2nd forge identity (**the load-bearing gap** — the differentiating promise has never run; §13 red-by-design on a single-owner repo). Owner-provisioning-blocked (2nd identity + `enforce_admins` repo). Collaborative — expect owner↔agent back-and-forth.
+4. **PROVE · Dogfood a real product** — the owner builds a *real* (non-synthetic) product with the complete kit = the adopter = the test. Its real friction **drives** steps 5–6 (not more self-audit). If built with the 2nd identity, this is also the team validation in real use.
+5. **Re-run the self-evaluation** (`~/.claude/workflows/kit-evaluation.js`, personal maintainer tool) on the post-epic, dogfood-exercised kit.
+6. **OPTIMIZE · Full cleanup** — de-inflate the headline check-count (40 lines → 32 unique scripts; collapse the 3 duplicate `verify.sh` lines), collapse the 6-script observability family to one token-table check, add a model-id single-source seam + drift check, move `verify.sh` toward self-registration, mark the 5 unexecuted profiles experimental. Informed by 4 + 5.
 
-**Release-line:** stay on the **3.x line**; **1.0 is gated on feature-complete + E10 + a real external adopter** (the kit is pre-adoption; n=2 synthetic). Internal milestone count does not gate 1.0.
+**Release-line:** stay on the **3.x line**. **1.0 is gated on feature-complete (platform + team) + a real EXTERNAL adopter** (distinct from the owner-dogfood — only a stranger catches author blind-spots) **+ the final right-weight pass.** Internal milestone count does not gate 1.0.
+
+**Banked** — E3-remaining (agentic *mechanics*, not roles): cross-session **agent-memory** · explicit **phase→agent** state machine. E7: **audit-evidence-export** (gated on a real audit). Plus the eval's medium fixes: run gitleaks on the kit's own tree; a narrative-count coherence lock; move `guard-core.sh` out of `/.claude/`.
 
 ---
 
