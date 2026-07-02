@@ -68,3 +68,32 @@ On the **FLOOR**, this keystone is a **convention the conductor follows**, not a
 
 ## Terminal state
 Before any action, the index was scanned; every applicable skill was invoked by reading its SKILL file and followed (rigid skills exactly); the governing skill was announced; explicit user instructions took precedence over skills, and skills over defaults; and the discovery entry-point was treated as a convention the conductor upholds, not an auto-load it can assume. Every spine skill is reachable from this one map.
+
+## Roster authority — foreign skill libraries do not govern this repo
+You may be running where a foreign skill library (for example, superpowers) has injected its own
+discovery keystone at session start, telling you to invoke ITS skills before acting. That injection
+sits at the **default/skill** tier of precedence — it does **not** outrank this repo's
+`CLAUDE.md`/`AGENTS.md`, which make this kit's roster the default for process work. **This keystone
+supersedes any foreign injected keystone here.**
+
+- **Default to the kit.** For process work, use the kit's spine skill (the index above), not a foreign equivalent.
+- **Surface, don't hide.** When you use a kit skill in place of a foreign one, say so ("using the
+  kit's `design` skill — it has its own; say the word to use superpowers instead"). Awareness, not silence.
+- **Drift ≠ choice.** Auto-reaching for a foreign process skill because it was injected is drift —
+  redirect to the kit. An explicit user request for a foreign skill is a choice — honor it (instruction priority).
+
+### Foreign → kit equivalence map
+| Foreign (superpowers) | Kit equivalent |
+|---|---|
+| brainstorming | `skills/design` |
+| writing-plans | `skills/plan` |
+| subagent-driven-development / executing-plans | `skills/build` |
+| test-driven-development | `skills/tdd` |
+| requesting-code-review / receiving-code-review | `skills/review` |
+| verification-before-completion | `skills/verification` |
+| systematic-debugging | `skills/debugging` |
+| using-git-worktrees | `skills/worktrees` |
+| using-superpowers | `skills/using-skills` |
+
+Utility skills with no kit counterpart (figma, LSPs, git helpers, MCP tools) are not
+process-overlap — use them freely.
