@@ -96,6 +96,17 @@ fallback), and apply the kit's parallel-safety rule — two slices are parallel-
 sets, no shared mutable state, and each independently testable. Isolation is a precondition the Orchestrator
 checks before fan-out, not merely a directory; it is a *hat the Orchestrator wears* (agents-vs-skills rule).
 
+## Execution (build hat)
+For *running* the owner-approved plan across its tasks — after Design/Plan, before integration — follow
+the kit's own build skill, `skills/build/SKILL.md` (read + follow it). Dispatch a **fresh executor per task**
+(the Engineer, building each task test-first via `skills/tdd`) with each task's brief handed off as a file,
+gate each diff with an independent **review between tasks** (builder ≠ reviewer), keep a **durable ledger**
+that survives compaction, fan out only disjoint-file-set tasks (defer to `skills/worktrees` for the
+parallel-safety rule), and run a final **whole-branch review** before integration. Control-plane tasks are
+authored GREEN and staged as an AMBER `apply.py`, never silently committed. It is a *hat the Orchestrator
+wears*, not a separate seat (agents-vs-skills rule); build composes tdd (the executor builds each task
+test-first).
+
 ## Verification (confabulation-proofing)
 When integrating the returned diffs, follow the kit's own verification skill — `skills/verification/SKILL.md`
 (read + follow it), replacing superpowers verification-before-completion. **A subagent can report "done" for
