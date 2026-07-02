@@ -5,6 +5,18 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versioning: [S
 
 > Claim verbs ("proven"/"PROVEN") are scoped to the reference implementation unless an entry states broader coverage — see [MAINTAINING.md §3](MAINTAINING.md#3-releasing-platform-team).
 
+
+## [3.86.0] - 2026-07-01
+
+**Non-vacuity ctl-only-wrappers - two checks' own FAIL paths made load-bearing (fail-closed).**
+
+### Changed
+- **`conformance/shellcheck.sh` + `conformance/runaway-killswitch-wired.sh`** each gain a **fail-closed meta-fixture** in their `--selftest`: the check's own FAIL path (`run()`'s `return 1`; `fail()`'s `exit 1`) is now exercised by a deliberately-failing input, with the assertion's abort placed in the oracle region so the non-vacuity mutation cannot neuter the detector. Both flip from `UNCOVERED (CTL-only)` to **KILLED**.
+- Non-vacuity live sweep: `26 killed · 0 survived · 5 uncovered (of 31)` -> **`28 killed · 0 survived · 3 uncovered (of 31)`** + 1 SKIPPED. This **completes the non-vacuity topic**: the 3 remaining UNCOVERED (`check-links` sibling teeth, `proportional-gate-wired` teeth-in-selftest, `mode-enforcement-blind` self-scan) are structural and left honest.
+
+### Notes
+- Honest ceiling: the meta-fixtures prove each check **fails closed** (its own error path aborts), not that its assertions are complete. No new mutation operators, no new claim, no guard change; `verify --require` unchanged at 39/0.
+
 ## [3.85.0] - 2026-07-01
 
 **Non-vacuity operator-widening - region-model + target_set refinement (drives UNCOVERED down honestly).**

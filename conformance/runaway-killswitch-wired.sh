@@ -32,6 +32,16 @@ selftest() {
   _desc="reset clears";           mkcfg 1000 10 5 80; : >"$tally"; R step --tokens 500 --agents 1 >/dev/null 2>&1; R reset --tally "$tally" >/dev/null 2>&1; expect 0 R check
   _desc="missing flag value -> 2"; mkcfg 1000 10 5 80; : >"$tally"; expect 2 R step --tokens
   _desc="empty flag value -> 2";   mkcfg 1000 10 5 80; : >"$tally"; expect 2 R step --tokens "" --agents 1
+  # fail-closed: prove fail() actually ABORTS on a false expectation — proves fail()'s `exit 1` is load-bearing.
+  # Run a deliberately-false expectation in a SUBSHELL and observe its exit code. The abort here is a direct
+  # `exit 1` (oracle region — non-vacuity never neuters it), NOT fail() (routing it through fail() is circular:
+  # the mutation neuters fail(), so the detector would be neutered too and the mutant would survive).
+  # NOTE: capture the subshell's exit status via the `&&`/`||` idiom (as `expect` itself does above), NOT a
+  # bare `cmd; rc=$?` — under `set -eu` a plain failing command aborts the WHOLE script before `rc=$?` is ever
+  # reached (verified: dash/bash/sh all exit immediately at the failing simple command), which would silently
+  # break --selftest on every ordinary (unmutated) run, not just the mutant.
+  ( _desc="fail-closed meta"; expect 0 false ) >/dev/null 2>&1 && _mrc=0 || _mrc=$?
+  [ "$_mrc" != 0 ] || { echo "FAIL: fail() did not abort on a false expectation (fail-closed broken)" >&2; exit 1; }
   echo "runaway-killswitch-wired: selftest OK"
 }
 

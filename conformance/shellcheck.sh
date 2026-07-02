@@ -52,6 +52,15 @@ selftest() {
   if shellcheck -s sh -S warning "$d/dirty.sh" >/dev/null 2>&1; then
     echo "selftest FAIL: dirty fixture not flagged"; return 1
   fi
+  # fail-closed: run() must FAIL on a tree containing a dirty shell file — proves run()'s own `return 1` is
+  # load-bearing, not just that the shellcheck tool works. Runs in a temp cwd so collect() globs the fixture.
+  # The `return 1` below is INSIDE selftest() (oracle region) so non-vacuity never neuters it (non-circular).
+  dd=$(mktemp -d); mkdir -p "$dd/conformance"
+  printf '#!/bin/sh\nx=$1\nif [ "$x" == "bad" ]; then echo bad; fi\n' > "$dd/conformance/dirty.sh"  # SC3014
+  # if/else (not `(...); _rrc=$?`) so the subshell's expected non-zero exit doesn't trip this
+  # script's own `set -eu` before the exit code can be captured.
+  if ( cd "$dd" && run >/dev/null 2>&1 ); then _rrc=0; else _rrc=$?; fi
+  [ "$_rrc" != 0 ] || { echo "selftest FAIL: run() did not fail on a dirty tree (fail-closed broken)"; return 1; }
   echo "shellcheck --selftest: OK (clean passes, dirty fails; fixtures left in $d)"
   return 0
 }
