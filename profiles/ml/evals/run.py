@@ -86,7 +86,9 @@ def main(argv=None) -> int:
         rubric = c.get("rubric", "")
         s = judge.score(prompt, candidate, expected, rubric)
         total += s
-        mark = "ok  " if s >= 1.0 else "MISS"
+        # Graded judges score in (0,1); only a zero is a clear MISS, a full 1.0 a clear ok,
+        # anything between is a partial — a flat binary label would misread a graded judge.
+        mark = "ok  " if s >= 1.0 else ("MISS" if s <= 0.0 else "part")
         print(f"  [{mark}] {c.get('id', '?')}: got={candidate!r} expected={expected!r} score={s:.2f}")
 
     mean = total / len(cases)

@@ -106,7 +106,10 @@ class ClaudeJudge:
 
     @staticmethod
     def _parse_score(text: str) -> float:
-        match = re.search(r"[01](?:\.\d+)?|0?\.\d+", text.strip())
+        # Match a full signed decimal FIRST (not a [01] fragment), so an out-of-range
+        # reply is parsed whole and then clamped — "2.5" -> 1.0, "-0.4" -> 0.0 — rather
+        # than a fragment ("2.5" -> ".5") silently mis-scoring a miscalibrated judge.
+        match = re.search(r"-?\d+(?:\.\d+)?|-?\.\d+", text.strip())
         if not match:
             raise ValueError(f"could not parse a 0..1 score from judge reply: {text!r}")
         value = float(match.group(0))

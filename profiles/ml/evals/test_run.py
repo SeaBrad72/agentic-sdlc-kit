@@ -118,5 +118,24 @@ class ClaudeJudgeIndependenceTest(unittest.TestCase):
         self.assertEqual(j.judge_model, judges.PINNED_JUDGE_MODEL)
 
 
+class ParseScoreTest(unittest.TestCase):
+    """Out-of-range / garbage judge replies are parsed whole then clamped, not fragmented."""
+
+    def test_in_range(self):
+        self.assertEqual(judges.ClaudeJudge._parse_score("0.75"), 0.75)
+        self.assertEqual(judges.ClaudeJudge._parse_score(".5"), 0.5)
+
+    def test_over_and_under_range_clamp(self):
+        self.assertEqual(judges.ClaudeJudge._parse_score("2.5"), 1.0)   # not the ".5" fragment
+        self.assertEqual(judges.ClaudeJudge._parse_score("-0.4"), 0.0)  # sign not dropped
+
+    def test_embedded_number(self):
+        self.assertEqual(judges.ClaudeJudge._parse_score("score: 1 star"), 1.0)
+
+    def test_unparseable_raises(self):
+        with self.assertRaises(ValueError):
+            judges.ClaudeJudge._parse_score("no number here")
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)
