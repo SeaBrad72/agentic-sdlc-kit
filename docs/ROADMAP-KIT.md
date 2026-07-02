@@ -65,7 +65,7 @@ Holistic right-weight audit on the finished kit + one comprehensive end-to-end v
 ### Loosely scoped — need a per-epic M brainstorm before they're "real"
 - **E7 — best-practice & supply-chain adherence:** SAST/DAST completeness, SBOM/SLSA completion, secrets-at-scale (Vault/KMS) proven, enterprise-scale RBAC/compliance. *May be substantially done already (semgrep SAST, partial SLSA, `supply-chain-verify.sh` shipped) — brainstorm to find what's genuinely left.*
 - **E9 — environment-promotion vertical (≤2 slices):** config-as-code + least-privilege detective verification reference (the env model already exists).
-- **E11 — AI-artifact lifecycle / audit vertical (≤2 slices):** artifact provenance/audit trail. *May be absorbed by E6 — brainstorm to confirm it's distinct.*
+- **E11 -- AI-artifact lifecycle / audit:** ✅ RESOLVED v3.92.0 -- one slice: produced-artifact lineage template (`templates/AI-ARTIFACT-LINEAGE-TEMPLATE.md`) + doc-coherence lock (`conformance/artifact-lineage-ready.sh`). Distinct per-*output* altitude; not absorbed by E6.
 
 ### R — Refactoring
 Scoped down to essentially **one real slice** (see Refactoring lens below): make `orchestrator-loop-wired.sh` data-driven. The broader "area-by-area refactor capstone" is small by design (continuous right-weighting kept the kit clean).

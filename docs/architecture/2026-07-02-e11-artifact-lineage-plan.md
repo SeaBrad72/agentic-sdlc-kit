@@ -13,7 +13,7 @@
 
 ## The 6 load-bearing markers (pinned — identical strings in template AND lock)
 
-`Artifact version` · `Producing model` · `Prompt/template version` · `Input dataset version` · `Eval score` · `Human sign-off`. The lock greps each with `grep -qiF` (case-insensitive, fixed-string); each must be a verbatim substring of the template. **Marker parity is the slice's key risk — both tasks use these exact strings.**
+`Artifact version` · `Model ID + version` · `Prompt/template version` · `Input dataset version` · `Eval score` · `Human sign-off`. The lock greps each with `grep -qiF` (case-insensitive, fixed-string); each must be a verbatim substring of the template. **Marker parity is the slice's key risk — both tasks use these exact strings.** *(§2's marker was strengthened from the heading `Producing model` to the field label `Model ID + version` per T1+T2 review finding 2, so it protects the real field, not just the heading.)*
 
 ## File structure map
 
@@ -34,7 +34,7 @@
 
 **TDD.**
 1. Write the failing test first — a throwaway assertion the engineer runs:
-   `for m in "Artifact version" "Producing model" "Prompt/template version" "Input dataset version" "Eval score" "Human sign-off"; do grep -qiF "$m" templates/AI-ARTIFACT-LINEAGE-TEMPLATE.md || echo "MISSING: $m"; done`
+   `for m in "Artifact version" "Model ID + version" "Prompt/template version" "Input dataset version" "Eval score" "Human sign-off"; do grep -qiF "$m" templates/AI-ARTIFACT-LINEAGE-TEMPLATE.md || echo "MISSING: $m"; done`
    Run it → every marker prints MISSING (file absent). Confirms the test bites.
 2. Author the template (exact content):
    ```markdown
@@ -46,7 +46,8 @@
    > and the `EVAL-PLAN.md` (which describes the tests).
    >
    > **Honest ceiling:** this record is an attestation. `conformance/artifact-lineage-ready.sh`
-   > checks it is present and structurally complete — it cannot verify the values are accurate.
+   > checks it is present and carries its six load-bearing marker phrases — it cannot verify the
+   > fields are filled or the values accurate.
    > Accuracy is the signer's responsibility (§6).
 
    ## 1. Artifact
@@ -98,7 +99,7 @@
 4. Run the main path against the real template: `LINEAGE_DOC=templates/AI-ARTIFACT-LINEAGE-TEMPLATE.md sh scratchpad/e11/artifact-lineage-ready.sh` → OK.
 5. `dash -n scratchpad/e11/artifact-lineage-ready.sh && shellcheck scratchpad/e11/artifact-lineage-ready.sh` → clean (the subagent-shell lint scar).
 
-**Honest ceiling (task):** the lock proves the template is present + structurally complete; it cannot prove adopter values are accurate. State this in the script header verbatim.
+**Honest ceiling (task):** the lock proves the template is present + carries its six load-bearing marker phrases; it cannot prove the fields are filled or adopter values accurate. State this in the script header verbatim.
 
 ## Task 3 (AMBER, serial after 2) — wiring, apply.py, version finishing
 
