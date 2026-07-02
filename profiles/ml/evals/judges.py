@@ -42,6 +42,21 @@ _MAX_JUDGE_TOKENS = 16
 _CANDIDATE_FENCE = "<<<CANDIDATE_UNTRUSTED>>>"
 
 
+def _strip_fence(text) -> str:
+    """Remove every fence token from ``text``, to a FIXED POINT.
+
+    A single-pass ``str.replace`` is non-overlapping, so an OVERLAPPING construction
+    — ``FENCE[:k] + FENCE + FENCE[k:]`` — would have its inner token removed and the
+    two halves rejoin into a fresh, valid fence (breakout). Looping until no fence
+    remains closes that hole: the result provably contains zero fence tokens, so
+    wrapping it yields EXACTLY two (open + close) regardless of candidate content.
+    """
+    text = str(text)
+    while _CANDIDATE_FENCE in text:
+        text = text.replace(_CANDIDATE_FENCE, "")
+    return text
+
+
 class ExactMatchJudge:
     """Exact-match rubric (1.0/0.0). Ignores the rubric. Offline. The DEFAULT judge."""
 
@@ -100,8 +115,8 @@ class ClaudeJudge:
         regardless of candidate content, and name the fenced region untrusted data to
         grade, never as instructions.
         """
-        # Neutralize breakout: a malicious candidate cannot forge the closing fence.
-        fenced = str(candidate).replace(_CANDIDATE_FENCE, "")
+        # Neutralize breakout to a fixed point (handles overlapping fence constructions).
+        fenced = _strip_fence(candidate)
         return (
             "You are an impartial eval judge. Given the task prompt, a candidate answer, "
             "the expected/reference answer, and a rubric, reply with a single number in "

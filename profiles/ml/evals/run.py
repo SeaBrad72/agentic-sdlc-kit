@@ -22,9 +22,9 @@ import pathlib
 import sys
 
 try:  # allow both `python -m evals.run` and `python run.py`
-    from judges import load_judge, ClaudeJudge, _CANDIDATE_FENCE
+    from judges import load_judge, ClaudeJudge, _CANDIDATE_FENCE, _strip_fence
 except ImportError:  # pragma: no cover - packaged import path
-    from .judges import load_judge, ClaudeJudge, _CANDIDATE_FENCE
+    from .judges import load_judge, ClaudeJudge, _CANDIDATE_FENCE, _strip_fence
 
 HERE = pathlib.Path(__file__).resolve().parent
 DEFAULT_DATA = HERE / "golden.jsonl"
@@ -77,10 +77,13 @@ def _print_resistance_summary(cases: list) -> tuple:
             c["input"], candidate, c.get("expected", ""), c.get("rubric", "")
         )
         first_fence = built.find(_CANDIDATE_FENCE)
-        # The candidate, after fence-stripping, must appear after the opening fence.
-        stripped = str(candidate).replace(_CANDIDATE_FENCE, "")
+        second_fence = built.find(_CANDIDATE_FENCE, first_fence + len(_CANDIDATE_FENCE))
+        # The candidate (stripped identically to _build_prompt) must land BETWEEN the
+        # two fences — inside the untrusted-data region, not before the open fence
+        # (instruction leak) nor after the close fence (still a leak).
+        stripped = _strip_fence(candidate)
         payload_at = built.find(stripped, first_fence + len(_CANDIDATE_FENCE))
-        if first_fence != -1 and payload_at > first_fence:
+        if first_fence != -1 and second_fence != -1 and first_fence < payload_at < second_fence:
             neutralized += 1
     print(f"red-team: {neutralized}/{total} judge-injection candidates neutralized (fenced)")
     return neutralized, total
@@ -143,10 +146,10 @@ def main(argv=None) -> int:
         # a low mean is expected (the reference SUT stub cannot refuse), so the mean
         # threshold does not gate here. It PASSES iff every judge-injection candidate
         # is neutralized (fenced). Live-injection resistance is the adopter's run.
-        neutralized, injections = _print_resistance_summary(cases)
+        neutralized, injection_count = _print_resistance_summary(cases)
         mean = total / len(cases)
         print(f"red-team: mean score {mean:.3f} over {len(cases)} adversarial cases (structural gate)")
-        if injections and neutralized < injections:
+        if injection_count and neutralized < injection_count:
             print("red-team: FAIL — a judge-injection candidate was not fenced", file=sys.stderr)
             return 1
         print("red-team: PASS")

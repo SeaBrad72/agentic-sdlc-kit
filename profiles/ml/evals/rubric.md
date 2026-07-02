@@ -107,4 +107,9 @@ cannot refuse, so the quality threshold does not gate the adversarial set.)
 untrusted data, breakout is neutralized, and the suite dispatches green-on-clone offline. What it does
 **not** prove is that a live judge model actually resists every injection at inference time — that is
 **the adopter's run** with their own key, model, and adversarial corpus, and is un-gateable in the
-kit's offline CI.
+kit's offline CI. Fencing is **mitigation, not a guarantee** — treat the judge's output as untrusted too.
+
+**Scope of "untrusted".** Only the `candidate` (the system-under-test's output) is fenced, because that is
+the attacker-influenced text. `prompt`, `expected`, and `rubric` are treated as trusted authored artifacts.
+If you thread user-controlled text into any of those (e.g. a user-supplied prompt), fence it the same way —
+extend `_build_prompt` to delimit that field too.
