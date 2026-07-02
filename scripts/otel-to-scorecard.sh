@@ -36,7 +36,14 @@ map_trace() {
           "review.rounds": ((.attributes["review.rounds"] // "0") | tonumber? // 0),
           steps: [ { outcome: (if $denied then "denied" else $run end),
                      retries: ((.attributes.retries // "0") | tonumber? // 0) } ]
-        } ]' "$1"
+        }
+      # exclude-unknown: merge .cost / .["eval.score"] ONLY when the attribute is present and numeric.
+      # Omit the key entirely when absent — never default to 0 (honesty rule, agent-scorecard.sh).
+      + (if (.attributes["gen_ai.usage.cost"] | (. != null and (tonumber? != null)))
+           then {cost: (.attributes["gen_ai.usage.cost"] | tonumber)} else {} end)
+      + (if (.attributes["eval.score"] | (. != null and (tonumber? != null)))
+           then {"eval.score": (.attributes["eval.score"] | tonumber)} else {} end)
+      ]' "$1"
 }
 
 selftest() {
@@ -51,9 +58,15 @@ selftest() {
   for k in '"agent.id"' '"outcome"' '"steps"' '"start"'; do
     [ "$(printf '%s' "$out" | jq "all(has($k))")" = "true" ] || { echo "FAIL: missing $k"; st_fail=1; }
   done
+  # exclude-unknown mapping: a span carrying gen_ai.usage.cost / eval.score -> record has .cost + .["eval.score"];
+  # a span WITHOUT those attributes OMITS the keys entirely (never coerced to 0).
+  [ "$(printf '%s' "$out" | jq '[.[]|select((.cost|type=="number") and (.["eval.score"]|type=="number"))]|length')" -ge 1 ] \
+      || { echo "FAIL: cost/eval.score not mapped when present"; st_fail=1; }
+  [ "$(printf '%s' "$out" | jq '[.[]|select((has("cost")|not) and (has("eval.score")|not))]|length')" -ge 1 ] \
+      || { echo "FAIL: cost/eval.score not omitted when absent (exclude-unknown violated)"; st_fail=1; }
   # (the REAL scorecard end-to-end proof lives in Step 4, not the selftest)
   [ "$st_fail" -eq 0 ] || { echo "otel-to-scorecard --selftest: FAIL" >&2; return 1; }
-  echo "otel-to-scorecard --selftest: OK (3 child records, denied mapped, required fields)"; return 0
+  echo "otel-to-scorecard --selftest: OK (3 child records, denied mapped, required fields, cost/eval exclude-unknown)"; return 0
 }
 
 case "${1:-}" in

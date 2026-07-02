@@ -6,6 +6,21 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versioning: [S
 > Claim verbs ("proven"/"PROVEN") are scoped to the reference implementation unless an entry states broader coverage — see [MAINTAINING.md §3](MAINTAINING.md#3-releasing-platform-team).
 
 
+## [3.90.0] - 2026-07-02
+
+**E6-c — LLM cost/quality tracing loop (AI-native eval depth).**
+
+### Added
+- **`scripts/agent-scorecard.sh`** gains two LLM dimensions — `cost_per_run` + `eval_score_mean` — and two regression triggers feeding the existing auto-downgrade tier directive: a **cost spike** (`recent > baseline * (1 + --cost-margin)`, default 0.25) and a **quality drop** (`baseline_eval - recent_eval >= --margin`). Both follow the exclude-unknown rule (a metric is `null` when no run carries the field — never 0; a trigger fires only when the field is present in both trailing halves).
+- **`scripts/otel-to-scorecard.sh`** maps `gen_ai.usage.cost` -> `.cost` and `eval.score` -> `.["eval.score"]` (OTel GenAI-semconv-aligned; adopter-supplied currency-agnostic number — no embedded pricing; keys omitted when the attribute is absent).
+- Fixtures: `cost-spike-bot` + `quality-drop-bot` (each regresses via exactly one new dimension); cost/eval attributes on the OTel sample.
+
+### Changed
+- **`conformance/agentops-sensor-wired.sh`** now runs `agent-scorecard.sh --selftest` (the 5th sensor selftest) so the cost/quality logic has `verify --require` coverage.
+
+### Notes
+- Honest ceiling: computation + mapping + regression are proven on synthetic fixtures; real cost/quality measurement is the adopter's live run (the kit's CI never calls a live provider). Not build-ahead — extends the shipped scorecard + directive + sensor lock; the prerequisite half of the banked auto-GO-scorecard-live item. `verify --require` unchanged at 40 controls (the `agentops-sensor` control was extended, no new claim). LLM-neutral (no Claude-specificity).
+
 ## [3.89.0] - 2026-07-02
 
 **E6-b — judge prompt-injection defense + red-team reference (AI-native eval depth).**
