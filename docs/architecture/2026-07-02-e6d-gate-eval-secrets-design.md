@@ -11,7 +11,7 @@ Fill the one gap in the kit's AI-secret story: a written **gate-eval secret-hand
 
 ## Why this is a reference, not a scanner (the honest scope)
 
-The kit's **`secret-scan` gate is required and non-waivable** (`DEVELOPMENT-STANDARDS.md` §218) with no `profiles/` exclusion, so a hardcoded key committed into the eval runner/plan is **already caught**. Building a new eval-specific secret scanner would be redundant (proven-but-already-covered). The genuine gap: `docs/operations/secrets-for-ai.md` today shows only static `gh secret set` and *points at* `secrets-at-scale.md` for OIDC — there is no written OIDC/short-lived-credential guidance for the **eval runner** specifically. E6-d writes that reference and locks its presence. (The roadmap literally says "gate-eval secret-exposure **reference** (C5).")
+The kit's **`secret-scan` gate is required and non-waivable** (`DEVELOPMENT-STANDARDS.md` line 218, the Brownfield-exception clause) with no `profiles/` exclusion, so a hardcoded key committed into the eval runner/plan is **already caught**. Building a new eval-specific secret scanner would be redundant (proven-but-already-covered). The genuine gap: `docs/operations/secrets-for-ai.md` today shows only static `gh secret set` and *points at* `secrets-at-scale.md` for OIDC — there is no written OIDC/short-lived-credential guidance for the **eval runner** specifically. E6-d writes that reference and locks its presence. (The roadmap literally says "gate-eval secret-exposure **reference** (C5).")
 
 ## What ships (slice 4)
 

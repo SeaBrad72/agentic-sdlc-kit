@@ -66,8 +66,11 @@ mints that credential securely and keeps it out of the repo. Handle it like this
   its signed workload identity to the provider (or to a managed secrets store /
   cloud broker) and receives a **short-lived** token scoped to that run.
   Restrict the federation to the trusted context — **push-to-main** — so a fork
-  PR or feature branch can never mint the credential. A short-lived,
-  context-bound token beats a long-lived key that lingers in CI settings.
+  PR or feature branch can never mint the credential. Enforce that restriction in
+  the **OIDC trust policy's subject (`sub`) condition** (e.g. bind to
+  `ref:refs/heads/main`), not merely in the workflow's trigger — the trust policy
+  is the real enforcement point. A short-lived, context-bound token beats a
+  long-lived key that lingers in CI settings.
 - **The key is never embedded.** No hardcoded credential belongs in the repo,
   the built image, the eval runner, the eval plan, or the logs — the token is
   minted at run time and expires. Nothing durable is written down.
