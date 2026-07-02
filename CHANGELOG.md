@@ -6,6 +6,18 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versioning: [S
 > Claim verbs ("proven"/"PROVEN") are scoped to the reference implementation unless an entry states broader coverage — see [MAINTAINING.md §3](MAINTAINING.md#3-releasing-platform-team).
 
 
+## [3.92.0] - 2026-07-02
+
+**E11 -- produced-artifact lineage template + doc-coherence lock (closes E11).**
+
+### Added
+- **`templates/AI-ARTIFACT-LINEAGE-TEMPLATE.md`** -- an AI-artifact lineage record that ties a produced AI output/model/dataset back to the model, prompt/template, input datasets, eval score, and human sign-off that made it (the six load-bearing fields).
+- **`conformance/artifact-lineage-ready.sh`** (new `check doc` `artifact-lineage`, kit-self) -- a doc-coherence lock asserting the lineage template carries its six load-bearing markers; `--selftest` = anchor + 6 load-bearing negatives. 14 -> 15 doc-checks; control count unchanged at 40 (doc-checks aren't claims -- no claims-registry edit).
+
+### Notes
+- Honest ceiling: a green run proves the template is PRESENT and carries its six load-bearing marker phrases (guards the kit's own template against a field being silently dropped); it does NOT prove those fields are filled, nor that a real artifact's stated lineage is accurate (that is the signer's responsibility).
+- **E11 RESOLVED at one slice** -- produced-artifact lineage is a distinct per-*output* altitude, NOT absorbed by E6 (which governs the eval/judge/cost seam, not the produced-artifact->origin chain).
+
 ## [3.91.0] - 2026-07-02
 
 **E6-d — gate-eval secret-exposure reference (C5) — CLOSES epic E6 (AI-native eval depth).**

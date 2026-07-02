@@ -109,6 +109,7 @@ check doc     security-policy sh conformance/security-policy.sh
 check doc     privacy-ready   sh conformance/privacy-ready.sh
 check doc     feature-flags-ready sh conformance/feature-flags-ready.sh
 check doc     gate-eval-secrets sh conformance/gate-eval-secrets-ready.sh
+check doc     artifact-lineage sh conformance/artifact-lineage-ready.sh
 
 echo ""
 printf 'Summary: %d control-checks · %d doc-checks · %d unverified · %d failed\n' "$controls" "$docs" "$unverified" "$failed"
