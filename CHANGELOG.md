@@ -6,6 +6,18 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versioning: [S
 > Claim verbs ("proven"/"PROVEN") are scoped to the reference implementation unless an entry states broader coverage — see [MAINTAINING.md §3](MAINTAINING.md#3-releasing-platform-team).
 
 
+## [3.88.0] - 2026-07-01
+
+**E6-a — pluggable eval-judge seam + pinned Claude reference adapter (AI-native eval depth).**
+
+### Added
+- **`profiles/ml/evals/judges.py`** — a provider-neutral pluggable judge seam (`score(prompt, candidate, expected, rubric)`) with three reference judges: `ExactMatchJudge` (offline default), `FakeRubricJudge` (offline, rubric-shaped — exercises the seam green-on-clone), and `ClaudeJudge` (the pinned, independent reference adapter: lazily imports the `anthropic` SDK, pins `PINNED_JUDGE_MODEL` at `temperature=0`, refuses to self-grade). `run.py` gains `--judge {exact,fake,claude}` (default offline `exact`); `test_run.py` proves the mechanics + seam offline. Claude is the default reference *adapter*, not the interface — an adopter drops in any judge behind the same signature (LLM-neutrality).
+- **`conformance/eval-harness-wired.sh`** (new control `eval-harness`) — kit-self structural lock asserting the reference harness carries the seam (≥2 judges incl. the rubric-shaped one), a pinned + `temperature=0` judge, judge-independence enforcement, and offline-by-default (exact default + lazy `anthropic` import). `--selftest`: liveness anchor + 5 load-bearing negatives (default-claude / unpinned / no-seam / no-independence / eager-import).
+
+### Notes
+- Honest ceiling: *provided + wired + mechanics-proven; live-eval-quality un-gateable*. The kit's CI runs the offline judges (green-on-clone, no keys); the live Claude judge is the adopter's run with their key — the standing "author + wire, do not run live" invariant holds. `verify --require` 39 → **40 controls**.
+- E6-a is the foundation for E6-b (red-team reference), E6-c (LLM cost/quality loop), E6-d (gate-eval secret-exposure).
+
 ## [3.87.0] - 2026-07-01
 
 **`build` — the kit's own subagent-driven execution spine skill (the 11th spine skill; the last self-hosting roster gap).**

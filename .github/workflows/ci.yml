@@ -139,6 +139,8 @@ jobs:
         run: sh conformance/agentops-sensor-wired.sh --selftest
       - name: orchestrator-loop self-test (E3a — real loop + wiring lock)
         run: sh conformance/orchestrator-loop-wired.sh --selftest
+      - name: eval-harness self-test (E6-a eval-judge seam + pinned/independent lock)
+        run: sh conformance/eval-harness-wired.sh --selftest
       - name: escalation-seam self-test (E3-escalation — HITL primitive + wiring lock)
         run: |
           sh scripts/escalate.sh --selftest
