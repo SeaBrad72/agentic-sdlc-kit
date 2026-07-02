@@ -78,6 +78,7 @@ check control orchestrator-loop sh conformance/orchestrator-loop-wired.sh
 check control escalation-seam    sh conformance/escalation-wired.sh --selftest
 check control proportional-gate sh conformance/proportional-gate-wired.sh --selftest
 check control non-vacuity      sh conformance/non-vacuity.sh --selftest
+check control eval-harness      sh conformance/eval-harness-wired.sh --selftest
 check control conflict-safe-integration sh conformance/orchestrator-loop-wired.sh
 check control skill-spine sh conformance/orchestrator-loop-wired.sh
 check control release-tag       sh conformance/release-tag-wired.sh
