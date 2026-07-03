@@ -247,6 +247,17 @@ assert_deny "redirect budget.conf" '{"tool_name":"Bash","tool_input":{"command":
 # --- E4d: must still ALLOW (reading the ceiling config is legitimate) ---
 assert_allow "read budget.conf"    '{"tool_name":"Read","tool_input":{"file_path":".kit/budget.conf"}}'
 
+# --- Slice B: agent CANNOT disable the roster dial (.kit/roster.conf is control-plane) ---
+# Write/Edit tool path -> guard_check_path -> is_control_plane_path -> DENY
+assert_deny "Write roster.conf"    '{"tool_name":"Write","tool_input":{"file_path":".kit/roster.conf","content":"MODE=off"}}'
+assert_deny "Edit roster.conf"     '{"tool_name":"Edit","tool_input":{"file_path":".kit/roster.conf","old_string":"MODE=deny","new_string":"MODE=off"}}'
+# Shell redirect path -> guard_check_command -> redirect-target matcher -> DENY
+assert_deny "redirect roster.conf" '{"tool_name":"Bash","tool_input":{"command":"echo MODE=off > .kit/roster.conf"}}'
+# Shell in-place edit -> guard_check_command -> command-scan (sed not read-only) -> DENY
+assert_deny "sed -i roster.conf"   '{"tool_name":"Bash","tool_input":{"command":"sed -i s/deny/off/ .kit/roster.conf"}}'
+# must still ALLOW reading the dial config (legitimate; reads of control-plane are permitted)
+assert_allow "read roster.conf"    '{"tool_name":"Read","tool_input":{"file_path":".kit/roster.conf"}}'
+
 # --- 9b review hardening: must still ALLOW (no new over-block) ---
 assert_allow "git config user"      '{"tool_name":"Bash","tool_input":{"command":"git config user.name Dev"}}'
 assert_allow "git checkout src"     '{"tool_name":"Bash","tool_input":{"command":"git checkout HEAD -- src/app.ts"}}'

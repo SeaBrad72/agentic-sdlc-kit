@@ -39,6 +39,7 @@ is_control_plane_path() {
     scripts/containment-audit.sh|*/scripts/containment-audit.sh|\
     scripts/sod-check.sh|*/scripts/sod-check.sh|\
     .kit/budget.conf|*/.kit/budget.conf|\
+    .kit/roster.conf|*/.kit/roster.conf|\
     scripts/runaway-guard.sh|*/scripts/runaway-guard.sh|\
     scripts/orchestrator-run.sh|*/scripts/orchestrator-run.sh|\
     scripts/release-tag.sh|*/scripts/release-tag.sh|\
@@ -79,10 +80,10 @@ guard_check_command() {
   if ! selfedit_allowed && printf '%s' "$cmd" | grep -Eq 'git[[:space:]]+config[[:space:]]+([^;&|]*[[:space:]])?core\.hooksPath'; then
     printf '%s' '13: git config core.hooksPath would disable the agent guard - human-gated. Set KIT_GUARD_SELFEDIT=1 for deliberate human maintenance.'; return 1
   fi
-  if ! selfedit_allowed && printf '%s' "$cmd" | grep -Eq '(\.claude(/|[[:space:]]|$)|\.github/workflows|/CODEOWNERS|(^|[^a-zA-Z.])CODEOWNERS|\.git(/|[[:space:]]|$)|hooks/pre-push|scripts/kit-guard|docs/governance/\.meta-control-last|docs/governance/meta-control-log\.md|\.kit/budget\.conf|scripts/orchestrator-run\.sh|agents/[^[:space:]]*\.agent\.md|scripts/release-tag\.sh|scripts/escalate\.sh|skills/[^[:space:]]*|conformance/[^[:space:]]*|adapters/[^[:space:]]*)'; then
+  if ! selfedit_allowed && printf '%s' "$cmd" | grep -Eq '(\.claude(/|[[:space:]]|$)|\.github/workflows|/CODEOWNERS|(^|[^a-zA-Z.])CODEOWNERS|\.git(/|[[:space:]]|$)|hooks/pre-push|scripts/kit-guard|docs/governance/\.meta-control-last|docs/governance/meta-control-log\.md|\.kit/budget\.conf|\.kit/roster\.conf|scripts/orchestrator-run\.sh|agents/[^[:space:]]*\.agent\.md|scripts/release-tag\.sh|scripts/escalate\.sh|skills/[^[:space:]]*|conformance/[^[:space:]]*|adapters/[^[:space:]]*)'; then
     if printf '%s' "$cmd" | grep -Eq '(^|[^[:alnum:]_])(rm|rmdir|mv|cp|truncate|shred|chmod|chown|dd|sed|tee|ln|install|patch)[[:space:]]' \
        || printf '%s' "$cmd" | grep -Eq '(^|[^[:alnum:]_])git[[:space:]]+(checkout|restore)([[:space:]]|$)' \
-       || printf '%s' "$cmd" | grep -Eq '>[[:space:]]*[^[:space:]]*(\.claude|\.github/workflows|CODEOWNERS|\.git|hooks/pre-push|scripts/kit-guard|docs/governance/\.meta-control-last|docs/governance/meta-control-log\.md|\.kit/budget\.conf|scripts/orchestrator-run\.sh|agents/[^[:space:]]*\.agent\.md|scripts/release-tag\.sh|scripts/escalate\.sh|skills/[^[:space:]]*|conformance/[^[:space:]]*|adapters/[^[:space:]]*)'; then
+       || printf '%s' "$cmd" | grep -Eq '>[[:space:]]*[^[:space:]]*(\.claude|\.github/workflows|CODEOWNERS|\.git|hooks/pre-push|scripts/kit-guard|docs/governance/\.meta-control-last|docs/governance/meta-control-log\.md|\.kit/budget\.conf|\.kit/roster\.conf|scripts/orchestrator-run\.sh|agents/[^[:space:]]*\.agent\.md|scripts/release-tag\.sh|scripts/escalate\.sh|skills/[^[:space:]]*|conformance/[^[:space:]]*|adapters/[^[:space:]]*)'; then
       # WS1 (DENY-BY-DEFAULT): the co-occurrence test above is the safe FLOOR — it would deny. Allow
       # back ONLY a provably-safe SINGLE READ command: no ;/&&/||/|/&/redirect chaining, and a leading
       # verb (after stripping a leading backslash / env-assignments / sudo+common wrappers) that is a
@@ -384,6 +385,75 @@ guard_check_push() {
     if ! git merge-base --is-ancestor "$remote_sha" "$local_sha" 2>/dev/null; then
       printf '%s' '13: non-fast-forward (force) push rewrites published history - human-gated.'; return 1
     fi
+  fi
+  return 0
+}
+
+# shellcheck shell=sh
+# =============================================================================
+# guard-core.additions.sh (Slice B) — the EXACT snippet apply.py appends to
+# .claude/hooks/guard-core.sh (after guard_check_push, before EOF). Not a
+# standalone script: a function fragment sourced with the rest of the core.
+# =============================================================================
+
+# guard_check_skill "<skill_name>": the roster-authority dial (Slice B, opt-in, ships OFF).
+# Prints a verdict TOKEN on line 1 (allow|ask|deny) and, for ask/deny, a reason on line 2+;
+# ALWAYS returns 0 — the adapter (guard.sh) maps the token to a permission decision.
+#
+# Dial source: KIT_ROSTER_GUARD (per-session override) wins; else MODE= in .kit/roster.conf
+# (repo-root-relative; path overridable via KIT_ROSTER_CONF for tests, mirroring
+# RUNAWAY_BUDGET_CONFIG). The config file is itself control-plane, so an agent cannot flip the
+# dial (see is_control_plane_path + the command/redirect matchers).
+#
+# FAIL-SAFE toward OFF (the load-bearing invariant): any unreadable/absent/garbage config, or a
+# MODE that is not exactly ask|deny, routes to `allow`. A config error must NEVER wedge the
+# session — the roster-authority FLOOR contract (CLAUDE.md/AGENTS.md) still steers by preference.
+#
+# Namespace match resists spoofing: the namespace is the part before the FIRST ':' (no colon =>
+# the whole string), trimmed and lowercased, then whole-token matched against BLOCKLIST. So
+# `Superpowers:x` (capitalized) and bare `superpowers` are BOTH caught, while `x::superpowers`
+# (namespace `x`) and any non-blocklisted namespace (figma/vercel/LSPs) are allowed.
+guard_check_skill() {
+  _sk=$1
+  _conf="${KIT_ROSTER_CONF:-.kit/roster.conf}"
+
+  # 1. mode: session override wins; else MODE= from config; else empty (=> off). Unreadable => off.
+  _mode="${KIT_ROSTER_GUARD:-}"
+  if [ -z "$_mode" ] && [ -r "$_conf" ]; then
+    _mode=$(grep -E '^[[:space:]]*MODE[[:space:]]*=' "$_conf" 2>/dev/null | tail -n1 \
+      | sed -E 's/^[[:space:]]*MODE[[:space:]]*=[[:space:]]*//; s/#.*$//; s/["'"'"']//g; s/[[:space:]].*$//')
+  fi
+  _mode=$(printf '%s' "$_mode" | tr 'A-Z' 'a-z')
+  # 2. fail-safe: only ask|deny are active; off / empty / garbage => allow.
+  case "$_mode" in
+    ask|deny) : ;;
+    *) printf 'allow\n'; return 0 ;;
+  esac
+
+  # 3. namespace = part before the first ':'; trim ws; lowercase (spoof-resistant).
+  _ns=${_sk%%:*}
+  _ns=$(printf '%s' "$_ns" | sed -E 's/^[[:space:]]+//; s/[[:space:]]+$//' | tr 'A-Z' 'a-z')
+  [ -n "$_ns" ] || { printf 'allow\n'; return 0; }
+
+  # 4. blocklist (fail-safe empty if unreadable): whole-token membership, never substring.
+  _bl=''
+  if [ -r "$_conf" ]; then
+    _bl=$(grep -E '^[[:space:]]*BLOCKLIST[[:space:]]*=' "$_conf" 2>/dev/null | tail -n1 \
+      | sed -E 's/^[[:space:]]*BLOCKLIST[[:space:]]*=[[:space:]]*//; s/#.*$//; s/["'"'"']//g' | tr 'A-Z' 'a-z')
+  fi
+  case " $_bl " in
+    *" $_ns "*) : ;;
+    *) printf 'allow\n'; return 0 ;;
+  esac
+
+  # 5. blocklisted namespace under an active mode => emit the mode + a MODE-APPROPRIATE reason.
+  #    ask: the user is prompted and just approves to proceed (a soft nudge, not a block).
+  #    deny: hard-blocked; the only escape is the per-session KIT_ROSTER_GUARD=off override.
+  printf '%s\n' "$_mode"
+  if [ "$_mode" = ask ]; then
+    printf 'kit prefers its own roster (skills/; see skills/using-skills/SKILL.md for the foreign->kit equivalent). Approve this prompt to use `%s` anyway.\n' "$_sk"
+  else
+    printf 'kit prefers its own roster (skills/; see skills/using-skills/SKILL.md for the foreign->kit equivalent). To use `%s` anyway, set KIT_ROSTER_GUARD=off for this session.\n' "$_sk"
   fi
   return 0
 }

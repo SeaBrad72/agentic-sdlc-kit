@@ -16,6 +16,10 @@ emit_deny() {
   printf '{"hookSpecificOutput":{"hookEventName":"PreToolUse","permissionDecision":"deny","permissionDecisionReason":"%s"}}\n' "$(json_escape "$1")"
   exit 0
 }
+emit_ask() {
+  printf '{"hookSpecificOutput":{"hookEventName":"PreToolUse","permissionDecision":"ask","permissionDecisionReason":"%s"}}\n' "$(json_escape "$1")"
+  exit 0
+}
 
 allow() { exit 0; }
 
@@ -55,6 +59,14 @@ case "$TOOL" in
       OV=$(jq -r '(.classOverride // {}) | to_entries[] | "\(.key)=\(.value)"' "$POL" 2>/dev/null || printf '')
     fi
     if reason=$(guard_check_mcp "$TOOL" "$AL" "$OV"); then allow; else emit_deny "$reason"; fi ;;
+  Skill)
+    SK=$(printf '%s' "$INPUT" | jq -r '.tool_input.skill // .tool_input.name // empty' 2>/dev/null || printf '')
+    v=$(guard_check_skill "$SK"); tok=$(printf '%s' "$v" | head -n1); reason=$(printf '%s' "$v" | sed -n '2,$p')
+    case "$tok" in
+      ask)  emit_ask "$reason" ;;
+      deny) emit_deny "$reason" ;;
+      *)    allow ;;
+    esac ;;
   *)
     allow ;;
 esac
