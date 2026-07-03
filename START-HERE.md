@@ -54,7 +54,7 @@ This guide's numbered steps are the **engineer/lead Inception path**. If you're 
 | **QA Engineer** | the testing standards (`DEVELOPMENT-STANDARDS.md` §7) + the UAT acceptance gate (`DEVELOPMENT-PROCESS.md` §9) | own the test plan (`templates/TEST-PLAN-TEMPLATE.md`) and the UAT sign-off (`templates/UAT-SIGNOFF-TEMPLATE.md`) |
 | **DevOps / SRE** | the environment model (`DEVELOPMENT-PROCESS.md` §9) + `RUNBOOK.md` + CI (`DEVELOPMENT-STANDARDS.md` §14) | own promotion & operate |
 | **Engineer / Lead — new project** | **run `sh scripts/incept.sh`**, then work the judgment steps below | full Inception (steps 1–7); use `--harness <list>` (default `claude-code`; pick `generic` for any AGENTS.md-reading harness; comma-separate for several — see `docs/operations/harness-adapters.md`) |
-| **Engineer — existing repo (brownfield)** | **`docs/adoption/brownfield.md`** (copy-in + `.claude/` merge + guard verify) | then the Inception judgment steps below |
+| **Engineer — existing repo (brownfield)** | **`docs/adoption/brownfield.md`** (copy-in + `.claude/` merge + guard verify) | then the Inception judgment steps below; if your environment carries a foreign process-skill library (e.g. superpowers), see **`docs/adoption/skill-rosters.md`** |
 
 (Note: `incept` renames the kit's principles `CLAUDE.md` to `ENGINEERING-PRINCIPLES.md` and stamps a new project `CLAUDE.md` — your project guide. The glossary and START-HERE references to the *principles* file mean `ENGINEERING-PRINCIPLES.md` after Inception.)
 
