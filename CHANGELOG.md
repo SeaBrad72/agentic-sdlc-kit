@@ -6,6 +6,17 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versioning: [S
 > Claim verbs ("proven"/"PROVEN") are scoped to the reference implementation unless an entry states broader coverage — see [MAINTAINING.md §3](MAINTAINING.md#3-releasing-platform-team).
 
 
+## [3.95.0] - 2026-07-02
+
+**Deploy-target adoption bridge — the last missing concretization axis (stack + harness + deploy-target).**
+
+### Added
+- **`docs/adoption/DEPLOYMENT-ENVIRONMENT.md`** (new) — a neutral, platform-agnostic obligations-contract (six capabilities: artifact & provenance · promotion path · config & secrets · rollback · post-deploy verification · observability & cost) + AWS/K8s worked examples + an AWS/Azure/GCP topology-coverage table (orchestrated / serverless / PaaS / static-edge) + a bring-your-own recipe. The kit owns the contract; the adopter brings the platform and records answers in RUNBOOK §4. Doc-only — no new conformance check (the enforceable half stays gated by `conformance/definition-of-deployable.md`).
+
+### Changed
+- **`CLAUDE.md`** docs table now indexes both adoption bridges (`adoption/vc-hosts.md` + `adoption/DEPLOYMENT-ENVIRONMENT.md`) — closing a discoverability gap (vc-hosts shipped in #243 unindexed).
+- **`templates/RUNBOOK-TEMPLATE.md` §4** and **`START-HERE.md` §4** gain a pointer to the deploy-target recipe.
+
 ## [3.94.0] - 2026-07-02
 
 **Roster authority Slice B — the opt-in Claude-Code guard dial for foreign process skills.**
