@@ -6,6 +6,21 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versioning: [S
 > Claim verbs ("proven"/"PROVEN") are scoped to the reference implementation unless an entry states broader coverage — see [MAINTAINING.md §3](MAINTAINING.md#3-releasing-platform-team).
 
 
+## [3.94.0] - 2026-07-02
+
+**Roster authority Slice B — the opt-in Claude-Code guard dial for foreign process skills.**
+
+### Added
+- **`.kit/roster.conf`** (new) — the roster-authority dial: `MODE=off|ask|deny` (ships **OFF**) + a namespace `BLOCKLIST` (seeded `superpowers`). Per-session override: `KIT_ROSTER_GUARD`. The file is itself **control-plane** — the agent cannot edit it to self-disable the dial.
+- **`guard_check_skill()` in `.claude/hooks/guard-core.sh`** — single source of truth for the verdict: prints `allow|ask|deny` for a Skill invocation. **Fail-safe toward off** (unreadable/absent/garbage config or a non-`ask|deny` MODE -> `allow`, never wedges the session); namespace match is spoof-resistant (before the first `:`, trimmed + lowercased, whole-token); `deny` always offers the `KIT_ROSTER_GUARD=off` escape (preference, not prohibition).
+- **`conformance/roster-guard-wired.sh`** (new `check control` `roster-guard`) — behavioural claim: 6 mode cases (off/deny/ask + utility-namespace-allowed + fail-safe + session-override) plus 4 e2e adapter cases (real Skill JSON piped through `guard.sh` -> permissionDecision, pinning the `.tool_input.skill` field) plus structural wiring (settings.json matcher admits `Skill`; `guard.sh` has a `Skill)` case). `--selftest` = anchor (live core passes) + non-vacuity (a dead always-allow core FAILS). Control count 40 -> 41; wired into CI's selftest coverage.
+- **`docs/adoption/skill-rosters.md`** — adopter recipe for the dial (modes, extending the blocklist, the honest Claude-Code-only ceiling).
+
+### Changed
+- **`.claude/hooks/guard.sh`** gains a thin `Skill)` adapter case + `emit_ask()` (maps the core verdict token to a Claude `permissionDecision`; all logic stays in `guard-core.sh`).
+- **`.claude/settings.json`** PreToolUse matcher now admits the `Skill` tool.
+- **`.claude/hooks/guard-core.sh`** protects `.kit/roster.conf` as control-plane in all three matchers (path case + command-scan + redirect), mirroring `.kit/budget.conf`; `conformance/agent-autonomy.sh` gains fixtures proving the agent cannot Write / `>` / `sed -i` it.
+
 ## [3.93.0] - 2026-07-02
 
 **Roster authority Slice A (FLOOR) — the kit's own roster is the authoritative default for process work.**

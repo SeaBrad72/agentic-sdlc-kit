@@ -29,7 +29,7 @@
   "hooks": {
     "PreToolUse": [
       {
-        "matcher": "Bash|Write|Edit|NotebookEdit|Read|mcp__.*",
+        "matcher": "Bash|Write|Edit|NotebookEdit|Read|Skill|mcp__.*",
         "hooks": [
           { "type": "command", "command": "sh \"$CLAUDE_PROJECT_DIR/.claude/hooks/guard.sh\"" }
         ]

@@ -117,6 +117,8 @@ jobs:
         run: sh conformance/artifact-lineage-ready.sh --selftest
       - name: roster-authority self-test (roster-authority contract doc-coherence)
         run: sh conformance/roster-authority-ready.sh --selftest
+      - name: roster-guard self-test (Slice B dial behaviour + wiring non-vacuity)
+        run: sh conformance/roster-guard-wired.sh --selftest
       - name: feature-flags-wired self-test (reference + golden-path flip wired)
         run: sh conformance/feature-flags-wired.sh --selftest
       - name: containment-audit runner self-test (usage parse; behavioural proof in golden-path)
