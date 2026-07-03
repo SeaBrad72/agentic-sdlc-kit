@@ -96,6 +96,8 @@ Then set up your **stack profile**, two ways:
 ## 4. Tooling & CI/CD baseline
 Stand up formatter, linter, type-checker, test runner, and a CI pipeline with quality gates — using the **standard commands** and **pipeline** from your profile (§3–4). **Get a green pipeline on the empty project before any feature work.**
 
+Choosing a deploy target? Map it to the contract first — see `docs/adoption/DEPLOYMENT-ENVIRONMENT.md` (the kit owns the questions, you bring the platform).
+
 ## 5. Instantiate project artifacts
 - `CLAUDE.md` — from `templates/PROJECT-CLAUDE-TEMPLATE.md`; fill identity, stack (link ADR-000 + your profile), per-project config (step 6), roles (step 7).
 - `RUNBOOK.md` — setup/deploy/troubleshoot/rollback (start it now; grow it at each release).

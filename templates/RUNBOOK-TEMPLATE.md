@@ -25,6 +25,7 @@ Documented in `.env.example` (committed, placeholders only). Required:
 - `[VAR]` — [purpose] — [where to obtain]
 
 ## 4. Deploy
+- **Deploy-target contract:** map your platform to the six-point deploy contract — see `docs/adoption/DEPLOYMENT-ENVIRONMENT.md`; record your platform's answers in this section.
 - Target: [Vercel / Railway / container / …]
 - Promotion: Dev → QA → UAT → Prod (prod is human-gated — see `DEVELOPMENT-PROCESS.md` "Environments & promotion")
 - **Preview environments:** [approach] *(deployable services — per-PR isolated, safe test data, scoped creds, auto-teardown; see `docs/operations/preview-environments.md`)*
